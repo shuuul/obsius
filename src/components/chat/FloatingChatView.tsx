@@ -109,7 +109,6 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 
 	// Handlers for window management
 	const handleOpenNewFloatingChat = useCallback(() => {
-		console.log("[FloatingChatView] Opening new floating chat...");
 		plugin.openNewFloatingChat(true); // Open expanded
 	}, [plugin]);
 
@@ -130,7 +129,7 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 
 	// Listen for expand requests from other instances
 	useEffect(() => {
-		const handleExpandRequest = (event: CustomEvent) => {
+		const handleExpandRequest = (event: CustomEvent<{ instanceId: string }>) => {
 			if (event.detail.instanceId === instanceId) {
 				setIsExpanded(true);
 				setShowInstanceMenu(false);
