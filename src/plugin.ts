@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf, Notice, requestUrl, MarkdownRenderChild } from "obsidian";
+import { Plugin, WorkspaceLeaf, Notice, requestUrl } from "obsidian";
 import type { Root } from "react-dom/client";
 import * as semver from "semver";
 import { ChatView, VIEW_TYPE_CHAT } from "./components/chat/ChatView";
@@ -242,7 +242,7 @@ export default class AgentClientPlugin extends Plugin {
 
 	onunload() {
 		// Unmount all floating chat instances
-		for (const [instanceId, { root, container }] of this.floatingChatInstances) {
+		for (const [, { root, container }] of this.floatingChatInstances) {
 			root.unmount();
 			container.remove();
 		}
