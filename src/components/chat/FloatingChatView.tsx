@@ -19,8 +19,11 @@ interface FloatingChatComponentProps {
 	initialExpanded?: boolean;
 }
 
-function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: FloatingChatComponentProps) {
-
+function FloatingChatComponent({
+	plugin,
+	instanceId,
+	initialExpanded = false,
+}: FloatingChatComponentProps) {
 	// ============================================================
 	// Chat Controller Hook (Centralized Logic)
 	// ============================================================
@@ -71,10 +74,11 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 	const [showInstanceMenu, setShowInstanceMenu] = useState(false);
 	const [size, setSize] = useState(settings.floatingWindowSize);
 	const [position, setPosition] = useState(() => {
-		if (settings.floatingWindowPosition) return settings.floatingWindowPosition;
+		if (settings.floatingWindowPosition)
+			return settings.floatingWindowPosition;
 		return {
 			x: window.innerWidth - settings.floatingWindowSize.width - 50,
-			y: window.innerHeight - settings.floatingWindowSize.height - 50
+			y: window.innerHeight - settings.floatingWindowSize.height - 50,
 		};
 	});
 	const [isDragging, setIsDragging] = useState(false);
@@ -87,7 +91,11 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 	const mockView = useMemo(() => {
 		return {
 			app: plugin.app,
-			registerDomEvent: (target: EventTarget, type: string, callback: EventListenerOrEventListenerObject) => {
+			registerDomEvent: (
+				target: EventTarget,
+				type: string,
+				callback: EventListenerOrEventListenerObject,
+			) => {
 				target.addEventListener(type, callback);
 			},
 		};
@@ -97,14 +105,20 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 	const floatingButtonImageSrc = useMemo(() => {
 		const img = settings.floatingButtonImage;
 		if (!img) return null;
-		if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:")) {
+		if (
+			img.startsWith("http://") ||
+			img.startsWith("https://") ||
+			img.startsWith("data:")
+		) {
 			return img;
 		}
 		// Treat as local path
 		interface VaultAdapterWithResourcePath {
 			getResourcePath?: (path: string) => string;
 		}
-		return (plugin.app.vault.adapter as VaultAdapterWithResourcePath).getResourcePath?.(img);
+		return (
+			plugin.app.vault.adapter as VaultAdapterWithResourcePath
+		).getResourcePath?.(img);
 	}, [settings.floatingButtonImage, plugin.app.vault.adapter]);
 
 	// Handlers for window management
@@ -129,7 +143,9 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 
 	// Listen for expand requests from other instances
 	useEffect(() => {
-		const handleExpandRequest = (event: CustomEvent<{ instanceId: string }>) => {
+		const handleExpandRequest = (
+			event: CustomEvent<{ instanceId: string }>,
+		) => {
 			if (event.detail.instanceId === instanceId) {
 				setIsExpanded(true);
 				setShowInstanceMenu(false);
@@ -156,7 +172,10 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 			for (const entry of entries) {
 				const { width, height } = entry.contentRect;
 				// Only update if significantly different to avoid loops
-				if (Math.abs(width - size.width) > 5 || Math.abs(height - size.height) > 5) {
+				if (
+					Math.abs(width - size.width) > 5 ||
+					Math.abs(height - size.height) > 5
+				) {
 					setSize({ width, height });
 				}
 			}
@@ -169,10 +188,13 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 	// Save size to settings
 	useEffect(() => {
 		const saveSize = async () => {
-			if (size.width !== settings.floatingWindowSize.width || size.height !== settings.floatingWindowSize.height) {
+			if (
+				size.width !== settings.floatingWindowSize.width ||
+				size.height !== settings.floatingWindowSize.height
+			) {
 				await plugin.saveSettingsAndNotify({
 					...plugin.settings,
-					floatingWindowSize: size
+					floatingWindowSize: size,
 				});
 			}
 		};
@@ -186,12 +208,14 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 	// Save position to settings
 	useEffect(() => {
 		const savePosition = async () => {
-			if (!settings.floatingWindowPosition ||
+			if (
+				!settings.floatingWindowPosition ||
 				position.x !== settings.floatingWindowPosition.x ||
-				position.y !== settings.floatingWindowPosition.y) {
+				position.y !== settings.floatingWindowPosition.y
+			) {
 				await plugin.saveSettingsAndNotify({
 					...plugin.settings,
-					floatingWindowPosition: position
+					floatingWindowPosition: position,
 				});
 			}
 		};
@@ -205,21 +229,24 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 	// ============================================================
 	// Dragging Logic (View-Specific)
 	// ============================================================
-	const onMouseDown = useCallback((e: React.MouseEvent) => {
-		if (!containerRef.current) return;
-		setIsDragging(true);
-		dragOffset.current = {
-			x: e.clientX - position.x,
-			y: e.clientY - position.y
-		};
-	}, [position]);
+	const onMouseDown = useCallback(
+		(e: React.MouseEvent) => {
+			if (!containerRef.current) return;
+			setIsDragging(true);
+			dragOffset.current = {
+				x: e.clientX - position.x,
+				y: e.clientY - position.y,
+			};
+		},
+		[position],
+	);
 
 	useEffect(() => {
 		const onMouseMove = (e: MouseEvent) => {
 			if (!isDragging) return;
 			setPosition({
 				x: e.clientX - dragOffset.current.x,
-				y: e.clientY - dragOffset.current.y
+				y: e.clientY - dragOffset.current.y,
 			});
 		};
 
@@ -257,7 +284,11 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 				<>
 					<div
 						className="agent-client-floating-button"
-						style={floatingButtonImageSrc ? { background: "transparent" } : undefined}
+						style={
+							floatingButtonImageSrc
+								? { background: "transparent" }
+								: undefined
+						}
 					>
 						{floatingButtonImageSrc ? (
 							<img src={floatingButtonImageSrc} alt="AI" />
@@ -288,7 +319,10 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 									}}
 									style={{ flex: 1, cursor: "pointer" }}
 								>
-									Chat {index + 1} {id === instanceId ? `(${activeAgentLabel})` : ""}
+									Chat {index + 1}{" "}
+									{id === instanceId
+										? `(${activeAgentLabel})`
+										: ""}
 								</span>
 								{allInstances.length > 1 && (
 									<button
@@ -322,7 +356,11 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 			<div
 				className="agent-client-floating-button"
 				onClick={handleButtonClick}
-				style={floatingButtonImageSrc ? { background: "transparent" } : undefined}
+				style={
+					floatingButtonImageSrc
+						? { background: "transparent" }
+						: undefined
+				}
 			>
 				{floatingButtonImageSrc ? (
 					<img src={floatingButtonImageSrc} alt="AI" />
@@ -351,90 +389,115 @@ function FloatingChatComponent({ plugin, instanceId, initialExpanded = false }: 
 					left: position.x,
 					top: position.y,
 					width: size.width,
-					height: size.height
+					height: size.height,
 				}}
 			>
-			<div className="agent-client-floating-header" onMouseDown={onMouseDown}>
-				<InlineHeader
-					variant="floating"
-					agentLabel={activeAgentLabel}
-					availableAgents={availableAgents}
-					currentAgentId={session.agentId}
-					isUpdateAvailable={isUpdateAvailable}
-					canShowSessionHistory={sessionHistory.canShowSessionHistory}
-					hasMessages={messages.length > 0}
-					onAgentChange={(agentId) => void handleSwitchAgent(agentId)}
-					onNewSession={() => void handleNewChat()}
-					onOpenHistory={() => void handleOpenHistory()}
-					onExportChat={() => void handleExportChat()}
-					onRestartAgent={() => void handleRestartAgent()}
-					onOpenNewWindow={handleOpenNewFloatingChat}
-					onClose={handleCloseWindow}
-				/>
-			</div>
+				<div
+					className="agent-client-floating-header"
+					onMouseDown={onMouseDown}
+				>
+					<InlineHeader
+						variant="floating"
+						agentLabel={activeAgentLabel}
+						availableAgents={availableAgents}
+						currentAgentId={session.agentId}
+						isUpdateAvailable={isUpdateAvailable}
+						canShowSessionHistory={
+							sessionHistory.canShowSessionHistory
+						}
+						hasMessages={messages.length > 0}
+						onAgentChange={(agentId) =>
+							void handleSwitchAgent(agentId)
+						}
+						onNewSession={() => void handleNewChat()}
+						onOpenHistory={() => void handleOpenHistory()}
+						onExportChat={() => void handleExportChat()}
+						onRestartAgent={() => void handleRestartAgent()}
+						onOpenNewWindow={handleOpenNewFloatingChat}
+						onClose={handleCloseWindow}
+					/>
+				</div>
 
-			<div className="agent-client-floating-content">
-				{floatingButtonImageSrc && (
-					<div className="agent-client-code-block-image-container">
-						<img
-							src={floatingButtonImageSrc}
-							alt="Agent"
-							className="agent-client-code-block-image"
+				<div className="agent-client-floating-content">
+					{floatingButtonImageSrc && (
+						<div className="agent-client-code-block-image-container">
+							<img
+								src={floatingButtonImageSrc}
+								alt="Agent"
+								className="agent-client-code-block-image"
+							/>
+						</div>
+					)}
+
+					<div className="agent-client-floating-messages-container">
+						<ChatMessages
+							messages={messages}
+							isSending={isSending}
+							isSessionReady={isSessionReady}
+							isRestoringSession={sessionHistory.loading}
+							agentLabel={activeAgentLabel}
+							plugin={plugin}
+							view={mockView as unknown as ChatView}
+							acpClient={acpClientRef.current}
+							onApprovePermission={permission.approvePermission}
 						/>
 					</div>
-				)}
 
-				<div className="agent-client-floating-messages-container">
-					<ChatMessages
-						messages={messages}
+					<ChatInput
 						isSending={isSending}
 						isSessionReady={isSessionReady}
 						isRestoringSession={sessionHistory.loading}
 						agentLabel={activeAgentLabel}
+						availableCommands={session.availableCommands || []}
+						autoMentionEnabled={settings.autoMentionActiveNote}
+						restoredMessage={restoredMessage}
+						mentions={mentions}
+						slashCommands={slashCommands}
+						autoMention={autoMention}
 						plugin={plugin}
 						view={mockView as unknown as ChatView}
-						acpClient={acpClientRef.current}
-						onApprovePermission={permission.approvePermission}
+						onSendMessage={handleSendMessage}
+						onStopGeneration={handleStopGeneration}
+						onRestoredMessageConsumed={
+							handleRestoredMessageConsumed
+						}
+						modes={session.modes}
+						onModeChange={(modeId) => void handleSetMode(modeId)}
+						models={session.models}
+						onModelChange={(modelId) =>
+							void handleSetModel(modelId)
+						}
+						supportsImages={
+							session.promptCapabilities?.image ?? false
+						}
+						agentId={session.agentId}
+						inputValue={inputValue}
+						onInputChange={setInputValue}
+						attachedImages={attachedImages}
+						onAttachedImagesChange={setAttachedImages}
+						errorInfo={errorInfo}
+						onClearError={handleClearError}
 					/>
 				</div>
-
-				<ChatInput
-					isSending={isSending}
-					isSessionReady={isSessionReady}
-					isRestoringSession={sessionHistory.loading}
-					agentLabel={activeAgentLabel}
-					availableCommands={session.availableCommands || []}
-					autoMentionEnabled={settings.autoMentionActiveNote}
-					restoredMessage={restoredMessage}
-					mentions={mentions}
-					slashCommands={slashCommands}
-					autoMention={autoMention}
-					plugin={plugin}
-					view={mockView as unknown as ChatView}
-					onSendMessage={handleSendMessage}
-					onStopGeneration={handleStopGeneration}
-					onRestoredMessageConsumed={handleRestoredMessageConsumed}
-					modes={session.modes}
-					onModeChange={(modeId) => void handleSetMode(modeId)}
-					models={session.models}
-					onModelChange={(modelId) => void handleSetModel(modelId)}
-					supportsImages={session.promptCapabilities?.image ?? false}
-					agentId={session.agentId}
-					inputValue={inputValue}
-					onInputChange={setInputValue}
-					attachedImages={attachedImages}
-					onAttachedImagesChange={setAttachedImages}
-					errorInfo={errorInfo}
-					onClearError={handleClearError}
-				/>
 			</div>
-		</div>
 		</>
 	);
 }
-export function mountFloatingChat(plugin: AgentClientPlugin, instanceId: string, initialExpanded = false) {
-	const container = document.body.createDiv({ cls: "agent-client-floating-root" });
+export function mountFloatingChat(
+	plugin: AgentClientPlugin,
+	instanceId: string,
+	initialExpanded = false,
+) {
+	const container = document.body.createDiv({
+		cls: "agent-client-floating-root",
+	});
 	const root = createRoot(container);
-	root.render(<FloatingChatComponent plugin={plugin} instanceId={instanceId} initialExpanded={initialExpanded} />);
+	root.render(
+		<FloatingChatComponent
+			plugin={plugin}
+			instanceId={instanceId}
+			initialExpanded={initialExpanded}
+		/>,
+	);
 	return { root, container };
 }

@@ -67,7 +67,9 @@ export function InlineHeader({
 	onClose,
 }: InlineHeaderProps) {
 	return (
-		<div className={`agent-client-inline-header agent-client-inline-header-${variant}`}>
+		<div
+			className={`agent-client-inline-header agent-client-inline-header-${variant}`}
+		>
 			<div className="agent-client-inline-header-main">
 				<select
 					className="agent-client-agent-selector"
@@ -99,7 +101,9 @@ export function InlineHeader({
 						onClick={onOpenHistory}
 					/>
 				) : (
-					<span style={{ width: "20px", height: "20px", flexShrink: 0 }} />
+					<span
+						style={{ width: "20px", height: "20px", flexShrink: 0 }}
+					/>
 				)}
 				<HeaderButton
 					iconName="save"

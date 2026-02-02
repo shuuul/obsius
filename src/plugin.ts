@@ -158,7 +158,10 @@ export default class AgentClientPlugin extends Plugin {
 	/** Track the last active ChatView for keybind targeting */
 	private _lastActiveChatViewId: string | null = null;
 	/** Map of instanceId to floating chat roots and containers */
-	private floatingChatInstances: Map<string, { root: Root; container: HTMLElement }> = new Map();
+	private floatingChatInstances: Map<
+		string,
+		{ root: Root; container: HTMLElement }
+	> = new Map();
 	/** Counter for generating unique floating chat instance IDs */
 	private floatingChatCounter = 0;
 
@@ -454,7 +457,11 @@ export default class AgentClientPlugin extends Plugin {
 	 */
 	openNewFloatingChat(initialExpanded = false): void {
 		const instanceId = `floating-${this.floatingChatCounter++}`;
-		const { root, container } = mountFloatingChat(this, instanceId, initialExpanded);
+		const { root, container } = mountFloatingChat(
+			this,
+			instanceId,
+			initialExpanded,
+		);
 		this.floatingChatInstances.set(instanceId, { root, container });
 	}
 
