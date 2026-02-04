@@ -111,6 +111,13 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		options: PermissionOption[];
 	}> = [];
 
+	// Tracks whether any session update was received during the current prompt.
+	// Used to detect silent failures (e.g., missing API keys) where the agent
+	// returns end_turn with no content.
+	private promptSessionUpdateCount = 0;
+	// Captures recent stderr output for error diagnostics
+	private recentStderr = "";
+
 	constructor(private plugin: AgentClientPlugin) {
 		this.logger = getLogger();
 		// Initialize with no-op callback
@@ -377,6 +384,11 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		agentProcess.stderr?.setEncoding("utf8");
 		agentProcess.stderr?.on("data", (data) => {
 			this.logger.log(`[AcpAdapter] ${agentLabel} stderr:`, data);
+			// Keep a rolling window of recent stderr for error diagnostics
+			this.recentStderr += data;
+			if (this.recentStderr.length > 8192) {
+				this.recentStderr = this.recentStderr.slice(-4096);
+			}
 		});
 
 		// Create stream for ACP communication
@@ -631,6 +643,8 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 
 		// Reset current message for new assistant response
 		this.resetCurrentMessage();
+		this.promptSessionUpdateCount = 0;
+		this.recentStderr = "";
 
 		try {
 			// Convert domain PromptContent to ACP ContentBlock
@@ -650,6 +664,32 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 			this.logger.log(
 				`[AcpAdapter] Agent completed with: ${promptResult.stopReason}`,
 			);
+
+			// Detect silent failures: agent returned end_turn but sent no content.
+			// Only surface an error when stderr contains a recognized error pattern
+			// (e.g., missing API key). Some commands like /compact legitimately
+			// return no session updates, so we avoid false positives.
+			if (
+				this.promptSessionUpdateCount === 0 &&
+				promptResult.stopReason === "end_turn"
+			) {
+				// Allow pending stderr data events to flush before checking
+				await new Promise((r) => setTimeout(r, 100));
+
+				const stderrHint = this.extractStderrErrorHint();
+				if (stderrHint) {
+					this.logger.warn(
+						"[AcpAdapter] Agent returned end_turn with no session updates — detected error in stderr",
+					);
+					throw new Error(
+						`The agent returned an empty response. ${stderrHint}`,
+					);
+				} else {
+					this.logger.log(
+						"[AcpAdapter] Agent returned end_turn with no session updates (may be expected for some commands)",
+					);
+				}
+			}
 		} catch (error: unknown) {
 			this.logger.error("[AcpAdapter] Prompt Error:", error);
 
@@ -928,6 +968,34 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		}
 	}
 
+	/**
+	 * Extract a user-friendly error hint from recent stderr output.
+	 * Detects common failure patterns like missing API keys.
+	 */
+	private extractStderrErrorHint(): string | null {
+		const stderr = this.recentStderr;
+		if (!stderr) return null;
+
+		// Missing API key (OpenCode, Claude Code, etc.)
+		if (
+			stderr.includes("API key is missing") ||
+			stderr.includes("LoadAPIKeyError")
+		) {
+			return "The agent's API key may be missing. For custom agents, add the required API key (e.g., ANTHROPIC_API_KEY) in the agent's Environment Variables setting.";
+		}
+
+		// Authentication failures
+		if (
+			stderr.includes("authentication") ||
+			stderr.includes("unauthorized") ||
+			stderr.includes("401")
+		) {
+			return "The agent reported an authentication error. Check that your API key or credentials are valid.";
+		}
+
+		return null;
+	}
+
 	// ========================================================================
 	// IAcpClient Implementation
 	// ========================================================================
@@ -939,6 +1007,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 	sessionUpdate(params: acp.SessionNotification): Promise<void> {
 		const update = params.update;
 		const sessionId = params.sessionId;
+		this.promptSessionUpdateCount++;
 		this.logger.log("[AcpAdapter] sessionUpdate:", { sessionId, update });
 
 		switch (update.sessionUpdate) {
