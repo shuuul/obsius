@@ -162,9 +162,7 @@ export default class AgentClientPlugin extends Plugin {
 
 	/** Map of viewId to AcpAdapter for multi-session support */
 	private _adapters: Map<string, AcpAdapter> = new Map();
-	/** Track the last active ChatView for keybind targeting */
-	private _lastActiveChatViewId: string | null = null;
-	/** Map of instanceId to floating chat roots and containers */
+	/** Map of viewId to floating chat roots and containers (legacy, being migrated to viewRegistry) */
 	private floatingChatInstances: Map<
 		string,
 		{ root: Root; container: HTMLElement }
@@ -256,11 +254,17 @@ export default class AgentClientPlugin extends Plugin {
 	}
 
 	onunload() {
-		// Unmount all floating chat instances
-		for (const [, { root, container }] of this.floatingChatInstances) {
-			root.unmount();
-			container.remove();
+		// Unmount all floating chat instances via registry
+		for (const container of this.viewRegistry.getByType("floating")) {
+			if (container instanceof FloatingViewContainer) {
+				container.unmount();
+			}
 		}
+
+		// Clear registry (sidebar views are managed by Obsidian workspace)
+		this.viewRegistry.clear();
+
+		// Clear legacy storage
 		this.floatingChatInstances.clear();
 	}
 
@@ -294,17 +298,15 @@ export default class AgentClientPlugin extends Plugin {
 			}
 			this._adapters.delete(viewId);
 		}
-		// Clear lastActiveChatViewId if it was this view
-		if (this._lastActiveChatViewId === viewId) {
-			this._lastActiveChatViewId = null;
-		}
+		// Note: lastActiveChatViewId is now managed by viewRegistry
+		// Clearing happens automatically when view is unregistered
 	}
 
 	/**
 	 * Get the last active ChatView ID for keybind targeting.
 	 */
 	get lastActiveChatViewId(): string | null {
-		return this._lastActiveChatViewId;
+		return this.viewRegistry.getFocusedId();
 	}
 
 	/**
@@ -312,7 +314,9 @@ export default class AgentClientPlugin extends Plugin {
 	 * Called when a ChatView receives focus or interaction.
 	 */
 	setLastActiveChatViewId(viewId: string | null): void {
-		this._lastActiveChatViewId = viewId;
+		if (viewId) {
+			this.viewRegistry.setFocused(viewId);
+		}
 	}
 
 	async activateView() {
@@ -323,12 +327,11 @@ export default class AgentClientPlugin extends Plugin {
 
 		if (leaves.length > 0) {
 			// Find the leaf matching lastActiveChatViewId, or fall back to first leaf
-			if (this._lastActiveChatViewId) {
+			const focusedId = this.lastActiveChatViewId;
+			if (focusedId) {
 				leaf =
 					leaves.find(
-						(l) =>
-							(l.view as ChatView)?.viewId ===
-							this._lastActiveChatViewId,
+						(l) => (l.view as ChatView)?.viewId === focusedId,
 					) || leaves[0];
 			} else {
 				leaf = leaves[0];
@@ -368,43 +371,14 @@ export default class AgentClientPlugin extends Plugin {
 
 	/**
 	 * Focus the next or previous ChatView in the list.
-	 * Cycles through all ChatView leaves.
+	 * Uses ChatViewRegistry which includes both sidebar and floating views.
 	 */
 	private focusChatView(direction: "next" | "previous"): void {
-		const { workspace } = this.app;
-		const leaves = workspace.getLeavesOfType(VIEW_TYPE_CHAT);
-
-		if (leaves.length === 0) {
-			return;
+		if (direction === "next") {
+			this.viewRegistry.focusNext();
+		} else {
+			this.viewRegistry.focusPrevious();
 		}
-
-		if (leaves.length === 1) {
-			void workspace.revealLeaf(leaves[0]);
-			this.focusTextarea(leaves[0]);
-			return;
-		}
-
-		// Find current index
-		let currentIndex = 0;
-		if (this._lastActiveChatViewId) {
-			const foundIndex = leaves.findIndex(
-				(l) =>
-					(l.view as ChatView)?.viewId === this._lastActiveChatViewId,
-			);
-			if (foundIndex !== -1) {
-				currentIndex = foundIndex;
-			}
-		}
-
-		// Get target index (cycle)
-		const targetIndex =
-			direction === "next"
-				? (currentIndex + 1) % leaves.length
-				: (currentIndex - 1 + leaves.length) % leaves.length;
-		const targetLeaf = leaves[targetIndex];
-
-		void workspace.revealLeaf(targetLeaf);
-		this.focusTextarea(targetLeaf);
 	}
 
 	/**
@@ -478,30 +452,33 @@ export default class AgentClientPlugin extends Plugin {
 
 	/**
 	 * Close a specific floating chat window.
+	 * @param viewId - The viewId in "floating-chat-{id}" format (from getFloatingChatInstances())
 	 */
-	closeFloatingChat(instanceId: string): void {
-		const instance = this.floatingChatInstances.get(instanceId);
-		if (instance) {
-			instance.root.unmount();
-			instance.container.remove();
-			this.floatingChatInstances.delete(instanceId);
+	closeFloatingChat(viewId: string): void {
+		const container = this.viewRegistry.get(viewId);
+		if (container && container instanceof FloatingViewContainer) {
+			container.unmount();
 		}
+		// Also remove from legacy floatingChatInstances if present
+		this.floatingChatInstances.delete(viewId);
 	}
 
 	/**
-	 * Get all floating chat instance IDs.
+	 * Get all floating chat instance viewIds.
+	 * @returns Array of viewIds in "floating-chat-{id}" format
 	 */
 	getFloatingChatInstances(): string[] {
-		return Array.from(this.floatingChatInstances.keys());
+		return this.viewRegistry.getByType("floating").map((v) => v.viewId);
 	}
 
 	/**
 	 * Expand a specific floating chat window by triggering a custom event.
+	 * @param viewId - The viewId in "floating-chat-{id}" format (from getFloatingChatInstances())
 	 */
-	expandFloatingChat(instanceId: string): void {
+	expandFloatingChat(viewId: string): void {
 		window.dispatchEvent(
 			new CustomEvent("agent-client:expand-floating-chat", {
-				detail: { instanceId },
+				detail: { viewId },
 			}),
 		);
 	}
@@ -572,7 +549,7 @@ export default class AgentClientPlugin extends Plugin {
 				await this.activateView();
 				this.app.workspace.trigger(
 					"agent-client:approve-active-permission" as "quit",
-					this._lastActiveChatViewId,
+					this.lastActiveChatViewId,
 				);
 			},
 		});
@@ -584,7 +561,7 @@ export default class AgentClientPlugin extends Plugin {
 				await this.activateView();
 				this.app.workspace.trigger(
 					"agent-client:reject-active-permission" as "quit",
-					this._lastActiveChatViewId,
+					this.lastActiveChatViewId,
 				);
 			},
 		});
@@ -596,7 +573,7 @@ export default class AgentClientPlugin extends Plugin {
 				await this.activateView();
 				this.app.workspace.trigger(
 					"agent-client:toggle-auto-mention" as "quit",
-					this._lastActiveChatViewId,
+					this.lastActiveChatViewId,
 				);
 			},
 		});
@@ -607,7 +584,7 @@ export default class AgentClientPlugin extends Plugin {
 			callback: () => {
 				this.app.workspace.trigger(
 					"agent-client:cancel-message" as "quit",
-					this._lastActiveChatViewId,
+					this.lastActiveChatViewId,
 				);
 			},
 		});
@@ -649,23 +626,15 @@ export default class AgentClientPlugin extends Plugin {
 	 * Copy prompt from active view to all other views
 	 */
 	private broadcastPrompt(): void {
-		const allChatViews = this.getAllChatViews();
-		if (allChatViews.length === 0) {
+		const allViews = this.viewRegistry.getAll();
+		if (allViews.length === 0) {
 			new Notice("[Agent Client] No chat views open");
 			return;
 		}
 
-		// Find the active (source) view
-		const activeViewId = this._lastActiveChatViewId;
-		const sourceView = allChatViews.find((v) => v.viewId === activeViewId);
-
-		if (!sourceView) {
-			new Notice("[Agent Client] No active chat view found");
-			return;
-		}
-
-		// Get input state from source view
-		const inputState = sourceView.getInputState();
+		const inputState = this.viewRegistry.toFocused((v) =>
+			v.getInputState(),
+		);
 		if (
 			!inputState ||
 			(inputState.text.trim() === "" && inputState.images.length === 0)
@@ -674,10 +643,8 @@ export default class AgentClientPlugin extends Plugin {
 			return;
 		}
 
-		// Broadcast to all other views
-		const targetViews = allChatViews.filter(
-			(v) => v.viewId !== activeViewId,
-		);
+		const focusedId = this.viewRegistry.getFocusedId();
+		const targetViews = allViews.filter((v) => v.viewId !== focusedId);
 		if (targetViews.length === 0) {
 			new Notice("[Agent Client] No other chat views to broadcast to");
 			return;
@@ -692,20 +659,18 @@ export default class AgentClientPlugin extends Plugin {
 	 * Send message in all views that can send
 	 */
 	private async broadcastSend(): Promise<void> {
-		const allChatViews = this.getAllChatViews();
-		if (allChatViews.length === 0) {
+		const allViews = this.viewRegistry.getAll();
+		if (allViews.length === 0) {
 			new Notice("[Agent Client] No chat views open");
 			return;
 		}
 
-		// Filter to views that can send
-		const sendableViews = allChatViews.filter((v) => v.canSend());
+		const sendableViews = allViews.filter((v) => v.canSend());
 		if (sendableViews.length === 0) {
 			new Notice("[Agent Client] No views ready to send");
 			return;
 		}
 
-		// Send in all views concurrently
 		await Promise.allSettled(sendableViews.map((v) => v.sendMessage()));
 	}
 
@@ -713,26 +678,14 @@ export default class AgentClientPlugin extends Plugin {
 	 * Cancel operation in all views
 	 */
 	private async broadcastCancel(): Promise<void> {
-		const allChatViews = this.getAllChatViews();
-		if (allChatViews.length === 0) {
+		const allViews = this.viewRegistry.getAll();
+		if (allViews.length === 0) {
 			new Notice("[Agent Client] No chat views open");
 			return;
 		}
 
-		// Cancel in all views concurrently
-		await Promise.allSettled(allChatViews.map((v) => v.cancelOperation()));
-
+		await Promise.allSettled(allViews.map((v) => v.cancelOperation()));
 		new Notice("[Agent Client] Cancel broadcast to all views");
-	}
-
-	/**
-	 * Get all open ChatView instances
-	 */
-	private getAllChatViews(): ChatView[] {
-		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_CHAT);
-		return leaves
-			.map((leaf) => leaf.view)
-			.filter((view): view is ChatView => view instanceof ChatView);
 	}
 
 	async loadSettings() {
