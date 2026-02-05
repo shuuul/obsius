@@ -1949,8 +1949,9 @@ If your plugin does not need CSS, delete this file.
 
 .agent-client-floating-messages-container {
 	flex: 1;
-	overflow-y: auto;
-	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden; /* Let inner .agent-client-chat-view-messages handle scrolling */
 	margin-bottom: 8px;
 	min-height: 0;
 }
