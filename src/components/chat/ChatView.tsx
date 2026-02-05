@@ -5,6 +5,10 @@ import {
 	Notice,
 	FileSystemAdapter,
 } from "obsidian";
+import type {
+	IChatViewContainer,
+	ChatViewType,
+} from "../../domain/ports/chat-view-container.port";
 import * as React from "react";
 const { useState, useRef, useEffect, useMemo, useCallback } = React;
 import { createRoot, Root } from "react-dom/client";
@@ -1198,12 +1202,14 @@ type SendMessageCallback = () => Promise<boolean>;
 type CanSendCallback = () => boolean;
 type CancelCallback = () => Promise<void>;
 
-export class ChatView extends ItemView {
+export class ChatView extends ItemView implements IChatViewContainer {
 	private root: Root | null = null;
 	private plugin: AgentClientPlugin;
 	private logger: Logger;
 	/** Unique identifier for this view instance (for multi-session support) */
 	readonly viewId: string;
+	/** View type for IChatViewContainer */
+	readonly viewType: ChatViewType = "sidebar";
 	/** Initial agent ID passed via state (for openNewChatViewWithAgent) */
 	private initialAgentId: string | null = null;
 	/** Callbacks to notify React when agentId is restored from workspace state */
@@ -1365,6 +1371,58 @@ export class ChatView extends ItemView {
 		await this.cancelCallback?.();
 	}
 
+	// ============================================================
+	// IChatViewContainer Implementation
+	// ============================================================
+
+	/**
+	 * Called when this view becomes the active/focused view.
+	 */
+	onActivate(): void {
+		this.logger.log(`[ChatView] Activated: ${this.viewId}`);
+	}
+
+	/**
+	 * Called when this view loses active/focused status.
+	 */
+	onDeactivate(): void {
+		this.logger.log(`[ChatView] Deactivated: ${this.viewId}`);
+	}
+
+	/**
+	 * Programmatically focus this view's input.
+	 */
+	focus(): void {
+		const textarea = this.containerEl.querySelector(
+			"textarea.agent-client-chat-input-textarea",
+		);
+		if (textarea instanceof HTMLTextAreaElement) {
+			textarea.focus();
+		}
+	}
+
+	/**
+	 * Check if this view currently has focus.
+	 */
+	hasFocus(): boolean {
+		return this.containerEl.contains(document.activeElement);
+	}
+
+	/**
+	 * Expand the view if it's in a collapsed state.
+	 * Sidebar views don't have expand/collapse state - no-op.
+	 */
+	expand(): void {
+		// Sidebar views don't have expand/collapse state - no-op
+	}
+
+	/**
+	 * Get the DOM container element for this view.
+	 */
+	getContainerEl(): HTMLElement {
+		return this.containerEl;
+	}
+
 	onOpen() {
 		const container = this.containerEl.children[1];
 		container.empty();
@@ -1377,11 +1435,19 @@ export class ChatView extends ItemView {
 				viewId={this.viewId}
 			/>,
 		);
+
+		// Register with plugin's view registry
+		this.plugin.viewRegistry.register(this);
+
 		return Promise.resolve();
 	}
 
 	async onClose(): Promise<void> {
 		this.logger.log("[ChatView] onClose() called");
+
+		// Unregister from plugin's view registry
+		this.plugin.viewRegistry.unregister(this.viewId);
+
 		// Cleanup is handled by React useEffect cleanup in ChatComponent
 		// which performs auto-export and closeSession
 		if (this.root) {

@@ -3,6 +3,7 @@ import type { Root } from "react-dom/client";
 import * as semver from "semver";
 import { ChatView, VIEW_TYPE_CHAT } from "./components/chat/ChatView";
 import { mountFloatingChat } from "./components/chat/FloatingChatView";
+import { ChatViewRegistry } from "./shared/chat-view-registry";
 import {
 	createSettingsStore,
 	type SettingsStore,
@@ -152,6 +153,9 @@ const DEFAULT_SETTINGS: AgentClientPluginSettings = {
 export default class AgentClientPlugin extends Plugin {
 	settings: AgentClientPluginSettings;
 	settingsStore!: SettingsStore;
+
+	/** Registry for all chat view containers (sidebar + floating) */
+	viewRegistry = new ChatViewRegistry();
 
 	/** Map of viewId to AcpAdapter for multi-session support */
 	private _adapters: Map<string, AcpAdapter> = new Map();
