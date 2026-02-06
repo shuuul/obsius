@@ -678,7 +678,7 @@ function FloatingChatComponent({
 	]);
 
 	// ============================================================
-	// Focus Tracking (ChatView と同等)
+	// Focus Tracking (same as ChatView)
 	// ============================================================
 	useEffect(() => {
 		const handleFocus = () => {

@@ -159,14 +159,13 @@ function ChatComponent({
 	// ChatView-specific Callbacks
 	// ============================================================
 
-	// ChatView 固有の handleNewChat ラッパー（view.setAgentId を追加）
-	// Note: requestedAgentId がある場合はそれを使用、ない場合は現在のエージェントを維持
+	// ChatView-specific handleNewChat wrapper (also persists agent ID via view.setAgentId)
+	// If requestedAgentId is provided, use it; otherwise keep the current agent
 	const handleNewChatWithPersist = useCallback(
 		async (requestedAgentId?: string) => {
 			await handleNewChat(requestedAgentId);
 			// Persist agent ID for this view (survives Obsidian restart)
-			// requestedAgentId が指定されていればそれを使用
-			// 指定されていなければ現在の session.agentId を使用（既に同じなので実質 no-op）
+			// Use requestedAgentId if provided; otherwise current session.agentId (effectively no-op)
 			if (requestedAgentId) {
 				view.setAgentId(requestedAgentId);
 			}
@@ -194,7 +193,7 @@ function ChatComponent({
 	const handleSwitchAgentWithMenu = useCallback(
 		(agentId: string) => {
 			setIsMenuOpen(false);
-			// handleNewChatWithPersist を使用して view.setAgentId も呼び出す
+			// Use handleNewChatWithPersist to also call view.setAgentId
 			void handleNewChatWithPersist(agentId);
 		},
 		[handleNewChatWithPersist],
