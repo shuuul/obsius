@@ -1981,8 +1981,8 @@ If your plugin does not need CSS, delete this file.
 	min-width: 220px;
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	border-radius: 6px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 	overflow: hidden;
 }
 
