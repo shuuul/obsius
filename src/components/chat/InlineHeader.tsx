@@ -147,7 +147,7 @@ export function InlineHeader({
 			</div>
 			{isUpdateAvailable && (
 				<p className="agent-client-chat-view-header-update">
-					Update available!
+					Plugin update available!
 				</p>
 			)}
 			<div className="agent-client-inline-header-actions">
