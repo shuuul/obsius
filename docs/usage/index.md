@@ -74,7 +74,7 @@ See [Multi-Session Chat](/usage/multi-session) for details on:
 
 ## Floating Chat
 
-A draggable, resizable chat window that floats over your workspace. Enable it in **Settings → Agent Client → Floating Chat Button**.
+A draggable, resizable chat window that floats over your workspace. Enable it in **Settings → Agent Client → Floating chat**.
 
 See [Floating Chat](/usage/floating-chat) for details.
 

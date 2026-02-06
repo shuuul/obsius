@@ -17,7 +17,7 @@ The Floating Chat provides a lightweight alternative to the sidebar chat view:
 - **Independent sessions** — each window runs its own agent session
 
 ::: tip
-Enable the floating chat in **Settings → Agent Client → Floating Chat Button → Show floating button**.
+Enable the floating chat in **Settings → Agent Client → Floating chat → Show floating button**.
 :::
 
 ## Getting Started
@@ -75,7 +75,7 @@ Assign keyboard shortcuts to these commands in **Settings → Hotkeys** for quic
 
 ## Configuration
 
-Customize the floating chat in **Settings → Agent Client → Floating Chat Button**:
+Customize the floating chat in **Settings → Agent Client → Floating chat**:
 
 | Setting | Default | Description |
 |---------|---------|-------------|

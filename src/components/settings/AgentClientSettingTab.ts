@@ -246,10 +246,10 @@ export class AgentClientSettingTab extends PluginSettingTab {
 		}
 
 		// ─────────────────────────────────────────────────────────────────────
-		// Floating Chat Button
+		// Floating chat
 		// ─────────────────────────────────────────────────────────────────────
 
-		new Setting(containerEl).setName("Floating Chat Button").setHeading();
+		new Setting(containerEl).setName("Floating chat").setHeading();
 
 		new Setting(containerEl)
 			.setName("Show floating button")
