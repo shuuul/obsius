@@ -851,16 +851,6 @@ function FloatingChatComponent({
 				</div>
 
 				<div className="agent-client-floating-content">
-					{floatingButtonImageSrc && (
-						<div className="agent-client-agent-image-container">
-							<img
-								src={floatingButtonImageSrc}
-								alt="Agent"
-								className="agent-client-agent-image"
-							/>
-						</div>
-					)}
-
 					<div className="agent-client-floating-messages-container">
 						<ChatMessages
 							messages={messages}

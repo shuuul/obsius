@@ -2040,20 +2040,6 @@ If your plugin does not need CSS, delete this file.
 	overflow: hidden;
 }
 
-.agent-client-agent-image-container {
-	display: flex;
-	justify-content: center;
-	padding: 12px;
-	background: var(--background-secondary);
-}
-
-.agent-client-agent-image {
-	width: 48px;
-	height: 48px;
-	border-radius: 50%;
-	object-fit: cover;
-}
-
 .agent-client-code-block-content {
 	display: flex;
 	flex-direction: column;
