@@ -72,6 +72,12 @@ See [Multi-Session Chat](/usage/multi-session) for details on:
 - Broadcast commands
 - Focus navigation
 
+## Floating Chat
+
+A draggable, resizable chat window that floats over your workspace. Enable it in **Settings → Agent Client → Floating Chat Button**.
+
+See [Floating Chat](/usage/floating-chat) for details.
+
 ## Changing Models and Modes
 
 Below the input field, you'll find dropdowns to:
