@@ -52,7 +52,7 @@ https://github.com/user-attachments/assets/1c538349-b3fb-44dd-a163-7331cbca7824
 1. **エージェントとACPアダプタをインストール**（例: Claude Code）:
    ```bash
    curl -fsSL https://claude.ai/install.sh | bash   # Claude Codeをインストール
-   npm install -g @zed-industries/claude-code-acp   # ACPアダプタをインストール
+   npm install -g @zed-industries/claude-agent-acp   # ACPアダプタをインストール
    ```
 
 2. **ログイン**（APIキーを使う場合はスキップ）:
@@ -64,15 +64,15 @@ https://github.com/user-attachments/assets/1c538349-b3fb-44dd-a163-7331cbca7824
 3. **パスを確認**:
    ```bash
    which node   # macOS/Linux
-   which claude-code-acp
+   which claude-agent-acp
 
    where.exe node   # Windows
-   where.exe claude-code-acp
+   where.exe claude-agent-acp
    ```
 
 4. **設定 → Agent Client** で設定:
    - **Node.js path**: 例: `/usr/local/bin/node`
-   - **Built-in agents → Claude Code → Path**: 例: `/usr/local/bin/claude-code-acp`（`claude`ではない）
+   - **Built-in agents → Claude Code → Path**: 例: `/usr/local/bin/claude-agent-acp`（`claude`ではない）
    - **API key**: キーを追加、またはCLIでログイン済みの場合は空欄
 
 5. **チャット開始**: リボンのロボットアイコンをクリック

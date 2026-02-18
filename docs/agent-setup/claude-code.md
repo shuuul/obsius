@@ -6,10 +6,10 @@ Claude Code is Anthropic's AI coding assistant. You can use it with either an **
 
 Open a terminal (Terminal on macOS/Linux, PowerShell on Windows) and run the following commands.
 
-1. Install claude-code-acp:
+1. Install claude-agent-acp:
 
 ```bash
-npm install -g @zed-industries/claude-code-acp
+npm install -g @zed-industries/claude-agent-acp
 ```
 
 2. Find the installation path:
@@ -17,13 +17,13 @@ npm install -g @zed-industries/claude-code-acp
 ::: code-group
 
 ```bash [macOS/Linux]
-which claude-code-acp
-# Example output: /usr/local/bin/claude-code-acp
+which claude-agent-acp
+# Example output: /usr/local/bin/claude-agent-acp
 ```
 
 ```cmd [Windows]
-where.exe claude-code-acp
-# Example output: C:\Users\Username\AppData\Roaming\npm\claude-code-acp.cmd
+where.exe claude-agent-acp
+# Example output: C:\Users\Username\AppData\Roaming\npm\claude-agent-acp.cmd
 ```
 
 :::

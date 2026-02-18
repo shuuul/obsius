@@ -34,7 +34,7 @@ Chats are exported as Markdown files with YAML frontmatter:
 ---
 created: 2025-12-13T00:31:12
 agentDisplayName: Claude Code
-agentId: claude-code-acp
+agentId: claude-agent-acp
 session_id: f95b4847-cb9c-441a-9f0b-08eb243ff5dd
 tags: [agent-client]  # Customizable in settings
 ---

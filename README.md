@@ -56,7 +56,7 @@ Open a terminal (Terminal on macOS/Linux, PowerShell on Windows) and run the fol
 1. **Install an agent and its ACP adapter** (e.g., Claude Code):
    ```bash
    curl -fsSL https://claude.ai/install.sh | bash   # Install Claude Code
-   npm install -g @zed-industries/claude-code-acp   # Install ACP adapter
+   npm install -g @zed-industries/claude-agent-acp   # Install ACP adapter
    ```
 
 2. **Login** (skip if using API key):
@@ -68,15 +68,15 @@ Open a terminal (Terminal on macOS/Linux, PowerShell on Windows) and run the fol
 3. **Find the paths**:
    ```bash
    which node   # macOS/Linux
-   which claude-code-acp
+   which claude-agent-acp
 
    where.exe node   # Windows
-   where.exe claude-code-acp
+   where.exe claude-agent-acp
    ```
 
 4. **Configure** in **Settings → Agent Client**:
    - **Node.js path**: e.g., `/usr/local/bin/node`
-   - **Built-in agents → Claude Code → Path**: e.g., `/usr/local/bin/claude-code-acp` (not `claude`)
+   - **Built-in agents → Claude Code → Path**: e.g., `/usr/local/bin/claude-agent-acp` (not `claude`)
    - **API key**: Add your key, or leave empty if logged in via CLI
 
 5. **Start chatting**: Click the robot icon in the ribbon

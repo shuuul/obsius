@@ -864,10 +864,10 @@ export class AgentClientSettingTab extends PluginSettingTab {
 		new Setting(sectionEl)
 			.setName("Path")
 			.setDesc(
-				'Absolute path to the claude-code-acp. On macOS/Linux, use "which claude-code-acp", and on Windows, use "where claude-code-acp" to find it.',
+				'Absolute path to the claude-agent-acp. On macOS/Linux, use "which claude-agent-acp", and on Windows, use "where claude-agent-acp" to find it.',
 			)
 			.addText((text) => {
-				text.setPlaceholder("Absolute path to claude-code-acp")
+				text.setPlaceholder("Absolute path to claude-agent-acp")
 					.setValue(claude.command)
 					.onChange(async (value) => {
 						this.plugin.settings.claude.command = value.trim();

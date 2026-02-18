@@ -16,8 +16,8 @@ The plugin is trying to start the agent process but isn't receiving a response.
 **Solutions:**
 
 1. **Verify the agent path** in **Settings → Agent Client → [Agent Name] → Path**
-   - On macOS/Linux, find the path with: `which claude-code-acp`
-   - On Windows, find the path with: `where claude-code-acp`
+   - On macOS/Linux, find the path with: `which claude-agent-acp`
+   - On Windows, find the path with: `where claude-agent-acp`
 
 2. **Verify Node.js path** in **Settings → Agent Client → Node.js path**
    - Many agents require Node.js
@@ -31,7 +31,7 @@ The agent executable cannot be found at the specified path.
 
 **Solutions:**
 
-1. Use the full absolute path (e.g., `/usr/local/bin/claude-code-acp` instead of just `claude-code-acp`)
+1. Use the full absolute path (e.g., `/usr/local/bin/claude-agent-acp` instead of just `claude-agent-acp`)
 2. Verify the agent is installed by running it directly in Terminal
 3. On Windows, include the `.cmd` extension if needed
 
