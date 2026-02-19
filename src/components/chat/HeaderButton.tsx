@@ -5,7 +5,7 @@ import { setIcon } from "obsidian";
 interface HeaderButtonProps {
 	iconName: string;
 	tooltip: string;
-	onClick: () => void;
+	onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 export const HeaderButton = forwardRef<HTMLButtonElement, HeaderButtonProps>(

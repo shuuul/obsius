@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Platform, Notice } from "obsidian";
+import { ItemView, WorkspaceLeaf, Platform, Notice, Menu } from "obsidian";
 import type {
 	IChatViewContainer,
 	ChatViewType,
@@ -14,8 +14,6 @@ import type { ChatInputState } from "../../domain/models/chat-input-state";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
-import { HeaderMenu } from "./HeaderMenu";
-
 // Utility imports
 import { getLogger, Logger } from "../../shared/logger";
 
@@ -145,15 +143,8 @@ function ChatComponent({
 	// Refs
 	// ============================================================
 	const acpClientRef = useRef<IAcpClient>(acpAdapter);
-	/** Ref for settings button (for menu positioning) */
-	const menuButtonRef = useRef<HTMLButtonElement>(null);
 	/** Track if initial agent restoration has been performed (prevent re-triggering) */
 	const hasRestoredAgentRef = useRef(false);
-
-	// ============================================================
-	// UI State (ChatView-specific)
-	// ============================================================
-	const [isMenuOpen, setIsMenuOpen] = useState(false);
 
 	// ============================================================
 	// ChatView-specific Callbacks
@@ -180,34 +171,69 @@ function ChatComponent({
 	}, [plugin]);
 
 	// ============================================================
-	// Header Menu Callbacks (ChatView-specific)
+	// Header Menu (Obsidian native Menu API)
 	// ============================================================
-	const handleToggleMenu = useCallback(() => {
-		setIsMenuOpen((prev) => !prev);
-	}, []);
+	const handleShowMenu = useCallback(
+		(e: React.MouseEvent<HTMLButtonElement>) => {
+			const menu = new Menu();
 
-	const handleCloseMenu = useCallback(() => {
-		setIsMenuOpen(false);
-	}, []);
+			// -- Switch agent section --
+			menu.addItem((item) => {
+				item.setTitle("Switch agent").setIsLabel(true);
+			});
 
-	const handleSwitchAgentWithMenu = useCallback(
-		(agentId: string) => {
-			setIsMenuOpen(false);
-			// Use handleNewChatWithPersist to also call view.setAgentId
-			void handleNewChatWithPersist(agentId);
+			for (const agent of availableAgents) {
+				menu.addItem((item) => {
+					item.setTitle(agent.displayName)
+						.setChecked(agent.id === (session.agentId || ""))
+						.onClick(() => {
+							void handleNewChatWithPersist(agent.id);
+						});
+				});
+			}
+
+			menu.addSeparator();
+
+			// -- Actions section --
+			menu.addItem((item) => {
+				item.setTitle("Open new view")
+					.setIcon("plus")
+					.onClick(() => {
+						void plugin.openNewChatViewWithAgent(
+							plugin.settings.defaultAgentId,
+						);
+					});
+			});
+
+			menu.addItem((item) => {
+				item.setTitle("Restart agent")
+					.setIcon("refresh-cw")
+					.onClick(() => {
+						void handleRestartAgent();
+					});
+			});
+
+			menu.addSeparator();
+
+			menu.addItem((item) => {
+				item.setTitle("Plugin settings")
+					.setIcon("settings")
+					.onClick(() => {
+						handleOpenSettings();
+					});
+			});
+
+			menu.showAtMouseEvent(e.nativeEvent);
 		},
-		[handleNewChatWithPersist],
+		[
+			availableAgents,
+			session.agentId,
+			handleNewChatWithPersist,
+			plugin,
+			handleRestartAgent,
+			handleOpenSettings,
+		],
 	);
-
-	const handleRestartAgentWithMenu = useCallback(() => {
-		setIsMenuOpen(false);
-		void handleRestartAgent();
-	}, [handleRestartAgent]);
-
-	const handleOpenNewView = useCallback(() => {
-		setIsMenuOpen(false);
-		void plugin.openNewChatViewWithAgent(plugin.settings.defaultAgentId);
-	}, [plugin]);
 
 	// ============================================================
 	// Agent ID Restoration Effect (ChatView-specific)
@@ -515,25 +541,9 @@ function ChatComponent({
 				hasHistoryCapability={sessionHistory.canShowSessionHistory}
 				onNewChat={() => void handleNewChatWithPersist()}
 				onExportChat={() => void handleExportChat()}
-				onToggleMenu={handleToggleMenu}
+				onShowMenu={handleShowMenu}
 				onOpenHistory={handleOpenHistory}
-				menuButtonRef={menuButtonRef}
 			/>
-
-			{isMenuOpen && (
-				<HeaderMenu
-					anchorRef={menuButtonRef}
-					currentAgentId={session.agentId || ""}
-					availableAgents={availableAgents}
-					onSwitchAgent={handleSwitchAgentWithMenu}
-					onOpenNewView={handleOpenNewView}
-					onRestartAgent={handleRestartAgentWithMenu}
-					onOpenPluginSettings={handleOpenSettings}
-					onClose={handleCloseMenu}
-					plugin={plugin}
-					view={view}
-				/>
-			)}
 
 			<ChatMessages
 				messages={messages}
