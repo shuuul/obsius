@@ -63,7 +63,15 @@ function FloatingButtonComponent({ plugin }: FloatingButtonProps) {
 
 	// Dragging state
 	const [position, setPosition] = useState<{ x: number; y: number } | null>(
-		() => settings.floatingButtonPosition,
+		() => {
+			if (!settings.floatingButtonPosition) return null;
+			return clampPosition(
+				settings.floatingButtonPosition.x,
+				settings.floatingButtonPosition.y,
+				BUTTON_SIZE,
+				BUTTON_SIZE,
+			);
+		},
 	);
 	const [isDragging, setIsDragging] = useState(false);
 	const dragOffset = useRef({ x: 0, y: 0 });

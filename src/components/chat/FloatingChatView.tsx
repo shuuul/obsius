@@ -248,13 +248,28 @@ function FloatingChatComponent({
 	const [isExpanded, setIsExpanded] = useState(initialExpanded);
 	const [size, setSize] = useState(settings.floatingWindowSize);
 	const [position, setPosition] = useState(() => {
-		if (initialPosition) return initialPosition;
-		if (settings.floatingWindowPosition)
-			return settings.floatingWindowPosition;
-		return {
-			x: window.innerWidth - settings.floatingWindowSize.width - 50,
-			y: window.innerHeight - settings.floatingWindowSize.height - 50,
-		};
+		if (initialPosition) {
+			return clampPosition(
+				initialPosition.x,
+				initialPosition.y,
+				settings.floatingWindowSize.width,
+				settings.floatingWindowSize.height,
+			);
+		}
+		if (settings.floatingWindowPosition) {
+			return clampPosition(
+				settings.floatingWindowPosition.x,
+				settings.floatingWindowPosition.y,
+				settings.floatingWindowSize.width,
+				settings.floatingWindowSize.height,
+			);
+		}
+		return clampPosition(
+			window.innerWidth - settings.floatingWindowSize.width - 50,
+			window.innerHeight - settings.floatingWindowSize.height - 50,
+			settings.floatingWindowSize.width,
+			settings.floatingWindowSize.height,
+		);
 	});
 	const [isDragging, setIsDragging] = useState(false);
 	const dragOffset = useRef({ x: 0, y: 0 });
