@@ -1,3 +1,5 @@
+import { Platform } from "obsidian";
+
 /**
  * Shell escaping utilities for different platforms.
  */
@@ -19,4 +21,16 @@ export function escapeShellArgWindows(arg: string): string {
 		return `"${escaped}"`;
 	}
 	return escaped;
+}
+
+/**
+ * Resolve the login shell for the current platform.
+ * Uses $SHELL environment variable when available (covers NixOS, etc.),
+ * falls back to platform defaults (/bin/zsh on macOS, /bin/sh on Linux).
+ */
+export function getLoginShell(): string {
+	if (process.env.SHELL) {
+		return process.env.SHELL;
+	}
+	return Platform.isMacOS ? "/bin/zsh" : "/bin/sh";
 }

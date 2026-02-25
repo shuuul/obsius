@@ -6,7 +6,7 @@ import { Platform } from "obsidian";
 import { wrapCommandForWsl } from "./wsl-utils";
 import { resolveCommandDirectory } from "./path-utils";
 import { getEnhancedWindowsEnv } from "./windows-env";
-import { escapeShellArgWindows } from "./shell-utils";
+import { escapeShellArgWindows, getLoginShell } from "./shell-utils";
 
 interface TerminalProcess {
 	id: string;
@@ -84,7 +84,7 @@ export class TerminalManager {
 		}
 		// On macOS and Linux, wrap the command in a login shell to inherit the user's environment
 		else if (Platform.isMacOS || Platform.isLinux) {
-			const shell = Platform.isMacOS ? "/bin/zsh" : "/bin/bash";
+			const shell = getLoginShell();
 			let commandString: string;
 			if (args.length > 0) {
 				// args provided: escape each argument individually

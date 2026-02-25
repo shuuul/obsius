@@ -36,7 +36,7 @@ import {
 } from "../../shared/wsl-utils";
 import { resolveCommandDirectory } from "../../shared/path-utils";
 import { getEnhancedWindowsEnv } from "../../shared/windows-env";
-import { escapeShellArgWindows } from "../../shared/shell-utils";
+import { escapeShellArgWindows, getLoginShell } from "../../shared/shell-utils";
 
 /**
  * Extended ACP Client interface for UI layer.
@@ -260,7 +260,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		// On macOS and Linux, wrap the command in a login shell to inherit the user's environment
 		// This ensures that PATH modifications in .zshrc/.bash_profile are available
 		else if (Platform.isMacOS || Platform.isLinux) {
-			const shell = Platform.isMacOS ? "/bin/zsh" : "/bin/bash";
+			const shell = getLoginShell();
 			const commandString = [command, ...args]
 				.map((arg) => "'" + arg.replace(/'/g, "'\\''") + "'")
 				.join(" ");
