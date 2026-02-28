@@ -8,7 +8,7 @@ State transitions are now reducer-backed in `src/hooks/state/` for deterministic
 
 | Hook | Lines | State Owned | Key Deps |
 |------|-------|-------------|----------|
-| `useChatController` | 711 | Combines all below | All hooks + adapters |
+| `useChatController` | 570 | Combines all below | All hooks + adapters |
 | `useAgentSession` | 566 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
 | `useChat` | 567 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
 | `useSessionHistory` | 590 | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` |
@@ -42,6 +42,7 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
 
 - `chat-controller/types.ts`: exported `UseChatController` interfaces to keep the coordinator lean
 - `chat-controller/history-modal.ts`: pure modal-props builder for `SessionHistoryModal`
+- `chat-controller/session-history-handlers.ts`: isolated history restore/fork/delete/open handler orchestration
 - `agent-session/helpers.ts` + `agent-session/types.ts`: normalization and shared type contracts
 - `session-history/session-history-ops.ts`: pure history list/load/restore/fork helpers
 

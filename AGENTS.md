@@ -41,7 +41,7 @@ src/
 
 ```
 ChatView.tsx / FloatingChatView.tsx
-    └── useChatController()  ← Central coordinator (~711 lines)
+    └── useChatController()  ← Central coordinator (~570 lines)
             ├── Creates adapters via useMemo:
             │   ├── AcpAdapter (from plugin registry)
             │   ├── ObsidianVaultAdapter

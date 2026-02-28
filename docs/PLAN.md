@@ -54,6 +54,9 @@ Status: In progress
   - `src/components/settings/AgentClientSettingTab.ts` reduced to coordinator (~118 LOC)
 - Added Zod runtime schema boundary for settings and session payloads
 - Clean break behavior implemented on incompatible persisted data
+- `src/hooks/useChatController.ts` reduced to ~570 LOC
+- Extracted session-history controller module:
+  - `src/hooks/chat-controller/session-history-handlers.ts`
 
 ### Phase 5: Strict Quality Gates and Maintainer UX
 Status: In progress
@@ -76,7 +79,6 @@ Status: In progress
 - `src/components/chat/ChatView.tsx`
 - `src/components/chat/FloatingChatView.tsx`
 - `src/components/chat/ToolCallRenderer.tsx`
-- `src/hooks/useChatController.ts`
 
 ## Risks and Controls
 - Risk: behavioral drift during module extraction
