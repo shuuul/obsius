@@ -45,6 +45,9 @@ The agent requires authentication before processing requests.
 - **API key**: Set in **Settings → Obsius → Claude Code (ACP) → API key**
 - **Account login**: Run `claude` in Terminal first and complete the login flow
 
+**For OpenCode:**
+- Run `opencode auth login` in Terminal first to authenticate
+
 **For Codex:**
 - Set your OpenAI API key in **Settings → Obsius → Codex → API key**
 
@@ -203,7 +206,7 @@ If you need more detailed information about an issue, enable Debug mode:
 If you're still experiencing issues:
 
 1. Enable **Debug mode** and check console logs
-2. Search [GitHub Issues](https://github.com/shuuul/obsidian-acp/issues)
+2. Search [GitHub Issues](https://github.com/shuuul/obsius/issues)
 3. Open a new issue with:
    - Your OS and Obsidian version
    - The agent you're using

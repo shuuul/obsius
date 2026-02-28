@@ -6,7 +6,7 @@ Frequently asked questions about Obsius.
 
 ### What is Obsius?
 
-Obsius is an Obsidian plugin that lets you chat with AI agents directly within Obsidian. It supports Claude Code, Codex, Gemini CLI, and any ACP-compatible agent. The plugin uses the [Agent Client Protocol (ACP)](https://agentclientprotocol.com/) to communicate with agents.
+Obsius is an Obsidian plugin that lets you chat with AI agents directly within Obsidian. It supports Claude Code, OpenCode, Codex, Gemini CLI, and any ACP-compatible agent. The plugin uses the [Agent Client Protocol (ACP)](https://agentclientprotocol.com/) to communicate with agents.
 
 ### Is this an official Anthropic/OpenAI/Google plugin?
 
@@ -71,7 +71,7 @@ By default, new views open in the right pane. You can change this in **Settings 
 
 ### What is a custom agent?
 
-Any ACP-compatible agent beyond the built-in ones (Claude Code, Codex, Gemini CLI). You can add custom agents in **Settings → Obsius → Custom agents**. See [Custom Agents](/agent-setup/custom-agents).
+Any ACP-compatible agent beyond the built-in ones (Claude Code, OpenCode, Codex, Gemini CLI). You can add custom agents in **Settings → Obsius → Custom agents**. See [Custom Agents](/agent-setup/custom-agents).
 
 ### Do all agents support the same features?
 
@@ -169,12 +169,12 @@ The plugin itself is free and open source. However, using AI agents may incur co
 ### Where can I get help?
 
 1. Check the [Troubleshooting](/help/troubleshooting) page
-2. Search [GitHub Issues](https://github.com/shuuul/obsidian-acp/issues)
+2. Search [GitHub Issues](https://github.com/shuuul/obsius/issues)
 3. Open a new issue if your problem isn't covered
 
 ### How do I report a bug?
 
-[Open an issue on GitHub](https://github.com/shuuul/obsidian-acp/issues/new) with:
+[Open an issue on GitHub](https://github.com/shuuul/obsius/issues/new)
 - Your OS and Obsidian version
 - The agent you're using
 - Steps to reproduce

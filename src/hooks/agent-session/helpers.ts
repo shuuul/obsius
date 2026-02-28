@@ -22,6 +22,10 @@ export function getAvailableAgentsFromSettings(
 			displayName: settings.claude.displayName || settings.claude.id,
 		},
 		{
+			id: settings.opencode.id,
+			displayName: settings.opencode.displayName || settings.opencode.id,
+		},
+		{
 			id: settings.codex.id,
 			displayName: settings.codex.displayName || settings.codex.id,
 		},
@@ -56,6 +60,9 @@ export function findAgentSettings(
 ): BaseAgentSettings | null {
 	if (agentId === settings.claude.id) {
 		return settings.claude;
+	}
+	if (agentId === settings.opencode.id) {
+		return settings.opencode;
 	}
 	if (agentId === settings.codex.id) {
 		return settings.codex;
@@ -105,7 +112,6 @@ export function buildAgentConfigWithApiKey(
 			},
 		};
 	}
-
 	return baseConfig;
 }
 

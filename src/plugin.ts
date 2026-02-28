@@ -22,6 +22,7 @@ import {
 	GeminiAgentSettings,
 	ClaudeAgentSettings,
 	CodexAgentSettings,
+	OpenCodeAgentSettings,
 	CustomAgentSettings,
 } from "./domain/models/agent-config";
 import type { SavedSessionInfo } from "./domain/models/session-info";
@@ -74,6 +75,7 @@ export interface AgentClientPluginSettings {
 	gemini: GeminiAgentSettings;
 	claude: ClaudeAgentSettings;
 	codex: CodexAgentSettings;
+	opencode: OpenCodeAgentSettings;
 	customAgents: CustomAgentSettings[];
 	/** Default agent ID for new views (renamed from activeAgentId for multi-session) */
 	defaultAgentId: string;

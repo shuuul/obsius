@@ -45,6 +45,9 @@ const generateCustomAgentDisplayName = (plugin: AgentClientPlugin): string => {
 		plugin.settings.claude.displayName || plugin.settings.claude.id,
 	);
 	existing.add(
+		plugin.settings.opencode.displayName || plugin.settings.opencode.id,
+	);
+	existing.add(
 		plugin.settings.codex.displayName || plugin.settings.codex.id,
 	);
 	existing.add(
@@ -94,6 +97,10 @@ export const getAgentOptions = (
 			plugin.settings.claude.displayName || plugin.settings.claude.id,
 		),
 		toOption(
+			plugin.settings.opencode.id,
+			plugin.settings.opencode.displayName || plugin.settings.opencode.id,
+		),
+		toOption(
 			plugin.settings.codex.id,
 			plugin.settings.codex.displayName || plugin.settings.codex.id,
 		),
@@ -129,6 +136,7 @@ export const renderBuiltInAgentSettings = (
 	plugin: AgentClientPlugin,
 ): void => {
 	renderClaudeSettings(containerEl, plugin);
+	renderOpenCodeSettings(containerEl, plugin);
 	renderCodexSettings(containerEl, plugin);
 	renderGeminiSettings(containerEl, plugin);
 };
@@ -263,6 +271,61 @@ function renderClaudeSettings(
 				.setValue(formatEnv(claude.env))
 				.onChange(async (value) => {
 					plugin.settings.claude.env = parseEnv(value);
+					await plugin.saveSettings();
+				});
+			text.inputEl.rows = 3;
+		});
+}
+
+function renderOpenCodeSettings(
+	sectionEl: HTMLElement,
+	plugin: AgentClientPlugin,
+): void {
+	const opencode = plugin.settings.opencode;
+
+	new Setting(sectionEl)
+		.setName(opencode.displayName || "OpenCode")
+		.setHeading();
+
+	new Setting(sectionEl)
+		.setName("Path")
+		.setDesc(
+			'Absolute path to the opencode-ai binary. On macOS/Linux, use "which opencode-ai", and on Windows, use "where opencode-ai" to find it.',
+		)
+		.addText((text) => {
+			text.setPlaceholder("Absolute path to OpenCode") // eslint-disable-line obsidianmd/ui/sentence-case
+				.setValue(opencode.command)
+				.onChange(async (value) => {
+					plugin.settings.opencode.command = value.trim();
+					await plugin.saveSettings();
+				});
+		});
+
+	new Setting(sectionEl)
+		.setName("Arguments")
+		.setDesc(
+			'Enter one argument per line. Leave empty to run without arguments. (The "acp" argument is required for ACP mode.)', // eslint-disable-line obsidianmd/ui/sentence-case
+		)
+		.addTextArea((text) => {
+			text.setPlaceholder("")
+				.setValue(formatArgs(opencode.args))
+				.onChange(async (value) => {
+					plugin.settings.opencode.args = parseArgs(value);
+					await plugin.saveSettings();
+				});
+			text.inputEl.rows = 3;
+		});
+
+	new Setting(sectionEl)
+		.setName("Environment variables")
+		.setDesc(
+			"Enter KEY=VALUE pairs, one per line. (stored as plain text)", // eslint-disable-line obsidianmd/ui/sentence-case
+		)
+		.addTextArea((text) => {
+			text.setPlaceholder("")
+				.setValue(formatEnv(opencode.env))
+				.onChange(async (value) => {
+					plugin.settings.opencode.env = parseEnv(value);
 					await plugin.saveSettings();
 				});
 			text.inputEl.rows = 3;

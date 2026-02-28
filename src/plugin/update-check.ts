@@ -3,7 +3,7 @@ import * as semver from "semver";
 
 async function fetchLatestStable(): Promise<string | null> {
 	const response = await requestUrl({
-		url: "https://api.github.com/repos/shuuul/obsidian-acp/releases/latest",
+		url: "https://api.github.com/repos/shuuul/obsius/releases/latest"
 	});
 	const data = response.json as { tag_name?: string };
 	return data.tag_name ? semver.clean(data.tag_name) : null;
@@ -11,7 +11,7 @@ async function fetchLatestStable(): Promise<string | null> {
 
 async function fetchLatestPrerelease(): Promise<string | null> {
 	const response = await requestUrl({
-		url: "https://api.github.com/repos/shuuul/obsidian-acp/releases",
+		url: "https://api.github.com/repos/shuuul/obsius/releases"
 	});
 	const releases = response.json as Array<{
 		tag_name: string;

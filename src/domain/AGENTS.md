@@ -10,7 +10,7 @@ domain/
 │   ├── chat-message.ts      # ChatMessage, MessageContent union, Role, ToolCallStatus, ToolKind
 │   ├── session-update.ts    # SessionUpdate union (13 types) — agent → UI event stream
 │   ├── chat-session.ts      # ChatSession state, SessionState, SlashCommand, AuthenticationMethod
-│   ├── agent-config.ts      # BaseAgentSettings, ClaudeAgentSettings, GeminiAgentSettings, CodexAgentSettings, CustomAgentSettings
+│   ├── agent-config.ts      # BaseAgentSettings, ClaudeAgentSettings, GeminiAgentSettings, CodexAgentSettings, OpenCodeAgentSettings, CustomAgentSettings
 │   ├── agent-error.ts       # AcpErrorCode enum, ErrorInfo, AcpError, ProcessError
 │   ├── session-info.ts      # SessionInfo, ListSessionsResult, LoadSessionResult, ResumeSessionResult, ForkSessionResult
 │   ├── prompt-content.ts    # PromptContent union (text, image, resource), ResourceAnnotations

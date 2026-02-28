@@ -84,6 +84,14 @@ export interface CodexAgentSettings extends BaseAgentSettings {
 }
 
 /**
+ * Configuration for OpenCode agent.
+ *
+ * OpenCode natively supports ACP and authenticates via `opencode auth login`.
+ * No API key field — uses only the base settings.
+ */
+export type OpenCodeAgentSettings = BaseAgentSettings;
+
+/**
  * Configuration for custom ACP-compatible agents.
  *
  * Uses only the base settings, allowing users to configure

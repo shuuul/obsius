@@ -179,6 +179,11 @@ export function useChatController(
 				plugin.settings.claude.displayName || plugin.settings.claude.id
 			);
 		}
+		if (activeId === plugin.settings.opencode.id) {
+			return (
+				plugin.settings.opencode.displayName || plugin.settings.opencode.id
+			);
+		}
 		if (activeId === plugin.settings.codex.id) {
 			return (
 				plugin.settings.codex.displayName || plugin.settings.codex.id

@@ -12,14 +12,14 @@ This plugin is awaiting approval for **Obsidian Community Plugins**. For now, us
 2. In Obsidian settings, go to **Community Plugins → BRAT → Add Beta Plugin**
 3. Paste this repo URL:
    ```
-   https://github.com/shuuul/obsidian-acp
+   https://github.com/shuuul/obsius
    ```
 4. BRAT will download the latest release and keep it auto-updated
 5. Enable **Obsius** from the plugin list
 
 ### Manual Installation
 
-1. Download the latest release files from [GitHub Releases](https://github.com/shuuul/obsidian-acp/releases):
+1. Download the latest release files from [GitHub Releases](https://github.com/shuuul/obsius/releases):
    - `main.js`
    - `manifest.json`
    - `styles.css`
@@ -32,7 +32,7 @@ This plugin is awaiting approval for **Obsidian Community Plugins**. For now, us
 ### Node.js
 
 ::: tip Not always required
-Node.js is needed for npm-based agents like Claude Code, Codex, and Gemini CLI. If your agent is a standalone binary, you can skip this step.
+Node.js is needed for npm-based agents like Claude Code, OpenCode, Codex, and Gemini CLI. If your agent is a standalone binary, you can skip this step.
 :::
 
 If you need Node.js:

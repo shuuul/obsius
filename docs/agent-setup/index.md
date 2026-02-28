@@ -6,6 +6,7 @@ Obsius supports multiple AI agents through the [Agent Client Protocol (ACP)](htt
 
 | Agent | Provider | Package |
 |-------|----------|---------|
+| [OpenCode](./opencode) | Anomalyco | `opencode-ai` |
 | [Claude Code](./claude-code) | Anthropic | `@zed-industries/claude-agent-acp` |
 | [Codex](./codex) | OpenAI | `@zed-industries/codex-acp` |
 | [Gemini CLI](./gemini-cli) | Google | `@google/gemini-cli` |

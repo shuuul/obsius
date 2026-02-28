@@ -4,7 +4,7 @@ You can use any agent that implements the [Agent Client Protocol (ACP)](https://
 
 ## Install and Configure
 
-1. Install your ACP-compatible agent (e.g., [OpenCode](https://github.com/sst/opencode), [Qwen Code](https://github.com/QwenLM/qwen-code), [Kiro](https://kiro.dev/)).
+1. Install your ACP-compatible agent (e.g., [Qwen Code](https://github.com/QwenLM/qwen-code), [Kiro](https://kiro.dev/)).
 
 2. Find the installation path by running the following command in your terminal (Terminal on macOS/Linux, PowerShell on Windows):
 
@@ -34,16 +34,6 @@ where.exe your-agent
    - **Environment variables**: `KEY=VALUE` pairs, one per line (if required)
 
 ## Configuration Examples
-
-### OpenCode
-
-| Field | Value |
-|-------|-------|
-| **Agent ID** | `opencode` |
-| **Display name** | `OpenCode` |
-| **Path** | `/usr/local/bin/opencode` |
-| **Arguments** | `acp` |
-| **Environment variables** | (optional) |
 
 ### Qwen Code
 

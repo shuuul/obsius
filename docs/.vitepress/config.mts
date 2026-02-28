@@ -3,7 +3,7 @@ import { defineConfig } from "vitepress";
 export default defineConfig({
   title: "Obsius",
   description:
-    "Obsidian plugin for AI agent integration - Chat with Claude Code, Codex, Gemini CLI and more",
+    "Obsidian plugin for AI agent integration - Chat with Claude Code, OpenCode, Codex, Gemini CLI and more",
 
   // GitHub Pages base path
   base: "/obsidian-acp/",
@@ -57,6 +57,7 @@ export default defineConfig({
         items: [
           { text: "Overview", link: "/agent-setup/" },
           { text: "Claude Code", link: "/agent-setup/claude-code" },
+          { text: "OpenCode", link: "/agent-setup/opencode" },
           { text: "Codex", link: "/agent-setup/codex" },
           { text: "Gemini CLI", link: "/agent-setup/gemini-cli" },
           { text: "Custom Agents", link: "/agent-setup/custom-agents" },

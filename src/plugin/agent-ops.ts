@@ -41,6 +41,10 @@ export const getAvailableAgents = (
 			displayName: settings.claude.displayName || settings.claude.id,
 		},
 		{
+			id: settings.opencode.id,
+			displayName: settings.opencode.displayName || settings.opencode.id,
+		},
+		{
 			id: settings.codex.id,
 			displayName: settings.codex.displayName || settings.codex.id,
 		},
@@ -60,6 +64,7 @@ export const collectAvailableAgentIds = (
 ): string[] => {
 	const ids = new Set<string>();
 	ids.add(settings.claude.id);
+	ids.add(settings.opencode.id);
 	ids.add(settings.codex.id);
 	ids.add(settings.gemini.id);
 	for (const agent of settings.customAgents) {

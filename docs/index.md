@@ -4,14 +4,14 @@ layout: home
 hero:
   name: "Obsius"
   text: "AI Agents in Obsidian"
-  tagline: Chat with Claude Code, Codex, Gemini CLI, and more — right from your vault
+  tagline: Chat with Claude Code, OpenCode, Codex, Gemini CLI, and more — right from your vault
   actions:
     - theme: brand
       text: Get Started
       link: /getting-started/
     - theme: alt
       text: View on GitHub
-      link: https://github.com/shuuul/obsidian-acp
+      link: https://github.com/shuuul/obsius
 
 features:
   - icon: 🤖
@@ -25,7 +25,7 @@ features:
     details: Use / commands to quickly trigger agent actions
   - icon: 🔄
     title: Multi-Agent Support
-    details: Switch between Claude Code, Codex, Gemini CLI, and custom agents
+    details: Switch between Claude Code, OpenCode, Codex, Gemini CLI, and custom agents
   - icon: 🎛️
     title: Mode & Model Selection
     details: Change AI models and agent modes directly from the chat
@@ -37,6 +37,7 @@ features:
 <div style="max-width: 800px; margin: 2rem auto;">
 
 _Demo video omitted in this fork._
+
 </div>
 
 ## What is Obsius?
@@ -47,10 +48,11 @@ Obsius is an Obsidian plugin that brings AI coding agents directly into your vau
 
 | Agent | Provider | Integration |
 |-------|----------|-------------|
-| **[Claude Code](https://github.com/anthropics/claude-code)** | Anthropic | via [Zed's SDK adapter](https://github.com/zed-industries/claude-agent-acp) |
-| **[Codex](https://github.com/openai/codex)** | OpenAI | via [Zed's adapter](https://github.com/zed-industries/codex-acp) |
-| **[Gemini CLI](https://github.com/google-gemini/gemini-cli)** | Google | with `--experimental-acp` option |
-| **Custom** | Various | [Any ACP-compatible agent](https://agentclientprotocol.com/overview/agents) (e.g., OpenCode, Qwen Code, Kiro) |
+| [OpenCode](https://github.com/anomalyco/opencode) | Anomalyco | via `opencode-ai acp` |
+| [Claude Code](https://github.com/anthropics/claude-code) | Anthropic | via [Zed's SDK adapter](https://github.com/zed-industries/claude-agent-acp) |
+| [Codex](https://github.com/openai/codex) | OpenAI | via [Zed's adapter](https://github.com/zed-industries/codex-acp) |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | Google | with `--experimental-acp` option |
+| Custom | Various | [Any ACP-compatible agent](https://agentclientprotocol.com/overview/agents) (e.g., Qwen Code, Kiro) |
 
 ### Key Features
 

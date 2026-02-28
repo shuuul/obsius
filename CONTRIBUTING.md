@@ -51,7 +51,7 @@ cd /path/to/your/vault/.obsidian/plugins
 
 # Clone the repository as "obsius"
 # The directory name must match the id in manifest.json
-git clone https://github.com/shuuul/obsidian-acp.git obsius
+git clone https://github.com/shuuul/obsius.git obsius
 cd obsius
 
 # Install dependencies
@@ -186,7 +186,7 @@ Pull requests automatically run:
 
 Please ensure these pass locally before submitting.
 
-**Note:** "Use sentence case for UI text" lint errors are acceptable for brand names and proper nouns (e.g., "Claude Code", "Gemini CLI").
+**Note:** "Use sentence case for UI text" lint errors are acceptable for brand names and proper nouns (e.g., "Claude Code", "OpenCode", "Gemini CLI").
 
 ## Architecture Overview
 

@@ -5,7 +5,7 @@ import type {
 	SendMessageShortcut,
 } from "../plugin";
 
-export const SETTINGS_SCHEMA_VERSION = 2;
+export const SETTINGS_SCHEMA_VERSION = 3;
 
 const sendMessageShortcutSchema = z.union([
 	z.literal("enter"),
@@ -75,6 +75,7 @@ const settingsSchema = z.object({
 	claude: apiKeyAgentSettingsSchema,
 	codex: apiKeyAgentSettingsSchema,
 	gemini: apiKeyAgentSettingsSchema,
+	opencode: commonAgentSettingsSchema,
 	customAgents: z.array(commonAgentSettingsSchema),
 	defaultAgentId: z.string().min(1),
 	autoAllowPermissions: z.boolean(),
@@ -135,6 +136,13 @@ export const createDefaultSettings = (): AgentClientPluginSettings => ({
 		args: ["--experimental-acp"],
 		env: [],
 	},
+	opencode: {
+		id: "opencode",
+		displayName: "OpenCode",
+		command: "",
+		args: ["acp"],
+		env: [],
+	},
 	customAgents: [],
 	defaultAgentId: "claude-code-acp",
 	autoAllowPermissions: false,
@@ -173,6 +181,15 @@ export const createDefaultSettings = (): AgentClientPluginSettings => ({
 	floatingButtonPosition: null,
 });
 
+function migrateV2ToV3(candidate: Record<string, unknown>): void {
+	if (candidate.schemaVersion !== 2) return;
+	const defaults = createDefaultSettings();
+	if (!candidate.opencode) {
+		candidate.opencode = { ...defaults.opencode };
+	}
+	candidate.schemaVersion = SETTINGS_SCHEMA_VERSION;
+}
+
 export function parseStoredSettings(raw: unknown): {
 	settings: AgentClientPluginSettings;
 	resetReason?: string;
@@ -185,6 +202,10 @@ export function parseStoredSettings(raw: unknown): {
 	}
 
 	const candidate = raw as Record<string, unknown>;
+
+	// Run migrations before version check
+	migrateV2ToV3(candidate);
+
 	if (candidate.schemaVersion !== SETTINGS_SCHEMA_VERSION) {
 		return {
 			settings: createDefaultSettings(),

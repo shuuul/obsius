@@ -3,7 +3,7 @@
 **Generated:** 2026-03-01 | **Commit:** ee8e386 | **Branch:** master
 
 ## Overview
-Obsidian desktop plugin for AI agent chat (Claude Code, Codex, Gemini CLI, custom agents). React 19 + TypeScript, communicating via Agent Client Protocol (ACP) over JSON-RPC stdin/stdout.
+Obsidian desktop plugin for AI agent chat (Claude Code, OpenCode, Codex, Gemini CLI, custom agents). React 19 + TypeScript, communicating via Agent Client Protocol (ACP) over JSON-RPC stdin/stdout.
 
 ## Structure
 ```
