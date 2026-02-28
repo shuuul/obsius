@@ -1,13 +1,20 @@
 # ACP Adapter Guide
 
-2 files implementing the Agent Client Protocol bridge between domain ports and `@agentclientprotocol/sdk`.
+ACP bridge modules implementing the Agent Client Protocol between domain ports and `@agentclientprotocol/sdk`.
 
 ## Files
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `acp.adapter.ts` | 1678 | `AcpAdapter` class — process lifecycle, JSON-RPC, session updates, terminals, permissions |
+| `acp.adapter.ts` | ~516 | `AcpAdapter` composition root implementing `IAgentClient` + `IAcpClient` |
 | `acp-type-converter.ts` | 80 | `AcpTypeConverter` — bidirectional type mapping (ACP SDK ↔ domain types) |
+| `process-lifecycle.ts` | ~303 | Spawn/bootstrap/initialize ACP connection and process lifecycle wiring |
+| `runtime-ops.ts` | ~310 | newSession/auth/sendPrompt/cancel/disconnect/set-mode/set-model operations |
+| `session-ops.ts` | ~199 | list/load/resume/fork session operations with WSL-aware cwd handling |
+| `permission-queue.ts` | ~224 | serialized permission queue and response/cancel flow |
+| `terminal-bridge.ts` | ~69 | terminal RPC bridge wrappers |
+| `update-routing.ts` | ~103 | Pure ACP session update → domain `SessionUpdate` mapping |
+| `error-diagnostics.ts` | ~54 | stderr hint extraction and startup diagnostics helpers |
 
 ## AcpAdapter Class
 
@@ -15,12 +22,11 @@ Implements both `IAgentClient` (domain port) and `IAcpClient` (extended UI inter
 
 ### Key Responsibilities
 
-1. **Process lifecycle**: `spawn` agent child process, monitor stdout/stderr, handle exit/crash
-2. **JSON-RPC over stdin/stdout**: `ClientSideConnection` from ACP SDK handles framing
-3. **Session updates**: Single `sessionUpdateCallback` dispatches all `SessionUpdate` types to hooks
-4. **Terminal management**: Delegates to `TerminalManager` (shared/) for command execution
-5. **Permission flow**: `pendingPermissionRequests` Map + `pendingPermissionQueue` array for sequential handling
-6. **Silent failure detection**: `promptSessionUpdateCount` tracks whether agent responded; `recentStderr` captures diagnostics
+1. **Composition root**: delegates concern blocks to dedicated modules
+2. **Session updates**: `update-routing.ts` maps ACP updates before callback dispatch to hooks
+3. **Terminal management**: delegates to `terminal-bridge.ts` and `TerminalManager`
+4. **Permission flow**: delegates to `permission-queue.ts` with serialized handling
+5. **Silent failure detection**: `promptSessionUpdateCount` + `recentStderr` remain adapter-owned state
 
 ### IAcpClient (Extended Interface)
 
@@ -32,9 +38,8 @@ Adds ACP-specific operations beyond domain `IAgentClient`:
 
 ### Platform Handling
 
-- **Windows (non-WSL)**: Enhanced PATH via `getEnhancedWindowsEnv()`, `escapeShellArgWindows()`
-- **Windows (WSL mode)**: Path conversion via `wrapCommandForWsl()`, `convertWindowsPathToWsl()`
-- **macOS/Linux**: Login shell resolution via `getLoginShell()`, `$SHELL` env
+- Process command wrapping and environment logic live in `process-lifecycle.ts`
+- WSL cwd conversion for session operations lives in `session-ops.ts`
 
 ## AcpTypeConverter
 
@@ -46,9 +51,10 @@ Static methods for SDK ↔ domain conversion:
 
 1. Update `@agentclientprotocol/sdk` version
 2. Modify `AcpTypeConverter` for new/changed types
-3. Update `AcpAdapter` for new JSON-RPC methods or notification types
-4. Add new `SessionUpdate` variants in `domain/models/session-update.ts`
-5. Handle new updates in `useChat.handleSessionUpdate()`
+3. Update `update-routing.ts` for new ACP notification/session update variants
+4. Add/update concern module in `adapters/acp/` and wire through `acp.adapter.ts`
+5. Add new `SessionUpdate` variants in `domain/models/session-update.ts`
+6. Handle new updates in `useChat.handleSessionUpdate()`
 
 Domain layer (`domain/`) stays untouched unless new domain concepts are needed.
 
@@ -57,3 +63,4 @@ Domain layer (`domain/`) stays untouched unless new domain concepts are needed.
 - Don't import `@agentclientprotocol/sdk` outside this directory (except `TerminalManager` which uses `acp.TerminalOutputRequest`)
 - Don't expose ACP SDK types to hooks/components — always convert to domain types first
 - Don't add multiple event callbacks — use unified `sessionUpdateCallback`
+- Don't re-grow `acp.adapter.ts` into a monolith; new behavior should land in concern modules first

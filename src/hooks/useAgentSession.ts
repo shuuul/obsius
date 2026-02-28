@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import type {
 	ChatSession,
 	SessionState,
@@ -17,6 +17,8 @@ import type {
 	CodexAgentSettings,
 } from "../domain/models/agent-config";
 import { toAgentConfig } from "../shared/settings-utils";
+import { createInitialSessionState } from "./state/session.actions";
+import { sessionReducer } from "./state/session.reducer";
 
 // ============================================================================
 // Types
@@ -328,17 +330,30 @@ export function useAgentSession(
 		effectiveInitialAgentId,
 	);
 
-	// Session state
-	const [session, setSession] = useState<ChatSession>(() =>
+	const [state, dispatch] = useReducer(
+		sessionReducer,
 		createInitialSession(
 			effectiveInitialAgentId,
 			initialAgent.displayName,
 			workingDirectory,
 		),
+		createInitialSessionState,
 	);
-
-	// Error state
-	const [errorInfo, setErrorInfo] = useState<SessionErrorInfo | null>(null);
+	const session = state.session;
+	const errorInfo = state.errorInfo;
+	const setSession = useCallback(
+		(updater: (prev: ChatSession) => ChatSession): void => {
+			dispatch({ type: "set_session", updater });
+		},
+		[],
+	);
+	const setErrorInfo = useCallback((nextError: SessionErrorInfo | null) => {
+		if (nextError) {
+			dispatch({ type: "set_error", error: nextError });
+			return;
+		}
+		dispatch({ type: "clear_error" });
+	}, []);
 
 	// Derived state
 	const isReady = session.state === "ready";

@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      tooling:
+        patterns:
+          - "eslint*"
+          - "@typescript-eslint/*"
+          - "typescript*"
+          - "vitest*"
+          - "vite*"
+          - "@vitest/*"
+          - "@biomejs/*"
+      runtime:
+        patterns:
+          - "@agentclientprotocol/*"
+          - "react"
+          - "react-dom"
+          - "zod"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

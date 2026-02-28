@@ -9,14 +9,16 @@ Obsidian desktop plugin for AI agent chat (Claude Code, Codex, Gemini CLI, custo
 ```
 src/
 ├── main.ts                   # Re-exports plugin.ts
-├── plugin.ts                 # Obsidian plugin lifecycle, settings, multi-session (1279 lines)
+├── plugin.ts                 # Obsidian plugin lifecycle composition root (~545 lines)
+├── plugin/                   # Extracted plugin modules (agent commands, update check, view helpers)
 ├── domain/                   # Pure types + interfaces — ZERO external deps
 │   ├── models/               # ChatMessage, SessionUpdate, AgentConfig, etc. (8 files)
 │   └── ports/                # IAgentClient, IVaultAccess, ISettingsAccess, IChatViewContainer (4 files)
 ├── adapters/
-│   ├── acp/                  # ACP protocol: process spawn, JSON-RPC, ndJsonStream (2 files)
+│   ├── acp/                  # ACP protocol modules: lifecycle, runtime ops, routing, terminal, permissions
 │   └── obsidian/             # VaultAdapter, SettingsStore, MentionService (3 files)
-├── hooks/                    # React custom hooks — ALL state + logic lives here (11 files)
+├── hooks/                    # React custom hooks
+├── hooks/state/              # Pure reducer/action modules for deterministic state transitions
 ├── components/
 │   ├── chat/                 # ChatView + 22 sub-components (23 files)
 │   └── settings/             # AgentClientSettingTab (1 file)
@@ -29,7 +31,7 @@ src/
 | Add new feature | `hooks/use[Feature].ts` → compose in `useChatController.ts` | See `hooks/AGENTS.md` |
 | Add agent type | Implement `IAgentClient` in `adapters/[agent]/` | Domain port isolates protocol |
 | Modify message types | `domain/models/chat-message.ts` + `session-update.ts` | Then handle in `useChat.handleSessionUpdate()` |
-| Change ACP protocol | `adapters/acp/acp.adapter.ts` only | 1678 lines — see `adapters/acp/AGENTS.md` |
+| Change ACP protocol | `adapters/acp/` modules + `acp.adapter.ts` composition | See `adapters/acp/AGENTS.md` |
 | UI changes | `components/chat/` | See `components/chat/AGENTS.md` |
 | Settings changes | `plugin.ts` (interface) + `components/settings/AgentClientSettingTab.ts` (UI) | |
 | Debug | Settings → Debug Mode ON → DevTools → filter `[AcpAdapter]`, `[useChat]`, `[NoteMentionService]` | |
@@ -98,7 +100,7 @@ Agent response → AcpAdapter.sessionUpdate() → onSessionUpdate callback
 
 ### Formatting
 - Tabs (width 4), double quotes, trailing commas, LF line endings
-- Prettier: `npm run format` / ESLint: `npm run lint`
+- Biome: `npm run format` / ESLint + architecture guards: `npm run lint`
 
 ## Anti-Patterns (This Project)
 - **Don't add ViewModel/UseCase classes** — use hooks
@@ -110,25 +112,31 @@ Agent response → AcpAdapter.sessionUpdate() → onSessionUpdate callback
 
 ## Commands
 ```bash
-npm run dev              # esbuild watch mode (outputs main.js)
-npm run build            # tsc -noEmit -skipLibCheck && esbuild production
-npm run lint             # ESLint
+npm run dev              # Vite watch build
+npm run typecheck        # TypeScript typecheck only
+npm run build            # typecheck + Vite production build
+npm run lint             # Biome + ESLint + architecture guardrails
 npm run lint:fix         # ESLint auto-fix
-npm run format           # Prettier write
-npm run format:check     # Prettier check
+npm run test             # Vitest
+npm run test:coverage    # Vitest + coverage gates
+npm run format           # Biome write
+npm run format:check     # Biome check
 npm run version          # Bump manifest.json + versions.json
 npm run docs:dev         # VitePress dev server
 npm run docs:build       # VitePress build
 ```
 
 ## Notes
-- **No tests exist** — no test framework installed, no CI test pipeline
-- **CI**: Only docs deploy + event relay workflows; no automated type-check/lint/build on PRs
+- **Tests exist**: Vitest is configured with coverage gates for new reducer/routing/schema modules
+- **CI**: PR workflow enforces typecheck, lint, tests with coverage, plugin build, and docs build
 - **Multi-session**: `ChatViewRegistry` manages sidebar + floating views with independent ACP sessions
 - **Session history**: Agent-side (`listSessions`) + local persistence (`sessions/{id}.json`)
+- **Current decomposition state**:
+  - `src/plugin.ts` is now a thin orchestrator; command/update/view helpers moved to `src/plugin/`
+  - `src/adapters/acp/acp.adapter.ts` is now a composition root; core logic moved to concern modules under `src/adapters/acp/`
 - **TODOs in code**: `TODO(code-block)` markers for future code block chat view feature
 - **Undocumented API**: `vault.adapter.ts:211` uses `editor.cm` (CodeMirror 6 internal) for selection tracking
-- **ACP SDK**: `@agentclientprotocol/sdk ^0.13.1` — protocol may evolve
+- **ACP SDK**: `@agentclientprotocol/sdk ^0.14.1` — protocol may evolve
 - **External deps**: `react ^19.1.1`, `diff ^8.0.2`, `semver ^7.7.3`, `@codemirror/state`, `@codemirror/view`
 
 ## Subdirectory Guides

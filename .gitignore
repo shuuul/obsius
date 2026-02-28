@@ -22,6 +22,8 @@ main.js
 
 # Exclude sourcemaps
 *.map
+dist/
+coverage/
 
 # obsidian
 data.json

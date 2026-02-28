@@ -2,13 +2,15 @@
 
 Central coordinator pattern: `useChatController` composes 9 specialized hooks + creates adapters via `useMemo`.
 
+State transitions are now reducer-backed in `src/hooks/state/` for deterministic updates and easier test coverage.
+
 ## Hook Inventory
 
 | Hook | Lines | State Owned | Key Deps |
 |------|-------|-------------|----------|
 | `useChatController` | 858 | Combines all below | All hooks + adapters |
-| `useAgentSession` | 952 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
-| `useChat` | 706 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
+| `useAgentSession` | 967 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
+| `useChat` | 743 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
 | `useSessionHistory` | 734 | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` |
 | `usePermission` | 224 | `activePermission`, approval queue | `IAgentClient` |
 | `useAutoExport` | 162 | None (stateless callbacks) | `ChatExporter` |
@@ -38,7 +40,7 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
 
 ## Race Condition Patterns
 
-**Streaming tool_call_update**: Multiple rapid updates arrive for the same tool call. `useChat` uses functional `setMessages((prev) => ...)` with `upsertToolCall()` to merge safely. Direct `setMessages(newArray)` would lose concurrent updates.
+**Streaming tool_call_update**: Multiple rapid updates arrive for the same tool call. `useChat` uses reducer actions with updater payloads (`apply_messages`) and `upsertToolCall()` merge logic. Non-functional replacement would lose concurrent updates.
 
 **mergeToolCallContent**: When merging tool call updates, preserve existing values when update fields are `undefined`. Treat content arrays as replace-all (not append).
 
@@ -60,6 +62,7 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
 
 ## Anti-Patterns
 
-- Don't use `setMessages(newArray)` for streaming updates — always functional updater
+- Don't bypass reducers for state transitions in `useChat` / `useAgentSession` / `usePermission`
 - Don't store derived state — compute from `messages` or `session` in components
 - Don't call `agentClient` directly from components — route through hooks
+- Don't add new callback-style mutation paths when a typed action in `src/hooks/state/` is appropriate

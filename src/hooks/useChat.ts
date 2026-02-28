@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import type {
 	ChatMessage,
 	MessageContent,
@@ -13,6 +13,13 @@ import type { ImagePromptContent } from "../domain/models/prompt-content";
 import type { IMentionService } from "../shared/mention-utils";
 import { preparePrompt, sendPreparedPrompt } from "../shared/message-service";
 import { Platform } from "obsidian";
+import {
+	chatReducer,
+} from "./state/chat.reducer";
+import {
+	createInitialChatState,
+	type ChatAction,
+} from "./state/chat.actions";
 
 // ============================================================================
 // Types
@@ -226,25 +233,35 @@ export function useChat(
 	sessionContext: SessionContext,
 	settingsContext: SettingsContext,
 ): UseChatReturn {
-	// Message state
-	const [messages, setMessages] = useState<ChatMessage[]>([]);
-	const [isSending, setIsSending] = useState(false);
-	const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
-	const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
+	const [state, dispatch] = useReducer(
+		chatReducer,
+		undefined,
+		createInitialChatState,
+	);
+
+	const applyMessageUpdater = useCallback(
+		(updater: (messages: ChatMessage[]) => ChatMessage[]) => {
+			dispatch({
+				type: "apply_messages",
+				updater,
+			});
+		},
+		[],
+	);
 
 	/**
 	 * Add a new message to the chat.
 	 */
 	const addMessage = useCallback((message: ChatMessage): void => {
-		setMessages((prev) => [...prev, message]);
-	}, []);
+		applyMessageUpdater((prev) => [...prev, message]);
+	}, [applyMessageUpdater]);
 
 	/**
 	 * Update the last message in the chat.
 	 * Creates a new assistant message if needed.
 	 */
 	const updateLastMessage = useCallback((content: MessageContent): void => {
-		setMessages((prev) => {
+		applyMessageUpdater((prev) => {
 			// If no messages or last message is not assistant, create new assistant message
 			if (
 				prev.length === 0 ||
@@ -299,7 +316,7 @@ export function useChat(
 
 			return [...prev.slice(0, -1), updatedMessage];
 		});
-	}, []);
+	}, [applyMessageUpdater]);
 
 	/**
 	 * Update or create the last user message with new content.
@@ -308,7 +325,7 @@ export function useChat(
 	 * Similar to updateLastMessage but targets "user" role instead of "assistant".
 	 */
 	const updateUserMessage = useCallback((content: MessageContent): void => {
-		setMessages((prev) => {
+		applyMessageUpdater((prev) => {
 			// If no messages or last message is not user, create new user message
 			if (prev.length === 0 || prev[prev.length - 1].role !== "user") {
 				const newMessage: ChatMessage = {
@@ -355,7 +372,7 @@ export function useChat(
 
 			return [...prev.slice(0, -1), updatedMessage];
 		});
-	}, []);
+	}, [applyMessageUpdater]);
 
 	/**
 	 * Update a specific message by tool call ID.
@@ -365,7 +382,7 @@ export function useChat(
 		(toolCallId: string, content: MessageContent): void => {
 			if (content.type !== "tool_call") return;
 
-			setMessages((prev) =>
+			applyMessageUpdater((prev) =>
 				prev.map((message) => ({
 					...message,
 					content: message.content.map((c) => {
@@ -380,7 +397,7 @@ export function useChat(
 				})),
 			);
 		},
-		[],
+		[applyMessageUpdater],
 	);
 
 	/**
@@ -393,7 +410,7 @@ export function useChat(
 		(toolCallId: string, content: MessageContent): void => {
 			if (content.type !== "tool_call") return;
 
-			setMessages((prev) => {
+			applyMessageUpdater((prev) => {
 				// Try to find existing tool call
 				let found = false;
 				const updated = prev.map((message) => ({
@@ -426,7 +443,7 @@ export function useChat(
 				];
 			});
 		},
-		[],
+		[applyMessageUpdater],
 	);
 
 	/**
@@ -488,6 +505,11 @@ export function useChat(
 				case "current_mode_update":
 					// These are intentionally not handled here
 					break;
+
+				default: {
+					const exhaustiveCheck: never = update;
+					return exhaustiveCheck;
+				}
 			}
 		},
 		[updateLastMessage, upsertToolCall],
@@ -497,10 +519,15 @@ export function useChat(
 	 * Clear all messages.
 	 */
 	const clearMessages = useCallback((): void => {
-		setMessages([]);
-		setLastUserMessage(null);
-		setIsSending(false);
-		setErrorInfo(null);
+		const actions: ChatAction[] = [
+			{ type: "clear_messages" },
+			{ type: "set_last_user_message", message: null },
+			{ type: "send_complete" },
+			{ type: "clear_error" },
+		];
+		for (const action of actions) {
+			dispatch(action);
+		}
 	}, []);
 
 	/**
@@ -526,9 +553,9 @@ export function useChat(
 				timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
 			}));
 
-			setMessages(chatMessages);
-			setIsSending(false);
-			setErrorInfo(null);
+			dispatch({ type: "set_messages", messages: chatMessages });
+			dispatch({ type: "send_complete" });
+			dispatch({ type: "clear_error" });
 		},
 		[],
 	);
@@ -540,9 +567,9 @@ export function useChat(
 	 */
 	const setMessagesFromLocal = useCallback(
 		(localMessages: ChatMessage[]): void => {
-			setMessages(localMessages);
-			setIsSending(false);
-			setErrorInfo(null);
+			dispatch({ type: "set_messages", messages: localMessages });
+			dispatch({ type: "send_complete" });
+			dispatch({ type: "clear_error" });
 		},
 		[],
 	);
@@ -551,7 +578,7 @@ export function useChat(
 	 * Clear the current error.
 	 */
 	const clearError = useCallback((): void => {
-		setErrorInfo(null);
+		dispatch({ type: "clear_error" });
 	}, []);
 
 	/**
@@ -568,9 +595,12 @@ export function useChat(
 		async (content: string, options: SendMessageOptions): Promise<void> => {
 			// Guard: Need session ID to send
 			if (!sessionContext.sessionId) {
-				setErrorInfo({
-					title: "Cannot Send Message",
+				dispatch({
+					type: "set_error",
+					error: {
+						title: "Cannot send message",
 					message: "No active session. Please wait for connection.",
+					},
 				});
 				return;
 			}
@@ -631,8 +661,8 @@ export function useChat(
 			addMessage(userMessage);
 
 			// Phase 3: Set sending state and store original message
-			setIsSending(true);
-			setLastUserMessage(content);
+			dispatch({ type: "send_start" });
+			dispatch({ type: "set_last_user_message", message: content });
 
 			// Phase 4: Send prepared prompt to agent using message-service
 			try {
@@ -648,30 +678,37 @@ export function useChat(
 
 				if (result.success) {
 					// Success - clear stored message
-					setIsSending(false);
-					setLastUserMessage(null);
+					dispatch({ type: "send_complete" });
+					dispatch({
+						type: "set_last_user_message",
+						message: null,
+					});
 				} else {
 					// Error from message-service
-					setIsSending(false);
-					setErrorInfo(
-						result.error
+					dispatch({ type: "send_complete" });
+					dispatch({
+						type: "set_error",
+						error: result.error
 							? {
 									title: result.error.title,
 									message: result.error.message,
 									suggestion: result.error.suggestion,
 								}
 							: {
-									title: "Send Message Failed",
+									title: "Send message failed",
 									message: "Failed to send message",
 								},
-					);
+					});
 				}
 			} catch (error) {
 				// Unexpected error
-				setIsSending(false);
-				setErrorInfo({
-					title: "Send Message Failed",
-					message: `Failed to send message: ${error instanceof Error ? error.message : String(error)}`,
+				dispatch({ type: "send_complete" });
+				dispatch({
+					type: "set_error",
+					error: {
+						title: "Send message failed",
+						message: `Failed to send message: ${error instanceof Error ? error.message : String(error)}`,
+					},
 				});
 			}
 		},
@@ -688,10 +725,10 @@ export function useChat(
 	);
 
 	return {
-		messages,
-		isSending,
-		lastUserMessage,
-		errorInfo,
+		messages: state.messages,
+		isSending: state.isSending,
+		lastUserMessage: state.lastUserMessage,
+		errorInfo: state.errorInfo,
 		sendMessage,
 		clearMessages,
 		setInitialMessages,

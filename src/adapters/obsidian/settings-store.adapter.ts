@@ -7,14 +7,15 @@
  */
 
 import { Platform } from "obsidian";
-import type { ISettingsAccess } from "../../domain/ports/settings-access.port";
-import type { AgentClientPluginSettings } from "../../plugin";
-import type AgentClientPlugin from "../../plugin";
+import { z } from "zod";
 import type {
 	ChatMessage,
 	MessageContent,
 } from "../../domain/models/chat-message";
 import type { SavedSessionInfo } from "../../domain/models/session-info";
+import type { ISettingsAccess } from "../../domain/ports/settings-access.port";
+import type AgentClientPlugin from "../../plugin";
+import type { AgentClientPluginSettings } from "../../plugin";
 import { convertWindowsPathToWsl } from "../../shared/wsl-utils";
 
 /** Listener callback invoked when settings change */
@@ -25,18 +26,20 @@ type Listener = () => void;
  *
  * Used for type-safe JSON parsing of session history files.
  */
-interface SessionMessagesFile {
-	version: number;
-	sessionId: string;
-	agentId: string;
-	messages: Array<{
-		id: string;
-		role: "user" | "assistant";
-		content: MessageContent[];
-		timestamp: string;
-	}>;
-	savedAt: string;
-}
+const sessionMessageSchema = z.object({
+	id: z.string().min(1),
+	role: z.union([z.literal("user"), z.literal("assistant")]),
+	content: z.array(z.custom<MessageContent>()),
+	timestamp: z.string().datetime(),
+});
+
+const sessionMessagesFileSchema = z.object({
+	version: z.literal(2),
+	sessionId: z.string().min(1),
+	agentId: z.string().min(1),
+	messages: z.array(sessionMessageSchema),
+	savedAt: z.string().datetime(),
+});
 
 /**
  * Observable store for plugin settings implementing ISettingsAccess port.
@@ -214,8 +217,7 @@ export class SettingsStore implements ISettingsAccess {
 		// Sort by updatedAt descending (newest first)
 		return [...sessions].sort(
 			(a, b) =>
-				new Date(b.updatedAt).getTime() -
-				new Date(a.updatedAt).getTime(),
+				new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
 		);
 	}
 
@@ -307,7 +309,7 @@ export class SettingsStore implements ISettingsAccess {
 		}));
 
 		const data = {
-			version: 1,
+			version: 2,
 			sessionId,
 			agentId,
 			messages: serialized,
@@ -330,9 +332,7 @@ export class SettingsStore implements ISettingsAccess {
 	 * @param sessionId - Session ID
 	 * @returns Chat messages or null if not found
 	 */
-	async loadSessionMessages(
-		sessionId: string,
-	): Promise<ChatMessage[] | null> {
+	async loadSessionMessages(sessionId: string): Promise<ChatMessage[] | null> {
 		const filePath = this.getSessionFilePath(sessionId);
 		const adapter = this.plugin.app.vault.adapter;
 
@@ -342,26 +342,17 @@ export class SettingsStore implements ISettingsAccess {
 
 		try {
 			const content = await adapter.read(filePath);
-			const data = JSON.parse(content) as SessionMessagesFile;
-
-			// Validate structure
-			if (
-				typeof data.version !== "number" ||
-				!Array.isArray(data.messages)
-			) {
+			const rawData = JSON.parse(content) as unknown;
+			const parsed = sessionMessagesFileSchema.safeParse(rawData);
+			if (!parsed.success) {
 				console.warn(
-					`[SettingsStore] Invalid session file structure: ${filePath}`,
+					`[SettingsStore] Invalid session file structure (clean break): ${filePath}`,
+					parsed.error.issues.map((issue) => issue.path.join(".")),
 				);
+				await adapter.remove(filePath);
 				return null;
 			}
-
-			// Version check for future compatibility
-			if (data.version !== 1) {
-				console.warn(
-					`[SettingsStore] Unknown session file version: ${data.version}`,
-				);
-				return null;
-			}
+			const data = parsed.data;
 
 			// Deserialize (convert timestamp: string → Date)
 			return data.messages.map((msg) => ({
@@ -372,6 +363,9 @@ export class SettingsStore implements ISettingsAccess {
 			console.error(
 				`[SettingsStore] Failed to load session messages: ${error}`,
 			);
+			if (await adapter.exists(filePath)) {
+				await adapter.remove(filePath);
+			}
 			return null;
 		}
 	}

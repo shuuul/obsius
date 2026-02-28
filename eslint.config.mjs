@@ -5,12 +5,23 @@ import tseslint from "typescript-eslint";
 
 export default defineConfig([
 	{
-		ignores: ["node_modules/", "main.js", "docs/"],
+		ignores: [
+			"node_modules/",
+			"main.js",
+			"dist/",
+			"scripts/",
+			"docs/",
+			"vite.config.ts",
+			"vitest.config.ts",
+			"coverage/",
+			"docs/.vitepress/dist/",
+			"docs/.vitepress/cache/",
+		],
 	},
 	...obsidianmd.configs.recommended,
 	...tseslint.configs.recommended,
 	{
-		files: ["**/*.ts", "**/*.tsx"],
+		files: ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "test/**/*.tsx"],
 		languageOptions: {
 			parser: tsparser,
 			parserOptions: { project: "./tsconfig.json" },
@@ -20,6 +31,23 @@ export default defineConfig([
 			"@typescript-eslint/no-unused-vars": ["error", { args: "none" }],
 			"@typescript-eslint/ban-ts-comment": "off",
 			"@typescript-eslint/no-empty-function": "off",
+			"obsidianmd/ui/sentence-case": [
+				"warn",
+				{
+					brands: [
+						"Agent Client",
+						"Claude Code",
+						"Gemini CLI",
+						"Codex",
+						"Node.js",
+						"Cmd/Ctrl+Enter",
+						"GitHub",
+						"Obsidian",
+					],
+					acronyms: ["API", "URL", "JSON", "WSL", "MCP"],
+					enforceCamelCaseLower: true,
+				},
+			],
 		},
 	},
 ]);

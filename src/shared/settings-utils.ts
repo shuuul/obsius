@@ -1,6 +1,20 @@
-import type { AgentEnvVar, CustomAgentSettings } from "../plugin";
+import { z } from "zod";
 import type { BaseAgentSettings } from "../domain/models/agent-config";
 import type { AgentConfig } from "../domain/ports/agent-client.port";
+import type { AgentEnvVar, CustomAgentSettings } from "../plugin";
+
+const envVarSchema = z.object({
+	key: z.string().min(1),
+	value: z.string(),
+});
+
+const baseAgentSettingsSchema = z.object({
+	id: z.string().min(1),
+	displayName: z.string().min(1),
+	command: z.string(),
+	args: z.array(z.string()),
+	env: z.array(envVarSchema),
+});
 
 export const sanitizeArgs = (value: unknown): string[] => {
 	if (Array.isArray(value)) {
@@ -40,9 +54,7 @@ export const normalizeEnvVars = (value: unknown): AgentEnvVar[] => {
 			}
 		}
 	} else if (typeof value === "object") {
-		for (const [key, val] of Object.entries(
-			value as Record<string, unknown>,
-		)) {
+		for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
 			if (typeof key === "string" && key.trim().length > 0) {
 				pairs.push({
 					key: key.trim(),
@@ -97,9 +109,7 @@ export const ensureUniqueCustomAgentIds = (
 	const seen = new Set<string>();
 	return agents.map((agent) => {
 		const base =
-			agent.id && agent.id.trim().length > 0
-				? agent.id.trim()
-				: "custom-agent";
+			agent.id && agent.id.trim().length > 0 ? agent.id.trim() : "custom-agent";
 		let candidate = base;
 		let suffix = 2;
 		while (seen.has(candidate)) {
@@ -125,8 +135,17 @@ export const toAgentConfig = (
 	settings: BaseAgentSettings,
 	workingDirectory: string,
 ): AgentConfig => {
+	const parsedSettings = baseAgentSettingsSchema.safeParse(settings);
+	if (!parsedSettings.success) {
+		throw new Error(
+			`Invalid agent settings payload: ${parsedSettings.error.issues
+				.map((issue) => issue.path.join(".") || "root")
+				.join(", ")}`,
+		);
+	}
+
 	// Convert AgentEnvVar[] to Record<string, string> for process.spawn()
-	const env = settings.env.reduce(
+	const env = parsedSettings.data.env.reduce(
 		(acc, { key, value }) => {
 			acc[key] = value;
 			return acc;
@@ -135,10 +154,10 @@ export const toAgentConfig = (
 	);
 
 	return {
-		id: settings.id,
-		displayName: settings.displayName,
-		command: settings.command,
-		args: settings.args,
+		id: parsedSettings.data.id,
+		displayName: parsedSettings.data.displayName,
+		command: parsedSettings.data.command,
+		args: parsedSettings.data.args,
 		env,
 		workingDirectory,
 	};

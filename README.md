@@ -97,6 +97,11 @@ Open a terminal (Terminal on macOS/Linux, PowerShell on Windows) and run the fol
 
 **[Full Documentation](https://rait-09.github.io/obsidian-agent-client/)**
 
+## Requirements
+
+- Obsidian `1.5.0` or later
+- Node.js `20.19.0` or later (development)
+
 ## Development
 
 ```bash
@@ -107,6 +112,13 @@ npm run dev
 For production builds:
 ```bash
 npm run build
+```
+
+Quality checks:
+```bash
+npm run typecheck
+npm run lint
+npm run test
 ```
 
 ## License

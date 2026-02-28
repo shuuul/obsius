@@ -1,10 +1,14 @@
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import type {
 	ChatMessage,
 	PermissionOption,
 } from "../domain/models/chat-message";
 import type { IAgentClient } from "../domain/ports/agent-client.port";
 import type { ErrorInfo } from "../domain/models/agent-error";
+import {
+	createInitialPermissionState,
+	permissionReducer,
+} from "./state/permission.reducer";
 
 // ============================================================================
 // Types
@@ -134,8 +138,11 @@ export function usePermission(
 	agentClient: IAgentClient,
 	messages: ChatMessage[],
 ): UsePermissionReturn {
-	// Error state
-	const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
+	const [state, dispatch] = useReducer(
+		permissionReducer,
+		undefined,
+		createInitialPermissionState,
+	);
 
 	// Find active permission from messages (derived state)
 	const activePermission = useMemo(
@@ -152,9 +159,12 @@ export function usePermission(
 			try {
 				await agentClient.respondToPermission(requestId, optionId);
 			} catch (error) {
-				setErrorInfo({
-					title: "Permission Error",
+				dispatch({
+					type: "set_error",
+					error: {
+						title: "Permission error",
 					message: `Failed to respond to permission request: ${error instanceof Error ? error.message : String(error)}`,
+					},
 				});
 			}
 		},
@@ -210,12 +220,12 @@ export function usePermission(
 	 * Clear the current error.
 	 */
 	const clearError = useCallback((): void => {
-		setErrorInfo(null);
+		dispatch({ type: "clear_error" });
 	}, []);
 
 	return {
 		activePermission,
-		errorInfo,
+		errorInfo: state.errorInfo,
 		approvePermission,
 		approveActivePermission,
 		rejectActivePermission,

@@ -40,7 +40,7 @@ This plugin focuses on **ACP client implementation** + **features that make ACP 
 
 ### Prerequisites
 
-- Node.js 18.x or later
+- Node.js 20.19.0 or later
 - npm
 
 ### Setup Steps
@@ -73,14 +73,17 @@ npm run dev
 | ------------------- | ------------------------------------------------ |
 | `npm run dev`       | Development build (watch mode)                   |
 | `npm run build`     | Production build (includes TypeScript type check)|
+| `npm run typecheck` | Run TypeScript type checks only                  |
 | `npm run lint`      | Run ESLint                                       |
 | `npm run lint:fix`  | Run ESLint with auto-fix                         |
-| `npm run format`    | Format code with Prettier                        |
+| `npm run test`      | Run Vitest suite                                 |
+| `npm run test:coverage` | Run tests with coverage report               |
+| `npm run format`    | Format code with Biome                           |
 | `npm run format:check` | Check formatting (used in CI)                 |
 
 ## Code Style
 
-### Prettier Configuration
+### Formatting Configuration
 
 | Setting        | Value         |
 | -------------- | ------------- |
@@ -91,9 +94,9 @@ npm run dev
 | Print width    | 80            |
 | End of line    | LF            |
 
-### ESLint
+### Linting
 
-We use `eslint-plugin-obsidianmd` for Obsidian-specific rules and `typescript-eslint` for TypeScript.
+We use Biome for fast formatting/baseline linting and ESLint (`eslint-plugin-obsidianmd`, `typescript-eslint`) for Obsidian- and TypeScript-specific rules.
 
 ### Obsidian Plugin Guidelines
 
@@ -175,8 +178,11 @@ Before submitting, please verify:
 
 Pull requests automatically run:
 
-- ESLint (`npx eslint src/`)
+- Typecheck (`npm run typecheck`)
+- Lint (`npm run lint`)
+- Tests (`npm run test:coverage`)
 - Build (`npm run build`)
+- Docs build (`npm run docs:build`)
 
 Please ensure these pass locally before submitting.
 

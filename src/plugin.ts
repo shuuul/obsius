@@ -1,12 +1,9 @@
 import {
 	Plugin,
 	WorkspaceLeaf,
-	WorkspaceSplit,
 	Notice,
-	requestUrl,
 } from "obsidian";
 import type { Root } from "react-dom/client";
-import * as semver from "semver";
 import { ChatView, VIEW_TYPE_CHAT } from "./components/chat/ChatView";
 import {
 	createFloatingChat,
@@ -21,13 +18,6 @@ import {
 import { AgentClientSettingTab } from "./components/settings/AgentClientSettingTab";
 import { AcpAdapter } from "./adapters/acp/acp.adapter";
 import {
-	sanitizeArgs,
-	normalizeEnvVars,
-	normalizeCustomAgent,
-	ensureUniqueCustomAgentIds,
-} from "./shared/settings-utils";
-import { parseChatFontSize } from "./shared/display-settings";
-import {
 	AgentEnvVar,
 	GeminiAgentSettings,
 	ClaudeAgentSettings,
@@ -36,6 +26,25 @@ import {
 } from "./domain/models/agent-config";
 import type { SavedSessionInfo } from "./domain/models/session-info";
 import { initializeLogger } from "./shared/logger";
+import {
+	createDefaultSettings,
+	parseStoredSettings,
+	SETTINGS_SCHEMA_VERSION,
+} from "./shared/settings-schema";
+import {
+	broadcastCancel,
+	broadcastPrompt,
+	broadcastSend,
+	ensureDefaultAgentId,
+	getAvailableAgents,
+	openChatWithAgent,
+	registerAgentCommands,
+	registerBroadcastCommands,
+	registerFloatingCommands,
+	registerPermissionCommands,
+} from "./plugin/agent-ops";
+import { checkForUpdates } from "./plugin/update-check";
+import { createNewChatLeaf, focusChatTextarea } from "./plugin/view-helpers";
 
 // Re-export for backward compatibility
 export type { AgentEnvVar, CustomAgentSettings };
@@ -61,6 +70,7 @@ export type ChatViewLocation =
 	| "editor-split";
 
 export interface AgentClientPluginSettings {
+	schemaVersion: number;
 	gemini: GeminiAgentSettings;
 	claude: ClaudeAgentSettings;
 	codex: CodexAgentSettings;
@@ -111,66 +121,7 @@ export interface AgentClientPluginSettings {
 }
 
 const DEFAULT_SETTINGS: AgentClientPluginSettings = {
-	claude: {
-		id: "claude-code-acp",
-		displayName: "Claude Code",
-		apiKey: "",
-		command: "",
-		args: [],
-		env: [],
-	},
-	codex: {
-		id: "codex-acp",
-		displayName: "Codex",
-		apiKey: "",
-		command: "",
-		args: [],
-		env: [],
-	},
-	gemini: {
-		id: "gemini-cli",
-		displayName: "Gemini CLI",
-		apiKey: "",
-		command: "",
-		args: ["--experimental-acp"],
-		env: [],
-	},
-	customAgents: [],
-	defaultAgentId: "claude-code-acp",
-	autoAllowPermissions: false,
-	autoMentionActiveNote: true,
-	debugMode: false,
-	nodePath: "",
-	exportSettings: {
-		defaultFolder: "Agent Client",
-		filenameTemplate: "agent_client_{date}_{time}",
-		autoExportOnNewChat: false,
-		autoExportOnCloseChat: false,
-		openFileAfterExport: true,
-		includeImages: true,
-		imageLocation: "obsidian",
-		imageCustomFolder: "Agent Client",
-		frontmatterTag: "agent-client",
-	},
-	windowsWslMode: false,
-	windowsWslDistribution: undefined,
-	sendMessageShortcut: "enter",
-	chatViewLocation: "right-tab",
-	displaySettings: {
-		autoCollapseDiffs: false,
-		diffCollapseThreshold: 10,
-		maxNoteLength: 10000,
-		maxSelectionLength: 10000,
-		showEmojis: true,
-		fontSize: null,
-	},
-	savedSessions: [],
-	lastUsedModels: {},
-	showFloatingButton: false,
-	floatingButtonImage: "",
-	floatingWindowSize: { width: 400, height: 500 },
-	floatingWindowPosition: null,
-	floatingButtonPosition: null,
+	...createDefaultSettings(),
 };
 
 export default class AgentClientPlugin extends Plugin {
@@ -249,39 +200,7 @@ export default class AgentClientPlugin extends Plugin {
 		this.registerAgentCommands();
 		this.registerPermissionCommands();
 		this.registerBroadcastCommands();
-
-		// Floating chat window commands
-		this.addCommand({
-			id: "open-floating-chat",
-			name: "Open floating chat window",
-			callback: () => {
-				if (!this.settings.showFloatingButton) return;
-				const instances = this.getFloatingChatInstances();
-				if (instances.length === 0) {
-					this.openNewFloatingChat(true);
-				} else if (instances.length === 1) {
-					this.expandFloatingChat(instances[0]);
-				} else {
-					const focused = this.viewRegistry.getFocused();
-					if (focused && focused.viewType === "floating") {
-						focused.expand();
-					} else {
-						this.expandFloatingChat(
-							instances[instances.length - 1],
-						);
-					}
-				}
-			},
-		});
-
-		this.addCommand({
-			id: "open-new-floating-chat",
-			name: "Open new floating chat window",
-			callback: () => {
-				if (!this.settings.showFloatingButton) return;
-				this.openNewFloatingChat(true);
-			},
-		});
+		registerFloatingCommands(this);
 
 		this.addCommand({
 			id: "close-floating-chat",
@@ -411,7 +330,12 @@ export default class AgentClientPlugin extends Plugin {
 				leaf = leaves[0];
 			}
 		} else {
-			leaf = this.createNewChatLeaf(false);
+			leaf = createNewChatLeaf(
+				this.app,
+				this.settings.chatViewLocation,
+				false,
+				VIEW_TYPE_CHAT,
+			);
 			if (leaf) {
 				await leaf.setViewState({
 					type: VIEW_TYPE_CHAT,
@@ -422,24 +346,7 @@ export default class AgentClientPlugin extends Plugin {
 
 		if (leaf) {
 			await workspace.revealLeaf(leaf);
-			this.focusTextarea(leaf);
-		}
-	}
-
-	/**
-	 * Focus the textarea in a ChatView leaf.
-	 */
-	private focusTextarea(leaf: WorkspaceLeaf): void {
-		const viewContainerEl = leaf.view?.containerEl;
-		if (viewContainerEl) {
-			window.setTimeout(() => {
-				const textarea = viewContainerEl.querySelector(
-					"textarea.agent-client-chat-input-textarea",
-				);
-				if (textarea instanceof HTMLTextAreaElement) {
-					textarea.focus();
-				}
-			}, 50);
+			focusChatTextarea(leaf);
 		}
 	}
 
@@ -459,64 +366,17 @@ export default class AgentClientPlugin extends Plugin {
 	 * Create a new leaf for ChatView based on the configured location setting.
 	 * @param isAdditional - true when opening additional views (e.g., Open New View)
 	 */
-	private createNewChatLeaf(isAdditional: boolean): WorkspaceLeaf | null {
-		const { workspace } = this.app;
-		const location = this.settings.chatViewLocation;
-
-		switch (location) {
-			case "right-tab":
-				if (isAdditional) {
-					return this.createSidebarTab("right");
-				}
-				return workspace.getRightLeaf(false);
-			case "right-split":
-				return workspace.getRightLeaf(isAdditional);
-			case "editor-tab":
-				return workspace.getLeaf("tab");
-			case "editor-split":
-				return workspace.getLeaf("split");
-			default:
-				return workspace.getRightLeaf(false);
-		}
-	}
-
-	/**
-	 * Create a new tab within an existing sidebar tab group.
-	 * Uses the parent of an existing chat leaf to add a sibling tab,
-	 * avoiding the vertical split caused by getRightLeaf(true).
-	 */
-	private createSidebarTab(side: "right" | "left"): WorkspaceLeaf | null {
-		const { workspace } = this.app;
-		const split =
-			side === "right" ? workspace.rightSplit : workspace.leftSplit;
-
-		// Find an existing chat leaf in this sidebar to get its tab group
-		const existingLeaves = workspace.getLeavesOfType(VIEW_TYPE_CHAT);
-		const sidebarLeaf = existingLeaves.find(
-			(leaf) => leaf.getRoot() === split,
-		);
-
-		if (sidebarLeaf) {
-			const tabGroup = sidebarLeaf.parent;
-			// Index is clamped by Obsidian, so a large value appends to the end
-			return workspace.createLeafInParent(
-				tabGroup as unknown as WorkspaceSplit,
-				Number.MAX_SAFE_INTEGER,
-			);
-		}
-
-		// Fallback: no existing chat leaf in sidebar, create first one
-		return side === "right"
-			? workspace.getRightLeaf(false)
-			: workspace.getLeftLeaf(false);
-	}
-
 	/**
 	 * Open a new chat view with a specific agent.
 	 * Always creates a new view (doesn't reuse existing).
 	 */
 	async openNewChatViewWithAgent(agentId: string): Promise<void> {
-		const leaf = this.createNewChatLeaf(true);
+		const leaf = createNewChatLeaf(
+			this.app,
+			this.settings.chatViewLocation,
+			true,
+			VIEW_TYPE_CHAT,
+		);
 		if (!leaf) {
 			console.warn("[AgentClient] Failed to create new leaf");
 			return;
@@ -529,19 +389,7 @@ export default class AgentClientPlugin extends Plugin {
 		});
 
 		await this.app.workspace.revealLeaf(leaf);
-
-		// Focus textarea after revealing the leaf
-		const viewContainerEl = leaf.view?.containerEl;
-		if (viewContainerEl) {
-			window.setTimeout(() => {
-				const textarea = viewContainerEl.querySelector(
-					"textarea.agent-client-chat-input-textarea",
-				);
-				if (textarea instanceof HTMLTextAreaElement) {
-					textarea.focus();
-				}
-			}, 0);
-		}
+		focusChatTextarea(leaf, 0);
 	}
 
 	/**
@@ -605,608 +453,81 @@ export default class AgentClientPlugin extends Plugin {
 	 * Get all available agents (claude, codex, gemini, custom)
 	 */
 	getAvailableAgents(): Array<{ id: string; displayName: string }> {
-		return [
-			{
-				id: this.settings.claude.id,
-				displayName:
-					this.settings.claude.displayName || this.settings.claude.id,
-			},
-			{
-				id: this.settings.codex.id,
-				displayName:
-					this.settings.codex.displayName || this.settings.codex.id,
-			},
-			{
-				id: this.settings.gemini.id,
-				displayName:
-					this.settings.gemini.displayName || this.settings.gemini.id,
-			},
-			...this.settings.customAgents.map((agent) => ({
-				id: agent.id,
-				displayName: agent.displayName || agent.id,
-			})),
-		];
+		return getAvailableAgents(this.settings);
 	}
 
 	/**
 	 * Open chat view and switch to specified agent
 	 */
 	private async openChatWithAgent(agentId: string): Promise<void> {
-		await this.activateView();
-
-		// Trigger new chat with specific agent
-		// Pass agentId so ChatComponent knows to force new session even if empty
-		this.app.workspace.trigger(
-			"agent-client:new-chat-requested" as "quit",
-			agentId,
-		);
+		await openChatWithAgent(this, agentId);
 	}
 
 	/**
 	 * Register commands for each configured agent
 	 */
 	private registerAgentCommands(): void {
-		const agents = this.getAvailableAgents();
-
-		for (const agent of agents) {
-			this.addCommand({
-				id: `open-chat-with-${agent.id}`,
-				name: `New chat with ${agent.displayName}`,
-				callback: async () => {
-					await this.openChatWithAgent(agent.id);
-				},
-			});
-		}
+		registerAgentCommands(this);
 	}
 
 	private registerPermissionCommands(): void {
-		this.addCommand({
-			id: "approve-active-permission",
-			name: "Approve active permission",
-			callback: async () => {
-				// Only activate sidebar view if the focused view is a sidebar
-				// (avoid stealing focus from floating views)
-				const focusedId = this.lastActiveChatViewId;
-				const isFloatingFocused =
-					focusedId?.startsWith("floating-chat-");
-				if (!isFloatingFocused) {
-					await this.activateView();
-				}
-				this.app.workspace.trigger(
-					"agent-client:approve-active-permission" as "quit",
-					this.lastActiveChatViewId,
-				);
-			},
-		});
-
-		this.addCommand({
-			id: "reject-active-permission",
-			name: "Reject active permission",
-			callback: async () => {
-				// Only activate sidebar view if the focused view is a sidebar
-				// (avoid stealing focus from floating views)
-				const focusedId = this.lastActiveChatViewId;
-				const isFloatingFocused =
-					focusedId?.startsWith("floating-chat-");
-				if (!isFloatingFocused) {
-					await this.activateView();
-				}
-				this.app.workspace.trigger(
-					"agent-client:reject-active-permission" as "quit",
-					this.lastActiveChatViewId,
-				);
-			},
-		});
-
-		this.addCommand({
-			id: "toggle-auto-mention",
-			name: "Toggle auto-mention",
-			callback: async () => {
-				// Only activate sidebar view if the focused view is a sidebar
-				// (avoid stealing focus from floating views)
-				const focusedId = this.lastActiveChatViewId;
-				const isFloatingFocused =
-					focusedId?.startsWith("floating-chat-");
-				if (!isFloatingFocused) {
-					await this.activateView();
-				}
-				this.app.workspace.trigger(
-					"agent-client:toggle-auto-mention" as "quit",
-					this.lastActiveChatViewId,
-				);
-			},
-		});
-
-		this.addCommand({
-			id: "cancel-current-message",
-			name: "Cancel current message",
-			callback: () => {
-				this.app.workspace.trigger(
-					"agent-client:cancel-message" as "quit",
-					this.lastActiveChatViewId,
-				);
-			},
-		});
+		registerPermissionCommands(this);
 	}
 
 	/**
 	 * Register broadcast commands for multi-view operations
 	 */
 	private registerBroadcastCommands(): void {
-		// Broadcast prompt: Copy prompt from active view to all other views
-		this.addCommand({
-			id: "broadcast-prompt",
-			name: "Broadcast prompt",
-			callback: () => {
-				this.broadcastPrompt();
-			},
-		});
-
-		// Broadcast send: Send message in all views that can send
-		this.addCommand({
-			id: "broadcast-send",
-			name: "Broadcast send",
-			callback: () => {
-				void this.broadcastSend();
-			},
-		});
-
-		// Broadcast cancel: Cancel operation in all views
-		this.addCommand({
-			id: "broadcast-cancel",
-			name: "Broadcast cancel",
-			callback: () => {
-				void this.broadcastCancel();
-			},
-		});
+		registerBroadcastCommands(this);
 	}
 
 	/**
 	 * Copy prompt from active view to all other views
 	 */
 	private broadcastPrompt(): void {
-		const allViews = this.viewRegistry.getAll();
-		if (allViews.length === 0) {
-			new Notice("[Agent Client] No chat views open");
-			return;
-		}
-
-		const inputState = this.viewRegistry.toFocused((v) =>
-			v.getInputState(),
-		);
-		if (
-			!inputState ||
-			(inputState.text.trim() === "" && inputState.images.length === 0)
-		) {
-			new Notice("[Agent Client] No prompt to broadcast");
-			return;
-		}
-
-		const focusedId = this.viewRegistry.getFocusedId();
-		const targetViews = allViews.filter((v) => v.viewId !== focusedId);
-		if (targetViews.length === 0) {
-			new Notice("[Agent Client] No other chat views to broadcast to");
-			return;
-		}
-
-		for (const view of targetViews) {
-			view.setInputState(inputState);
-		}
+		broadcastPrompt(this);
 	}
 
 	/**
 	 * Send message in all views that can send
 	 */
 	private async broadcastSend(): Promise<void> {
-		const allViews = this.viewRegistry.getAll();
-		if (allViews.length === 0) {
-			new Notice("[Agent Client] No chat views open");
-			return;
-		}
-
-		const sendableViews = allViews.filter((v) => v.canSend());
-		if (sendableViews.length === 0) {
-			new Notice("[Agent Client] No views ready to send");
-			return;
-		}
-
-		await Promise.allSettled(sendableViews.map((v) => v.sendMessage()));
+		await broadcastSend(this);
 	}
 
 	/**
 	 * Cancel operation in all views
 	 */
 	private async broadcastCancel(): Promise<void> {
-		const allViews = this.viewRegistry.getAll();
-		if (allViews.length === 0) {
-			new Notice("[Agent Client] No chat views open");
-			return;
-		}
-
-		await Promise.allSettled(allViews.map((v) => v.cancelOperation()));
-		new Notice("[Agent Client] Cancel broadcast to all views");
+		await broadcastCancel(this);
 	}
 
 	async loadSettings() {
-		const rawSettings = ((await this.loadData()) ?? {}) as Record<
-			string,
-			unknown
-		>;
-
-		const claudeFromRaw =
-			typeof rawSettings.claude === "object" &&
-			rawSettings.claude !== null
-				? (rawSettings.claude as Record<string, unknown>)
-				: {};
-		const codexFromRaw =
-			typeof rawSettings.codex === "object" && rawSettings.codex !== null
-				? (rawSettings.codex as Record<string, unknown>)
-				: {};
-		const geminiFromRaw =
-			typeof rawSettings.gemini === "object" &&
-			rawSettings.gemini !== null
-				? (rawSettings.gemini as Record<string, unknown>)
-				: {};
-
-		const resolvedClaudeArgs = sanitizeArgs(claudeFromRaw.args);
-		const resolvedClaudeEnv = normalizeEnvVars(claudeFromRaw.env);
-		const resolvedCodexArgs = sanitizeArgs(codexFromRaw.args);
-		const resolvedCodexEnv = normalizeEnvVars(codexFromRaw.env);
-		const resolvedGeminiArgs = sanitizeArgs(geminiFromRaw.args);
-		const resolvedGeminiEnv = normalizeEnvVars(geminiFromRaw.env);
-		const customAgents = Array.isArray(rawSettings.customAgents)
-			? ensureUniqueCustomAgentIds(
-					rawSettings.customAgents.map((agent: unknown) => {
-						const agentObj =
-							typeof agent === "object" && agent !== null
-								? (agent as Record<string, unknown>)
-								: {};
-						return normalizeCustomAgent(agentObj);
-					}),
-				)
-			: [];
-
-		const availableAgentIds = [
-			DEFAULT_SETTINGS.claude.id,
-			DEFAULT_SETTINGS.codex.id,
-			DEFAULT_SETTINGS.gemini.id,
-			...customAgents.map((agent) => agent.id),
-		];
-		// Migration: support both old activeAgentId and new defaultAgentId
-		const rawDefaultId =
-			typeof rawSettings.defaultAgentId === "string"
-				? rawSettings.defaultAgentId.trim()
-				: typeof rawSettings.activeAgentId === "string"
-					? rawSettings.activeAgentId.trim()
-					: "";
-		const fallbackDefaultId =
-			availableAgentIds.find((id) => id.length > 0) ||
-			DEFAULT_SETTINGS.claude.id;
-		const defaultAgentId =
-			availableAgentIds.includes(rawDefaultId) && rawDefaultId.length > 0
-				? rawDefaultId
-				: fallbackDefaultId;
-
-		this.settings = {
-			claude: {
-				id: DEFAULT_SETTINGS.claude.id,
-				displayName:
-					typeof claudeFromRaw.displayName === "string" &&
-					claudeFromRaw.displayName.trim().length > 0
-						? claudeFromRaw.displayName.trim()
-						: DEFAULT_SETTINGS.claude.displayName,
-				apiKey:
-					typeof claudeFromRaw.apiKey === "string"
-						? claudeFromRaw.apiKey
-						: DEFAULT_SETTINGS.claude.apiKey,
-				command:
-					typeof claudeFromRaw.command === "string" &&
-					claudeFromRaw.command.trim().length > 0
-						? claudeFromRaw.command.trim()
-						: typeof rawSettings.claudeCodeAcpCommandPath ===
-									"string" &&
-							  rawSettings.claudeCodeAcpCommandPath.trim()
-									.length > 0
-							? rawSettings.claudeCodeAcpCommandPath.trim()
-							: DEFAULT_SETTINGS.claude.command,
-				args: resolvedClaudeArgs.length > 0 ? resolvedClaudeArgs : [],
-				env: resolvedClaudeEnv.length > 0 ? resolvedClaudeEnv : [],
-			},
-			codex: {
-				id: DEFAULT_SETTINGS.codex.id,
-				displayName:
-					typeof codexFromRaw.displayName === "string" &&
-					codexFromRaw.displayName.trim().length > 0
-						? codexFromRaw.displayName.trim()
-						: DEFAULT_SETTINGS.codex.displayName,
-				apiKey:
-					typeof codexFromRaw.apiKey === "string"
-						? codexFromRaw.apiKey
-						: DEFAULT_SETTINGS.codex.apiKey,
-				command:
-					typeof codexFromRaw.command === "string" &&
-					codexFromRaw.command.trim().length > 0
-						? codexFromRaw.command.trim()
-						: DEFAULT_SETTINGS.codex.command,
-				args: resolvedCodexArgs.length > 0 ? resolvedCodexArgs : [],
-				env: resolvedCodexEnv.length > 0 ? resolvedCodexEnv : [],
-			},
-			gemini: {
-				id: DEFAULT_SETTINGS.gemini.id,
-				displayName:
-					typeof geminiFromRaw.displayName === "string" &&
-					geminiFromRaw.displayName.trim().length > 0
-						? geminiFromRaw.displayName.trim()
-						: DEFAULT_SETTINGS.gemini.displayName,
-				apiKey:
-					typeof geminiFromRaw.apiKey === "string"
-						? geminiFromRaw.apiKey
-						: DEFAULT_SETTINGS.gemini.apiKey,
-				command:
-					typeof geminiFromRaw.command === "string" &&
-					geminiFromRaw.command.trim().length > 0
-						? geminiFromRaw.command.trim()
-						: typeof rawSettings.geminiCommandPath === "string" &&
-							  rawSettings.geminiCommandPath.trim().length > 0
-							? rawSettings.geminiCommandPath.trim()
-							: DEFAULT_SETTINGS.gemini.command,
-				args:
-					resolvedGeminiArgs.length > 0
-						? resolvedGeminiArgs
-						: DEFAULT_SETTINGS.gemini.args,
-				env: resolvedGeminiEnv.length > 0 ? resolvedGeminiEnv : [],
-			},
-			customAgents: customAgents,
-			defaultAgentId,
-			autoAllowPermissions:
-				typeof rawSettings.autoAllowPermissions === "boolean"
-					? rawSettings.autoAllowPermissions
-					: DEFAULT_SETTINGS.autoAllowPermissions,
-			autoMentionActiveNote:
-				typeof rawSettings.autoMentionActiveNote === "boolean"
-					? rawSettings.autoMentionActiveNote
-					: DEFAULT_SETTINGS.autoMentionActiveNote,
-			debugMode:
-				typeof rawSettings.debugMode === "boolean"
-					? rawSettings.debugMode
-					: DEFAULT_SETTINGS.debugMode,
-			nodePath:
-				typeof rawSettings.nodePath === "string"
-					? rawSettings.nodePath.trim()
-					: DEFAULT_SETTINGS.nodePath,
-			exportSettings: (() => {
-				const rawExport = rawSettings.exportSettings as
-					| Record<string, unknown>
-					| null
-					| undefined;
-				if (rawExport && typeof rawExport === "object") {
-					return {
-						defaultFolder:
-							typeof rawExport.defaultFolder === "string"
-								? rawExport.defaultFolder
-								: DEFAULT_SETTINGS.exportSettings.defaultFolder,
-						filenameTemplate:
-							typeof rawExport.filenameTemplate === "string"
-								? rawExport.filenameTemplate
-								: DEFAULT_SETTINGS.exportSettings
-										.filenameTemplate,
-						autoExportOnNewChat:
-							typeof rawExport.autoExportOnNewChat === "boolean"
-								? rawExport.autoExportOnNewChat
-								: DEFAULT_SETTINGS.exportSettings
-										.autoExportOnNewChat,
-						autoExportOnCloseChat:
-							typeof rawExport.autoExportOnCloseChat === "boolean"
-								? rawExport.autoExportOnCloseChat
-								: DEFAULT_SETTINGS.exportSettings
-										.autoExportOnCloseChat,
-						openFileAfterExport:
-							typeof rawExport.openFileAfterExport === "boolean"
-								? rawExport.openFileAfterExport
-								: DEFAULT_SETTINGS.exportSettings
-										.openFileAfterExport,
-						includeImages:
-							typeof rawExport.includeImages === "boolean"
-								? rawExport.includeImages
-								: DEFAULT_SETTINGS.exportSettings.includeImages,
-						imageLocation:
-							rawExport.imageLocation === "obsidian" ||
-							rawExport.imageLocation === "custom" ||
-							rawExport.imageLocation === "base64"
-								? rawExport.imageLocation
-								: DEFAULT_SETTINGS.exportSettings.imageLocation,
-						imageCustomFolder:
-							typeof rawExport.imageCustomFolder === "string"
-								? rawExport.imageCustomFolder
-								: DEFAULT_SETTINGS.exportSettings
-										.imageCustomFolder,
-						frontmatterTag:
-							typeof rawExport.frontmatterTag === "string"
-								? rawExport.frontmatterTag
-								: DEFAULT_SETTINGS.exportSettings
-										.frontmatterTag,
-					};
-				}
-				return DEFAULT_SETTINGS.exportSettings;
-			})(),
-			windowsWslMode:
-				typeof rawSettings.windowsWslMode === "boolean"
-					? rawSettings.windowsWslMode
-					: DEFAULT_SETTINGS.windowsWslMode,
-			windowsWslDistribution:
-				typeof rawSettings.windowsWslDistribution === "string"
-					? rawSettings.windowsWslDistribution
-					: DEFAULT_SETTINGS.windowsWslDistribution,
-			sendMessageShortcut:
-				rawSettings.sendMessageShortcut === "enter" ||
-				rawSettings.sendMessageShortcut === "cmd-enter"
-					? rawSettings.sendMessageShortcut
-					: DEFAULT_SETTINGS.sendMessageShortcut,
-			chatViewLocation:
-				rawSettings.chatViewLocation === "right-tab" ||
-				rawSettings.chatViewLocation === "right-split" ||
-				rawSettings.chatViewLocation === "editor-tab" ||
-				rawSettings.chatViewLocation === "editor-split"
-					? rawSettings.chatViewLocation
-					: DEFAULT_SETTINGS.chatViewLocation,
-			displaySettings: (() => {
-				const rawDisplay = rawSettings.displaySettings as
-					| Record<string, unknown>
-					| null
-					| undefined;
-				if (rawDisplay && typeof rawDisplay === "object") {
-					return {
-						autoCollapseDiffs:
-							typeof rawDisplay.autoCollapseDiffs === "boolean"
-								? rawDisplay.autoCollapseDiffs
-								: DEFAULT_SETTINGS.displaySettings
-										.autoCollapseDiffs,
-						diffCollapseThreshold:
-							typeof rawDisplay.diffCollapseThreshold ===
-								"number" && rawDisplay.diffCollapseThreshold > 0
-								? rawDisplay.diffCollapseThreshold
-								: DEFAULT_SETTINGS.displaySettings
-										.diffCollapseThreshold,
-						maxNoteLength:
-							typeof rawDisplay.maxNoteLength === "number" &&
-							rawDisplay.maxNoteLength >= 1
-								? rawDisplay.maxNoteLength
-								: DEFAULT_SETTINGS.displaySettings
-										.maxNoteLength,
-						maxSelectionLength:
-							typeof rawDisplay.maxSelectionLength === "number" &&
-							rawDisplay.maxSelectionLength >= 1
-								? rawDisplay.maxSelectionLength
-								: DEFAULT_SETTINGS.displaySettings
-										.maxSelectionLength,
-						showEmojis:
-							typeof rawDisplay.showEmojis === "boolean"
-								? rawDisplay.showEmojis
-								: DEFAULT_SETTINGS.displaySettings.showEmojis,
-						fontSize: parseChatFontSize(rawDisplay.fontSize),
-					};
-				}
-				return DEFAULT_SETTINGS.displaySettings;
-			})(),
-			savedSessions: Array.isArray(rawSettings.savedSessions)
-				? (rawSettings.savedSessions as SavedSessionInfo[])
-				: DEFAULT_SETTINGS.savedSessions,
-			lastUsedModels: (() => {
-				const raw = rawSettings.lastUsedModels;
-				if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-					const result: Record<string, string> = {};
-					for (const [key, value] of Object.entries(
-						raw as Record<string, unknown>,
-					)) {
-						if (
-							typeof key === "string" &&
-							key.length > 0 &&
-							typeof value === "string" &&
-							value.length > 0
-						) {
-							result[key] = value;
-						}
-					}
-					return result;
-				}
-				return DEFAULT_SETTINGS.lastUsedModels;
-			})(),
-			showFloatingButton:
-				typeof rawSettings.showFloatingButton === "boolean"
-					? rawSettings.showFloatingButton
-					: DEFAULT_SETTINGS.showFloatingButton,
-			floatingButtonImage:
-				typeof rawSettings.floatingButtonImage === "string"
-					? rawSettings.floatingButtonImage
-					: DEFAULT_SETTINGS.floatingButtonImage,
-			floatingWindowSize: (() => {
-				const raw = rawSettings.floatingWindowSize as
-					| { width?: number; height?: number }
-					| null
-					| undefined;
-				if (
-					raw &&
-					typeof raw === "object" &&
-					typeof raw.width === "number" &&
-					typeof raw.height === "number"
-				) {
-					return { width: raw.width, height: raw.height };
-				}
-				return DEFAULT_SETTINGS.floatingWindowSize;
-			})(),
-			floatingWindowPosition: (() => {
-				const raw = rawSettings.floatingWindowPosition as
-					| { x?: number; y?: number }
-					| null
-					| undefined;
-				if (
-					raw &&
-					typeof raw === "object" &&
-					typeof raw.x === "number" &&
-					typeof raw.y === "number"
-				) {
-					return { x: raw.x, y: raw.y };
-				}
-				return null;
-			})(),
-			floatingButtonPosition: (() => {
-				const raw = rawSettings.floatingButtonPosition as
-					| { x?: number; y?: number }
-					| null
-					| undefined;
-				if (
-					raw &&
-					typeof raw === "object" &&
-					typeof raw.x === "number" &&
-					typeof raw.y === "number"
-				) {
-					return { x: raw.x, y: raw.y };
-				}
-				return null;
-			})(),
-		};
-
+		const rawSettings: unknown = (await this.loadData()) ?? {};
+		const { settings, resetReason } = parseStoredSettings(rawSettings);
+		this.settings = settings;
 		this.ensureDefaultAgentId();
+
+		if (resetReason) {
+			new Notice(
+				`[Agent Client] Settings were reset due to incompatible schema (${resetReason}). Clean break policy is active from schema version ${SETTINGS_SCHEMA_VERSION}.`,
+			);
+			await this.saveSettings();
+		}
 	}
 
 	async saveSettings() {
+		this.settings.schemaVersion = SETTINGS_SCHEMA_VERSION;
 		await this.saveData(this.settings);
 	}
 
 	async saveSettingsAndNotify(nextSettings: AgentClientPluginSettings) {
-		this.settings = nextSettings;
+		this.settings = {
+			...nextSettings,
+			schemaVersion: SETTINGS_SCHEMA_VERSION,
+		};
 		await this.saveData(this.settings);
 		this.settingsStore.set(this.settings);
-	}
-
-	/**
-	 * Fetch the latest stable release version from GitHub.
-	 */
-	private async fetchLatestStable(): Promise<string | null> {
-		const response = await requestUrl({
-			url: "https://api.github.com/repos/RAIT-09/obsidian-agent-client/releases/latest",
-		});
-		const data = response.json as { tag_name?: string };
-		return data.tag_name ? semver.clean(data.tag_name) : null;
-	}
-
-	/**
-	 * Fetch the latest prerelease version from GitHub.
-	 */
-	private async fetchLatestPrerelease(): Promise<string | null> {
-		const response = await requestUrl({
-			url: "https://api.github.com/repos/RAIT-09/obsidian-agent-client/releases",
-		});
-		const releases = response.json as Array<{
-			tag_name: string;
-			prerelease: boolean;
-		}>;
-
-		// Find the first prerelease (releases are sorted by date descending)
-		const latestPrerelease = releases.find((r) => r.prerelease);
-		return latestPrerelease
-			? semver.clean(latestPrerelease.tag_name)
-			: null;
 	}
 
 	/**
@@ -1215,65 +536,10 @@ export default class AgentClientPlugin extends Plugin {
 	 * - Prerelease users: compare with both latest stable and latest prerelease
 	 */
 	async checkForUpdates(): Promise<boolean> {
-		const currentVersion =
-			semver.clean(this.manifest.version) || this.manifest.version;
-		const isCurrentPrerelease = semver.prerelease(currentVersion) !== null;
-
-		if (isCurrentPrerelease) {
-			// Prerelease user: check both stable and prerelease
-			const [latestStable, latestPrerelease] = await Promise.all([
-				this.fetchLatestStable(),
-				this.fetchLatestPrerelease(),
-			]);
-
-			const hasNewerStable =
-				latestStable && semver.gt(latestStable, currentVersion);
-			const hasNewerPrerelease =
-				latestPrerelease && semver.gt(latestPrerelease, currentVersion);
-
-			if (hasNewerStable || hasNewerPrerelease) {
-				// Prefer stable version notification if available
-				const newestVersion = hasNewerStable
-					? latestStable
-					: latestPrerelease;
-				new Notice(
-					`[Agent Client] Update available: v${newestVersion}`,
-				);
-				return true;
-			}
-		} else {
-			// Stable version user: check stable only
-			const latestStable = await this.fetchLatestStable();
-			if (latestStable && semver.gt(latestStable, currentVersion)) {
-				new Notice(`[Agent Client] Update available: v${latestStable}`);
-				return true;
-			}
-		}
-
-		return false;
+		return await checkForUpdates(this.manifest.version);
 	}
 
 	ensureDefaultAgentId(): void {
-		const availableIds = this.collectAvailableAgentIds();
-		if (availableIds.length === 0) {
-			this.settings.defaultAgentId = DEFAULT_SETTINGS.claude.id;
-			return;
-		}
-		if (!availableIds.includes(this.settings.defaultAgentId)) {
-			this.settings.defaultAgentId = availableIds[0];
-		}
-	}
-
-	private collectAvailableAgentIds(): string[] {
-		const ids = new Set<string>();
-		ids.add(this.settings.claude.id);
-		ids.add(this.settings.codex.id);
-		ids.add(this.settings.gemini.id);
-		for (const agent of this.settings.customAgents) {
-			if (agent.id && agent.id.length > 0) {
-				ids.add(agent.id);
-			}
-		}
-		return Array.from(ids);
+		ensureDefaultAgentId(this.settings, DEFAULT_SETTINGS.claude.id);
 	}
 }
