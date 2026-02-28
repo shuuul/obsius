@@ -306,7 +306,7 @@ function renderPermissionSection(
 	new Setting(containerEl)
 		.setName("Auto-allow permissions")
 		.setDesc(
-			"Automatically allow all permission requests from agents. ⚠️ Use with caution - this gives agents full access to your system.",
+			"Automatically allow all permission requests from agents. ⚠️ Use with caution - this gives agents full access to your system.", // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addToggle((toggle) =>
 			toggle
@@ -327,12 +327,13 @@ function renderWindowsSection(
 		return;
 	}
 
+	// eslint-disable-next-line obsidianmd/ui/sentence-case
 	new Setting(containerEl).setName("Windows Subsystem for Linux").setHeading();
 
 	new Setting(containerEl)
 		.setName("Enable WSL mode")
 		.setDesc(
-			"Run agents inside Windows Subsystem for Linux. Recommended for agents like Codex that don't work well in native Windows environments.",
+			"Run agents inside Windows Subsystem for Linux. Recommended for agents like Codex that don't work well in native Windows environments.", // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addToggle((toggle) =>
 			toggle
@@ -404,7 +405,7 @@ function renderExportSection(
 		)
 		.addText((text) =>
 			text
-				.setPlaceholder("obsius")
+				.setPlaceholder("obsius") // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(plugin.settings.exportSettings.frontmatterTag)
 				.onChange(async (value) => {
 					plugin.settings.exportSettings.frontmatterTag = value;

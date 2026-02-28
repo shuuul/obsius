@@ -14,11 +14,8 @@ const LEGACY_EXEMPTIONS = new Set([
 	"src/hooks/useChatController.ts",
 	"src/hooks/useChat.ts",
 	"src/hooks/useSessionHistory.ts",
-	"src/components/chat/ChatView.tsx",
-	"src/components/chat/FloatingChatView.tsx",
 	"src/shared/message-service.ts",
 	"src/shared/chat-exporter.ts",
-	"src/components/chat/ToolCallRenderer.tsx",
 ]);
 
 function walk(dir) {

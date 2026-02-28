@@ -144,7 +144,7 @@ function renderGeminiSettings(
 	new Setting(sectionEl)
 		.setName("API key")
 		.setDesc(
-			"Gemini API key. Required if not logging in with a Google account. (Stored as plain text)",
+			"Gemini API key. Required if not logging in with a Google account. (stored as plain text)",
 		)
 		.addText((text) => {
 			text.setPlaceholder("Enter your Gemini API key")
@@ -159,10 +159,10 @@ function renderGeminiSettings(
 	new Setting(sectionEl)
 		.setName("Path")
 		.setDesc(
-			'Absolute path to the Gemini CLI. On macOS/Linux, use "which gemini", and on Windows, use "where gemini" to find it.',
+			'Absolute path to the Gemini CLI. On macOS/Linux, use "which gemini", and on Windows, use "where gemini" to find it.', // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addText((text) => {
-			text.setPlaceholder("Absolute path to gemini")
+			text.setPlaceholder("Absolute path to Gemini CLI")
 				.setValue(gemini.command)
 				.onChange(async (value) => {
 					plugin.settings.gemini.command = value.trim();
@@ -173,7 +173,7 @@ function renderGeminiSettings(
 	new Setting(sectionEl)
 		.setName("Arguments")
 		.setDesc(
-			'Enter one argument per line. Leave empty to run without arguments.(Currently, the Gemini CLI requires the "--experimental-acp" option.)',
+			'Enter one argument per line. Leave empty to run without arguments. (Currently, the Gemini CLI requires the "--experimental-acp" option.)', // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addTextArea((text) => {
 			text.setPlaceholder("")
@@ -188,10 +188,10 @@ function renderGeminiSettings(
 	new Setting(sectionEl)
 		.setName("Environment variables")
 		.setDesc(
-			"Enter KEY=VALUE pairs, one per line. Required to authenticate with Vertex AI. GEMINI_API_KEY is derived from the field above.(Stored as plain text)",
+			"Enter KEY=VALUE pairs, one per line. Required to authenticate with Vertex AI. GEMINI_API_KEY is derived from the field above. (stored as plain text)", // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addTextArea((text) => {
-			text.setPlaceholder("GOOGLE_CLOUD_PROJECT=...")
+			text.setPlaceholder("GOOGLE_CLOUD_PROJECT=...") // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(formatEnv(gemini.env))
 				.onChange(async (value) => {
 					plugin.settings.gemini.env = parseEnv(value);
@@ -214,7 +214,7 @@ function renderClaudeSettings(
 	new Setting(sectionEl)
 		.setName("API key")
 		.setDesc(
-			"Anthropic API key. Required if not logging in with an Anthropic account. (Stored as plain text)",
+			"Anthropic API key. Required if not logging in with an Anthropic account. (stored as plain text)",
 		)
 		.addText((text) => {
 			text.setPlaceholder("Enter your Anthropic API key")
@@ -232,7 +232,7 @@ function renderClaudeSettings(
 			'Absolute path to the claude-agent-acp. On macOS/Linux, use "which claude-agent-acp", and on Windows, use "where claude-agent-acp" to find it.',
 		)
 		.addText((text) => {
-			text.setPlaceholder("Absolute path to claude-agent-acp")
+			text.setPlaceholder("Absolute path to Claude Code")
 				.setValue(claude.command)
 				.onChange(async (value) => {
 					plugin.settings.claude.command = value.trim();
@@ -256,7 +256,7 @@ function renderClaudeSettings(
 	new Setting(sectionEl)
 		.setName("Environment variables")
 		.setDesc(
-			"Enter KEY=VALUE pairs, one per line. ANTHROPIC_API_KEY is derived from the field above.",
+			"Enter KEY=VALUE pairs, one per line. ANTHROPIC_API_KEY is derived from the field above.", // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addTextArea((text) => {
 			text.setPlaceholder("")
@@ -280,7 +280,7 @@ function renderCodexSettings(
 	new Setting(sectionEl)
 		.setName("API key")
 		.setDesc(
-			"OpenAI API key. Required if not logging in with an OpenAI account. (Stored as plain text)",
+			"OpenAI API key. Required if not logging in with an OpenAI account. (stored as plain text)",
 		)
 		.addText((text) => {
 			text.setPlaceholder("Enter your OpenAI API key")
@@ -295,10 +295,10 @@ function renderCodexSettings(
 	new Setting(sectionEl)
 		.setName("Path")
 		.setDesc(
-			'Absolute path to the codex-acp. On macOS/Linux, use "which codex-acp", and on Windows, use "where codex-acp" to find it.',
+			'Absolute path to the codex-acp. On macOS/Linux, use "which codex-acp", and on Windows, use "where codex-acp" to find it.', // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addText((text) => {
-			text.setPlaceholder("Absolute path to codex-acp")
+			text.setPlaceholder("Absolute path to Codex")
 				.setValue(codex.command)
 				.onChange(async (value) => {
 					plugin.settings.codex.command = value.trim();
@@ -322,7 +322,7 @@ function renderCodexSettings(
 	new Setting(sectionEl)
 		.setName("Environment variables")
 		.setDesc(
-			"Enter KEY=VALUE pairs, one per line. OPENAI_API_KEY is derived from the field above.",
+			"Enter KEY=VALUE pairs, one per line. OPENAI_API_KEY is derived from the field above.", // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addTextArea((text) => {
 			text.setPlaceholder("")
@@ -389,7 +389,7 @@ function renderCustomAgent(
 		.setName("Agent ID")
 		.setDesc("Unique identifier used to reference this agent.")
 		.addText((text) => {
-			text.setPlaceholder("custom-agent")
+			text.setPlaceholder("custom-agent") // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(agent.id)
 				.onChange(async (value) => {
 					const previousId = plugin.settings.customAgents[index].id;
@@ -460,9 +460,9 @@ function renderCustomAgent(
 
 	new Setting(blockEl)
 		.setName("Environment variables")
-		.setDesc("Enter KEY=VALUE pairs, one per line. (Stored as plain text)")
+		.setDesc("Enter KEY=VALUE pairs, one per line. (stored as plain text)") // eslint-disable-line obsidianmd/ui/sentence-case
 		.addTextArea((text) => {
-			text.setPlaceholder("TOKEN=...")
+			text.setPlaceholder("TOKEN=...") // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(formatEnv(agent.env))
 				.onChange(async (value) => {
 					plugin.settings.customAgents[index].env = parseEnv(value);

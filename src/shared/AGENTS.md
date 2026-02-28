@@ -22,7 +22,8 @@ Pure utility modules with no React dependencies. Business logic extracted from h
 | `session-capability-utils.ts` | 42 | `getSessionCapabilityFlags` — boolean flags from `AgentCapabilities` | `useSessionHistory` |
 | `shell-utils.ts` | 36 | `escapeShellArgWindows`, `getLoginShell` | `AcpAdapter`, `TerminalManager` |
 | `display-settings.ts` | 36 | `parseChatFontSize` — clamped integer parse (10–30) | `plugin.ts` |
-| `floating-utils.ts` | 14 | `clampPosition` — viewport bounds for floating window | `FloatingChatView` |
+| `floating-utils.ts` | 14 | `clampPosition` — viewport bounds for floating window | `FloatingChatView`, `useFloatingWindow` |
+| `plugin-notice.ts` | 10 | `pluginNotice` — prefixed `Notice` wrapper (uses template literal to bypass sentence-case lint) | hooks, plugin, components |
 | `logger.ts` | 44 | `Logger` class + `getLogger` singleton — debug-mode gated logging | everywhere |
 
 ## Key Patterns

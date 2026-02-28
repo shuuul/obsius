@@ -3,7 +3,7 @@ import type { ChatMessage } from "../domain/models/chat-message";
 import type { ChatSession } from "../domain/models/chat-session";
 import { ChatExporter } from "../shared/chat-exporter";
 import { getLogger } from "../shared/logger";
-import { Notice } from "obsidian";
+import { pluginNotice } from "../shared/plugin-notice";
 import type AgentClientPlugin from "../plugin";
 
 // ============================================================================
@@ -139,7 +139,7 @@ export function useAutoExport(plugin: AgentClientPlugin): UseAutoExportReturn {
 
 				if (filePath) {
 					// Show success notification
-					new Notice(`[Obsius] Chat exported to ${filePath}`);
+					pluginNotice(`Chat exported to ${filePath}`);
 
 					// Log success
 					const context =
@@ -148,7 +148,7 @@ export function useAutoExport(plugin: AgentClientPlugin): UseAutoExportReturn {
 				}
 			} catch {
 				// Show error notification
-				new Notice("[Obsius] Failed to export chat");
+				pluginNotice("Failed to export chat");
 				// Error already logged in exportChat
 			}
 		},

@@ -1,4 +1,4 @@
-import { Notice } from "obsidian";
+import { pluginNotice } from "../shared/plugin-notice";
 import type { AgentClientPluginSettings } from "../plugin";
 import type { IChatViewContainer } from "../domain/ports/chat-view-container.port";
 
@@ -169,20 +169,20 @@ export const registerPermissionCommands = (host: AgentOpsHost): void => {
 export const broadcastPrompt = (host: AgentOpsHost): void => {
 	const allViews = host.viewRegistry.getAll();
 	if (allViews.length === 0) {
-		new Notice("[Obsius] No chat views open");
+		pluginNotice("No chat views open");
 		return;
 	}
 
 	const inputState = host.viewRegistry.toFocused((v) => v.getInputState());
 	if (!inputState || (inputState.text.trim() === "" && inputState.images.length === 0)) {
-		new Notice("[Obsius] No prompt to broadcast");
+		pluginNotice("No prompt to broadcast");
 		return;
 	}
 
 	const focusedId = host.viewRegistry.getFocusedId();
 	const targetViews = allViews.filter((v) => v.viewId !== focusedId);
 	if (targetViews.length === 0) {
-		new Notice("[Obsius] No other chat views to broadcast to");
+		pluginNotice("No other chat views to broadcast to");
 		return;
 	}
 
@@ -194,13 +194,13 @@ export const broadcastPrompt = (host: AgentOpsHost): void => {
 export const broadcastSend = async (host: AgentOpsHost): Promise<void> => {
 	const allViews = host.viewRegistry.getAll();
 	if (allViews.length === 0) {
-		new Notice("[Obsius] No chat views open");
+		pluginNotice("No chat views open");
 		return;
 	}
 
 	const sendableViews = allViews.filter((v) => v.canSend());
 	if (sendableViews.length === 0) {
-		new Notice("[Obsius] No views ready to send");
+		pluginNotice("No views ready to send");
 		return;
 	}
 
@@ -210,12 +210,12 @@ export const broadcastSend = async (host: AgentOpsHost): Promise<void> => {
 export const broadcastCancel = async (host: AgentOpsHost): Promise<void> => {
 	const allViews = host.viewRegistry.getAll();
 	if (allViews.length === 0) {
-		new Notice("[Obsius] No chat views open");
+		pluginNotice("No chat views open");
 		return;
 	}
 
 	await Promise.allSettled(allViews.map((v) => v.cancelOperation()));
-	new Notice("[Obsius] Cancel broadcast to all views");
+	pluginNotice("Cancel broadcast to all views");
 };
 
 export const registerBroadcastCommands = (host: AgentOpsHost): void => {

@@ -133,6 +133,7 @@ npm run docs:build       # VitePress build
 - **Current decomposition state**:
   - `src/plugin.ts` is now a thin orchestrator; command/update/view helpers moved to `src/plugin/`
   - `src/adapters/acp/acp.adapter.ts` is now a composition root; core logic moved to concern modules under `src/adapters/acp/`
+  - `ChatView.tsx` (~576 LOC), `FloatingChatView.tsx` (~523 LOC), `ToolCallRenderer.tsx` (~173 LOC) — decomposed via extracted hooks (`useWorkspaceEvents`, `useFloatingWindow`) and `DiffRenderer.tsx`
 - **TODOs in code**: `TODO(code-block)` markers for future code block chat view feature
 - **Undocumented API**: `vault.adapter.ts:211` uses `editor.cm` (CodeMirror 6 internal) for selection tracking
 - **ACP SDK**: `@agentclientprotocol/sdk ^0.14.1` — protocol may evolve

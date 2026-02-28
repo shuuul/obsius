@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { Notice, FileSystemAdapter } from "obsidian";
+import { FileSystemAdapter } from "obsidian";
 
 import type { AttachedImage } from "../components/chat/ImagePreviewStrip";
+import { pluginNotice } from "../shared/plugin-notice";
 import { SessionHistoryModal } from "../components/chat/SessionHistoryModal";
 
 import { NoteMentionService } from "../adapters/obsidian/mention-service";
@@ -248,7 +249,7 @@ export function useChatController(
 				requestedAgentId && requestedAgentId !== session.agentId;
 
 			if (messages.length === 0 && !isAgentSwitch) {
-				new Notice("[Obsius] Already a new session");
+				pluginNotice("Already a new session");
 				return;
 			}
 
@@ -292,7 +293,7 @@ export function useChatController(
 
 	const handleExportChat = useCallback(async () => {
 		if (messages.length === 0) {
-			new Notice("[Obsius] No messages to export");
+			pluginNotice("No messages to export");
 			return;
 		}
 
@@ -307,9 +308,9 @@ export function useChatController(
 				session.createdAt,
 				openFile,
 			);
-			new Notice(`[Obsius] Chat exported to ${filePath}`);
+			pluginNotice(`Chat exported to ${filePath}`);
 		} catch (error) {
-			new Notice("[Obsius] Failed to export chat");
+			pluginNotice("Failed to export chat");
 			logger.error("Export error:", error);
 		}
 	}, [messages, session, plugin, logger]);
@@ -334,9 +335,9 @@ export function useChatController(
 
 		try {
 			await agentSession.forceRestartAgent();
-			new Notice("[Obsius] Agent restarted");
+			pluginNotice("Agent restarted");
 		} catch (error) {
-			new Notice("[Obsius] Failed to restart agent");
+			pluginNotice("Failed to restart agent");
 			logger.error("Restart error:", error);
 		}
 	}, [logger, messages, session, autoExport, chat, agentSession]);

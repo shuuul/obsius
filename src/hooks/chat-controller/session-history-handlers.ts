@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo } from "react";
-import { App, Notice } from "obsidian";
+import { App } from "obsidian";
 import type * as React from "react";
 
 import { ConfirmDeleteModal } from "../../components/chat/ConfirmDeleteModal";
+import { pluginNotice } from "../../shared/plugin-notice";
 import { SessionHistoryModal } from "../../components/chat/SessionHistoryModal";
 import type { SessionInfo } from "../../domain/models/session-info";
 import type { Logger } from "../../shared/logger";
@@ -57,9 +58,9 @@ export function useSessionHistoryHandlers(
 				logger.log(`[useChatController] Restoring session: ${sessionId}`);
 				clearMessages();
 				await sessionHistory.restoreSession(sessionId, cwd);
-				new Notice("[Obsius] Session restored");
+				pluginNotice("Session restored");
 			} catch (error) {
-				new Notice("[Obsius] Failed to restore session");
+				pluginNotice("Failed to restore session");
 				logger.error("Session restore error:", error);
 			}
 		},
@@ -72,9 +73,9 @@ export function useSessionHistoryHandlers(
 				logger.log(`[useChatController] Forking session: ${sessionId}`);
 				clearMessages();
 				await sessionHistory.forkSession(sessionId, cwd);
-				new Notice("[Obsius] Session forked");
+				pluginNotice("Session forked");
 			} catch (error) {
-				new Notice("[Obsius] Failed to fork session");
+				pluginNotice("Failed to fork session");
 				logger.error("Session fork error:", error);
 			}
 		},
@@ -97,9 +98,9 @@ export function useSessionHistoryHandlers(
 							`[useChatController] Deleting session: ${sessionId}`,
 						);
 						await sessionHistory.deleteSession(sessionId);
-						new Notice("[Obsius] Session deleted");
+						pluginNotice("Session deleted");
 					} catch (error) {
-						new Notice("[Obsius] Failed to delete session");
+						pluginNotice("Failed to delete session");
 						logger.error("Session delete error:", error);
 					}
 				},

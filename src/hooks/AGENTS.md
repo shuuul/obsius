@@ -1,6 +1,6 @@
 # Hooks Layer Guide
 
-Central coordinator pattern: `useChatController` composes 9 specialized hooks + creates adapters via `useMemo`.
+Central coordinator pattern: `useChatController` composes 9 specialized hooks + creates adapters via `useMemo`. View-level concerns extracted to `useWorkspaceEvents` and `useFloatingWindow`.
 
 State transitions are now reducer-backed in `src/hooks/state/` for deterministic updates and easier test coverage.
 
@@ -19,6 +19,8 @@ State transitions are now reducer-backed in `src/hooks/state/` for deterministic
 | `useAutoMention` | 62 | `activeNote`, `isDisabled` | `IVaultAccess` |
 | `useInputHistory` | 143 | History index (ref-based) | `ChatMessage[]` |
 | `useSettings` | 19 | None — delegates to `useSyncExternalStore` | `plugin.settingsStore` |
+| `useWorkspaceEvents` | 130 | None (effect-only) | `Workspace` events |
+| `useFloatingWindow` | 171 | Position, size, drag state | `FloatingChatView` |
 
 ## Composition Flow
 
@@ -45,6 +47,11 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
 - `chat-controller/session-history-handlers.ts`: isolated history restore/fork/delete/open handler orchestration
 - `agent-session/helpers.ts` + `agent-session/types.ts`: normalization and shared type contracts
 - `session-history/session-history-ops.ts`: pure history list/load/restore/fork helpers
+
+## View-Level Hooks (used directly by ChatView / FloatingChatView, not via useChatController)
+
+- `useWorkspaceEvents`: Subscribes to shared workspace hotkey events (toggle-auto-mention, new-chat-requested, approve/reject permission, cancel-message). Eliminates ~140 lines of duplicated event wiring from both view files.
+- `useFloatingWindow`: Manages floating window drag, resize, and position/size persistence. Extracted from FloatingChatView to keep it under 600 LOC.
 
 ## Race Condition Patterns
 

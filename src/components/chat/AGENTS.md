@@ -1,11 +1,11 @@
 # Chat Components Guide
 
-23 components for the chat UI. Two entry points: `ChatView` (sidebar/Obsidian leaf) and `FloatingChatView` (draggable window).
+25 components for the chat UI. Two entry points: `ChatView` (sidebar/Obsidian leaf) and `FloatingChatView` (draggable window).
 
 ## Component Tree
 
 ```
-ChatView (ItemView, 880 lines) ─── Obsidian sidebar leaf
+ChatView (ItemView, ~576 lines) ─── Obsidian sidebar leaf
   └── ChatComponent (React)
         ├── ChatHeader          ─ agent label, session controls, settings gear
         ├── ChatMessages        ─ scrollable message list
@@ -13,8 +13,9 @@ ChatView (ItemView, 880 lines) ─── Obsidian sidebar leaf
         │           └── MessageContentRenderer (per content block)
         │                 ├── MarkdownTextRenderer  ─ markdown → Obsidian renderMarkdown
         │                 ├── TextWithMentions      ─ @[[note]] link rendering
-        │                 ├── ToolCallRenderer      ─ tool call accordion
-        │                 │     ├── TerminalRenderer  ─ polling terminal output
+        │                 ├── ToolCallRenderer      ─ tool call accordion (~173 lines)
+        │                 │     ├── DiffRenderer       ─ unified diff view (~257 lines)
+        │                 │     ├── TerminalRenderer   ─ polling terminal output
         │                 │     └── PermissionRequestSection ─ approve/deny buttons
         │                 ├── CollapsibleThought    ─ agent reasoning toggle
         │                 └── InlineHeader          ─ plan entries
@@ -24,7 +25,7 @@ ChatView (ItemView, 880 lines) ─── Obsidian sidebar leaf
         │     └── chat-input/     use-image-attachments, use-chat-input-behavior, InputActions, etc.
         └── ErrorOverlay        ─ session error display
 
-FloatingChatView (820 lines) ─── standalone window, NOT an ItemView
+FloatingChatView (~523 lines) ─── standalone window, NOT an ItemView
   └── Same ChatComponent tree via useChatController
 
 SessionHistoryModal (Modal) ─── Obsidian modal for session list
@@ -36,9 +37,9 @@ HeaderButton ─── reusable icon button for header
 
 ## Entry Points
 
-**ChatView**: Extends `ItemView`. Manages Obsidian leaf lifecycle, view state persistence (agent ID, expanded state), `IChatViewContainer` implementation for registry. Creates React root in `onOpen()`, destroys in `onClose()`.
+**ChatView**: Extends `ItemView`. Manages Obsidian leaf lifecycle, view state persistence (agent ID), `IChatViewContainer` implementation for registry. Creates React root in `onOpen()`, destroys in `onClose()`. Workspace event handling delegated to `useWorkspaceEvents` hook.
 
-**FloatingChatView**: NOT an `ItemView` — creates its own HTML container appended to `document.body`. Handles drag, resize, collapse, minimize. Implements `IChatViewContainer` independently.
+**FloatingChatView**: NOT an `ItemView` — creates its own HTML container appended to `document.body`. Drag/resize/position persistence delegated to `useFloatingWindow` hook. Implements `IChatViewContainer` independently via `FloatingViewContainer` wrapper class.
 
 Both share `ChatComponent` which calls `useChatController()` — all logic lives in hooks.
 
@@ -52,7 +53,7 @@ Components that need DOM event cleanup depend on `IChatViewHost` (not `ChatView`
 
 **Terminal output**: `TerminalRenderer` polls `acpClient.terminalOutput()` on interval. Shows live output + exit status.
 
-**Diff display**: `ToolCallRenderer` uses `diff` library to generate unified diff view. Computes relative paths via `toRelativePath()`.
+**Diff display**: `DiffRenderer` (extracted from `ToolCallRenderer`) uses `diff` library to generate unified diff view with word-level highlighting. Computes relative paths via `toRelativePath()`.
 
 **Permission UI**: `PermissionRequestSection` renders approve/deny options. Local `selectedOptionId` state for immediate feedback before server confirms.
 

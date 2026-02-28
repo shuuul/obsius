@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Notice } from "obsidian";
+import { pluginNotice } from "../../../shared/plugin-notice";
 
 import type { AttachedImage } from "../ImagePreviewStrip";
 
@@ -63,12 +63,12 @@ export function useImageAttachments({
 
 			for (const file of files) {
 				if (attachedImages.length + addedCount >= MAX_IMAGE_COUNT) {
-					new Notice(`[Obsius] Maximum ${MAX_IMAGE_COUNT} images allowed`);
+					pluginNotice(`Maximum ${MAX_IMAGE_COUNT} images allowed`);
 					break;
 				}
 
 				if (file.size > MAX_IMAGE_SIZE_BYTES) {
-					new Notice(`[Obsius] Image too large (max ${MAX_IMAGE_SIZE_MB}MB)`);
+					pluginNotice(`Image too large (max ${MAX_IMAGE_SIZE_MB}MB)`);
 					continue;
 				}
 
@@ -82,7 +82,7 @@ export function useImageAttachments({
 					addedCount++;
 				} catch (error) {
 					console.error("Failed to convert image:", error);
-					new Notice("[Obsius] Failed to attach image");
+					pluginNotice("Failed to attach image");
 				}
 			}
 		},
@@ -106,7 +106,7 @@ export function useImageAttachments({
 			e.preventDefault();
 
 			if (!supportsImages) {
-				new Notice("[Obsius] This agent does not support image attachments");
+				pluginNotice("This agent does not support image attachments");
 				return;
 			}
 
@@ -154,7 +154,7 @@ export function useImageAttachments({
 
 			e.preventDefault();
 			if (!supportsImages) {
-				new Notice("[Obsius] This agent does not support image attachments");
+				pluginNotice("This agent does not support image attachments");
 				return;
 			}
 
