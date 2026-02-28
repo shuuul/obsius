@@ -11,7 +11,11 @@ import type { Logger } from "../../shared/logger";
 import { wrapCommandForWsl } from "../../shared/wsl-utils";
 import { resolveCommandDirectory } from "../../shared/path-utils";
 import { getEnhancedWindowsEnv } from "../../shared/windows-env";
-import { escapeShellArgWindows, getLoginShell } from "../../shared/shell-utils";
+import {
+	BUILTIN_AGENT_DEFAULT_COMMANDS,
+	escapeShellArgWindows,
+	getLoginShell,
+} from "../../shared/shell-utils";
 
 export interface InitializeOperationResult {
 	connection: acp.ClientSideConnection;
@@ -52,13 +56,21 @@ export async function initializeOperation(args: {
 		getCommandNotFoundSuggestion,
 	} = args;
 
-	if (!config.command || config.command.trim().length === 0) {
-		throw new Error(
-			`Command not configured for agent "${config.displayName}" (${config.id}). Please configure the agent command in settings.`,
-		);
-	}
+	let command = config.command?.trim() || "";
 
-	const command = config.command.trim();
+	if (command.length === 0) {
+		const defaultCommand = BUILTIN_AGENT_DEFAULT_COMMANDS[config.id];
+		if (defaultCommand) {
+			command = defaultCommand;
+			logger.log(
+				`[AcpAdapter] No command configured for "${config.displayName}", using default: ${defaultCommand}`,
+			);
+		} else {
+			throw new Error(
+				`Command not configured for agent "${config.displayName}" (${config.id}). Please configure the agent command in settings.`,
+			);
+		}
+	}
 	const commandArgs = config.args.length > 0 ? [...config.args] : [];
 	logger.log(`[AcpAdapter] Active agent: ${config.displayName} (${config.id})`);
 	logger.log("[AcpAdapter] Command:", command);

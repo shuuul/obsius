@@ -1,8 +1,21 @@
+import { execFile } from "child_process";
 import { Platform } from "obsidian";
 
 /**
  * Shell escaping utilities for different platforms.
  */
+
+/**
+ * Default command names for built-in agents, keyed by agent ID.
+ * Used as fallback when the user leaves the command field empty —
+ * the login shell wrapper resolves these from PATH.
+ */
+export const BUILTIN_AGENT_DEFAULT_COMMANDS: Record<string, string> = {
+	"claude-code-acp": "claude-agent-acp",
+	"codex-acp": "codex-acp",
+	"gemini-cli": "gemini",
+	opencode: "opencode",
+};
 
 /**
  * Escape a shell argument for Windows cmd.exe.
@@ -33,4 +46,46 @@ export function getLoginShell(): string {
 		return process.env.SHELL;
 	}
 	return Platform.isMacOS ? "/bin/zsh" : "/bin/sh";
+}
+
+/**
+ * Resolve a command name to its absolute path via the user's shell PATH.
+ * Spawns a login shell to pick up the full PATH from shell profiles.
+ * Returns null if the command is not found or resolution times out.
+ */
+export function resolveCommandFromShell(
+	commandName: string,
+): Promise<string | null> {
+	return new Promise((resolve) => {
+		if (!commandName || commandName.trim().length === 0) {
+			resolve(null);
+			return;
+		}
+
+		const name = commandName.trim();
+
+		if (Platform.isWin) {
+			execFile("where", [name], { timeout: 5000 }, (error, stdout) => {
+				if (error || !stdout.trim()) {
+					resolve(null);
+					return;
+				}
+				resolve(stdout.trim().split(/\r?\n/)[0]);
+			});
+		} else {
+			const shell = getLoginShell();
+			execFile(
+				shell,
+				["-l", "-c", `which '${name.replace(/'/g, "'\\''")}'`],
+				{ timeout: 5000 },
+				(error, stdout) => {
+					if (error || !stdout.trim()) {
+						resolve(null);
+						return;
+					}
+					resolve(stdout.trim().split("\n")[0]);
+				},
+			);
+		}
+	});
 }

@@ -1,10 +1,14 @@
-import { Setting } from "obsidian";
+import { Notice, Setting, type TextComponent } from "obsidian";
 import type AgentClientPlugin from "../../../plugin";
 import type {
 	AgentEnvVar,
 	CustomAgentSettings,
 } from "../../../plugin";
 import { normalizeEnvVars } from "../../../shared/settings-utils";
+import {
+	BUILTIN_AGENT_DEFAULT_COMMANDS,
+	resolveCommandFromShell,
+} from "../../../shared/shell-utils";
 
 const formatArgs = (args: string[]): string => args.join("\n");
 
@@ -88,7 +92,7 @@ export const getAgentOptions = (
 ): { id: string; label: string }[] => {
 	const toOption = (id: string, displayName: string) => ({
 		id,
-		label: `${displayName} (${id})`,
+		label: displayName,
 	});
 
 	const options: { id: string; label: string }[] = [
@@ -164,19 +168,14 @@ function renderGeminiSettings(
 			text.inputEl.type = "password";
 		});
 
-	new Setting(sectionEl)
-		.setName("Path")
-		.setDesc(
-			'Absolute path to the Gemini CLI. On macOS/Linux, use "which gemini", and on Windows, use "where gemini" to find it.', // eslint-disable-line obsidianmd/ui/sentence-case
-		)
-		.addText((text) => {
-			text.setPlaceholder("Absolute path to Gemini CLI")
-				.setValue(gemini.command)
-				.onChange(async (value) => {
-					plugin.settings.gemini.command = value.trim();
-					await plugin.saveSettings();
-				});
-		});
+	renderPathSettingWithDetect(sectionEl, plugin, {
+		agentId: gemini.id,
+		getValue: () => plugin.settings.gemini.command,
+		setValue: async (value) => {
+			plugin.settings.gemini.command = value;
+			await plugin.saveSettings();
+		},
+	});
 
 	new Setting(sectionEl)
 		.setName("Arguments")
@@ -234,19 +233,14 @@ function renderClaudeSettings(
 			text.inputEl.type = "password";
 		});
 
-	new Setting(sectionEl)
-		.setName("Path")
-		.setDesc(
-			'Absolute path to the claude-agent-acp. On macOS/Linux, use "which claude-agent-acp", and on Windows, use "where claude-agent-acp" to find it.',
-		)
-		.addText((text) => {
-			text.setPlaceholder("Absolute path to Claude Code")
-				.setValue(claude.command)
-				.onChange(async (value) => {
-					plugin.settings.claude.command = value.trim();
-					await plugin.saveSettings();
-				});
-		});
+	renderPathSettingWithDetect(sectionEl, plugin, {
+		agentId: claude.id,
+		getValue: () => plugin.settings.claude.command,
+		setValue: async (value) => {
+			plugin.settings.claude.command = value;
+			await plugin.saveSettings();
+		},
+	});
 
 	new Setting(sectionEl)
 		.setName("Arguments")
@@ -287,19 +281,14 @@ function renderOpenCodeSettings(
 		.setName(opencode.displayName || "OpenCode")
 		.setHeading();
 
-	new Setting(sectionEl)
-		.setName("Path")
-		.setDesc(
-			'Absolute path to the opencode binary. On macOS/Linux, use "which opencode", and on Windows, use "where opencode" to find it.',
-		)
-		.addText((text) => {
-			text.setPlaceholder("e.g. /opt/homebrew/bin/opencode") // eslint-disable-line obsidianmd/ui/sentence-case
-				.setValue(opencode.command)
-				.onChange(async (value) => {
-					plugin.settings.opencode.command = value.trim();
-					await plugin.saveSettings();
-				});
-		});
+	renderPathSettingWithDetect(sectionEl, plugin, {
+		agentId: opencode.id,
+		getValue: () => plugin.settings.opencode.command,
+		setValue: async (value) => {
+			plugin.settings.opencode.command = value;
+			await plugin.saveSettings();
+		},
+	});
 
 	new Setting(sectionEl)
 		.setName("Arguments")
@@ -355,19 +344,14 @@ function renderCodexSettings(
 			text.inputEl.type = "password";
 		});
 
-	new Setting(sectionEl)
-		.setName("Path")
-		.setDesc(
-			'Absolute path to the codex-acp. On macOS/Linux, use "which codex-acp", and on Windows, use "where codex-acp" to find it.', // eslint-disable-line obsidianmd/ui/sentence-case
-		)
-		.addText((text) => {
-			text.setPlaceholder("Absolute path to Codex")
-				.setValue(codex.command)
-				.onChange(async (value) => {
-					plugin.settings.codex.command = value.trim();
-					await plugin.saveSettings();
-				});
-		});
+	renderPathSettingWithDetect(sectionEl, plugin, {
+		agentId: codex.id,
+		getValue: () => plugin.settings.codex.command,
+		setValue: async (value) => {
+			plugin.settings.codex.command = value;
+			await plugin.saveSettings();
+		},
+	});
 
 	new Setting(sectionEl)
 		.setName("Arguments")
@@ -437,6 +421,61 @@ export const renderCustomAgents = (
 	});
 };
 
+function renderPathSettingWithDetect(
+	containerEl: HTMLElement,
+	_plugin: AgentClientPlugin,
+	opts: {
+		agentId: string;
+		getValue: () => string;
+		setValue: (value: string) => Promise<void>;
+	},
+): void {
+	const defaultCommand = BUILTIN_AGENT_DEFAULT_COMMANDS[opts.agentId] ?? "";
+	let textRef: TextComponent | null = null;
+
+	const setting = new Setting(containerEl)
+		.setName("Command")
+		.setDesc(
+			defaultCommand
+				? `Leave empty to use "${defaultCommand}" from your shell PATH, or enter a custom path.`
+				: "Command name or absolute path to the agent binary.",
+		)
+		.addText((text) => {
+			textRef = text;
+			text.setPlaceholder(defaultCommand || "Command name or path")
+				.setValue(opts.getValue())
+				.onChange(async (value) => {
+					await opts.setValue(value.trim());
+				});
+		});
+
+	if (defaultCommand) {
+		setting.addExtraButton((button) => {
+			button
+				.setIcon("search")
+				.setTooltip("Detect from shell PATH") // eslint-disable-line obsidianmd/ui/sentence-case
+				.onClick(async () => {
+					button.setDisabled(true);
+					try {
+						const resolved =
+							await resolveCommandFromShell(defaultCommand);
+						if (resolved) {
+							textRef?.setValue(resolved);
+							await opts.setValue(resolved);
+							new Notice(`Found: ${resolved}`);
+						} else {
+							new Notice(
+								`"${defaultCommand}" not found in shell PATH.`,
+							);
+						}
+					} finally {
+						button.setDisabled(false);
+					}
+				});
+		});
+	}
+}
+
 function renderCustomAgent(
 	containerEl: HTMLElement,
 	plugin: AgentClientPlugin,
@@ -497,10 +536,10 @@ function renderCustomAgent(
 		});
 
 	new Setting(blockEl)
-		.setName("Path")
-		.setDesc("Absolute path to the custom agent.")
+		.setName("Command")
+		.setDesc("Command name or absolute path to the agent binary.")
 		.addText((text) => {
-			text.setPlaceholder("Absolute path to custom agent")
+			text.setPlaceholder("Command name or path")
 				.setValue(agent.command)
 				.onChange(async (value) => {
 					plugin.settings.customAgents[index].command = value.trim();
