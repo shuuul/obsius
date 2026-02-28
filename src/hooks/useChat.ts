@@ -21,61 +21,30 @@ import {
 	type ChatAction,
 } from "./state/chat.actions";
 
-// ============================================================================
-// Types
-// ============================================================================
 
-/** Tool call content type extracted for type safety */
 type ToolCallMessageContent = Extract<MessageContent, { type: "tool_call" }>;
 
-/**
- * Options for sending a message.
- */
 export interface SendMessageOptions {
-	/** Currently active note for auto-mention */
-	activeNote: NoteMetadata | null;
-	/** Vault base path for mention resolution */
-	vaultBasePath: string;
-	/** Whether auto-mention is temporarily disabled */
-	isAutoMentionDisabled?: boolean;
-	/** Attached images */
-	images?: ImagePromptContent[];
+		activeNote: NoteMetadata | null;
+		vaultBasePath: string;
+		isAutoMentionDisabled?: boolean;
+		images?: ImagePromptContent[];
 }
 
-/**
- * Return type for useChat hook.
- */
 export interface UseChatReturn {
-	/** All messages in the current chat session */
-	messages: ChatMessage[];
-	/** Whether a message is currently being sent */
-	isSending: boolean;
-	/** Last user message (can be restored after cancel) */
-	lastUserMessage: string | null;
-	/** Error information from message operations */
-	errorInfo: ErrorInfo | null;
+		messages: ChatMessage[];
+		isSending: boolean;
+		lastUserMessage: string | null;
+		errorInfo: ErrorInfo | null;
 
-	/**
-	 * Send a message to the agent.
-	 * @param content - Message content
-	 * @param options - Message options (activeNote, vaultBasePath, etc.)
-	 */
-	sendMessage: (
+		sendMessage: (
 		content: string,
 		options: SendMessageOptions,
 	) => Promise<void>;
 
-	/**
-	 * Clear all messages (e.g., when starting a new session).
-	 */
-	clearMessages: () => void;
+		clearMessages: () => void;
 
-	/**
-	 * Set initial messages from loaded session history.
-	 * Converts conversation history to ChatMessage format.
-	 * @param history - Conversation history from loadSession
-	 */
-	setInitialMessages: (
+		setInitialMessages: (
 		history: Array<{
 			role: string;
 			content: Array<{ type: string; text: string }>;
@@ -83,94 +52,46 @@ export interface UseChatReturn {
 		}>,
 	) => void;
 
-	/**
-	 * Set messages directly from local storage.
-	 * Unlike setInitialMessages which converts from ACP history format,
-	 * this accepts ChatMessage[] as-is (for resume/fork operations).
-	 * @param localMessages - Chat messages from local storage
-	 */
-	setMessagesFromLocal: (localMessages: ChatMessage[]) => void;
+		setMessagesFromLocal: (localMessages: ChatMessage[]) => void;
 
-	/**
-	 * Clear the current error.
-	 */
-	clearError: () => void;
+		clearError: () => void;
 
-	/**
-	 * Callback to add a new message.
-	 * Used by AcpAdapter when receiving agent messages.
-	 */
-	addMessage: (message: ChatMessage) => void;
+		addMessage: (message: ChatMessage) => void;
 
-	/**
-	 * Callback to update the last message content.
-	 * Used by AcpAdapter for streaming text updates.
-	 */
-	updateLastMessage: (content: MessageContent) => void;
+		updateLastMessage: (content: MessageContent) => void;
 
-	/**
-	 * Callback to update a specific message by tool call ID.
-	 * Used by AcpAdapter for tool call status updates.
-	 */
-	updateMessage: (toolCallId: string, content: MessageContent) => void;
+		updateMessage: (toolCallId: string, content: MessageContent) => void;
 
-	/**
-	 * Callback to upsert a tool call message.
-	 * If a tool call with the given ID exists, it will be updated.
-	 * Otherwise, a new message will be created.
-	 * Used by AcpAdapter for tool_call and tool_call_update events.
-	 */
-	upsertToolCall: (toolCallId: string, content: MessageContent) => void;
+		upsertToolCall: (toolCallId: string, content: MessageContent) => void;
 
-	/**
-	 * Handle a session update from the agent.
-	 * This is the unified handler for all session update events.
-	 * Should be registered with agentClient.onSessionUpdate().
-	 */
-	handleSessionUpdate: (update: SessionUpdate) => void;
+		handleSessionUpdate: (update: SessionUpdate) => void;
 }
 
-/**
- * Session context required for sending messages.
- */
 export interface SessionContext {
 	sessionId: string | null;
 	authMethods: AuthenticationMethod[];
-	/** Prompt capabilities from agent initialization */
-	promptCapabilities?: {
+		promptCapabilities?: {
 		image?: boolean;
 		audio?: boolean;
 		embeddedContext?: boolean;
 	};
 }
 
-/**
- * Settings context required for message preparation.
- */
 export interface SettingsContext {
 	windowsWslMode: boolean;
 	maxNoteLength: number;
 	maxSelectionLength: number;
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
 
-/**
- * Merge new tool call content into existing tool call.
- * Preserves existing values when new values are undefined.
- */
 function mergeToolCallContent(
 	existing: ToolCallMessageContent,
 	update: ToolCallMessageContent,
 ): ToolCallMessageContent {
-	// Merge content arrays
 	let mergedContent = existing.content || [];
 	if (update.content !== undefined) {
 		const newContent = update.content || [];
 
-		// If new content contains diff, replace all old diffs
 		const hasDiff = newContent.some((item) => item.type === "diff");
 		if (hasDiff) {
 			mergedContent = mergedContent.filter(
@@ -204,28 +125,7 @@ function mergeToolCallContent(
 	};
 }
 
-// ============================================================================
-// Hook Implementation
-// ============================================================================
 
-/**
- * Hook for managing chat messages and message sending.
- *
- * This hook owns:
- * - Message history (messages array)
- * - Sending state (isSending flag)
- * - Message operations (send, add, update)
- *
- * It provides callbacks (addMessage, updateLastMessage, updateMessage) that
- * should be passed to AcpAdapter.setMessageCallbacks() for receiving
- * agent responses.
- *
- * @param agentClient - Agent client for sending messages
- * @param vaultAccess - Vault access for reading notes
- * @param mentionService - Mention service for parsing mentions
- * @param sessionContext - Session information (sessionId, authMethods)
- * @param settingsContext - Settings information (windowsWslMode)
- */
 export function useChat(
 	agentClient: IAgentClient,
 	vaultAccess: IVaultAccess,
@@ -249,20 +149,12 @@ export function useChat(
 		[],
 	);
 
-	/**
-	 * Add a new message to the chat.
-	 */
-	const addMessage = useCallback((message: ChatMessage): void => {
+		const addMessage = useCallback((message: ChatMessage): void => {
 		applyMessageUpdater((prev) => [...prev, message]);
 	}, [applyMessageUpdater]);
 
-	/**
-	 * Update the last message in the chat.
-	 * Creates a new assistant message if needed.
-	 */
-	const updateLastMessage = useCallback((content: MessageContent): void => {
+		const updateLastMessage = useCallback((content: MessageContent): void => {
 		applyMessageUpdater((prev) => {
-			// If no messages or last message is not assistant, create new assistant message
 			if (
 				prev.length === 0 ||
 				prev[prev.length - 1].role !== "assistant"
@@ -276,19 +168,16 @@ export function useChat(
 				return [...prev, newMessage];
 			}
 
-			// Update existing last message
 			const lastMessage = prev[prev.length - 1];
 			const updatedMessage = { ...lastMessage };
 
 			if (content.type === "text" || content.type === "agent_thought") {
-				// Append to existing content of same type or create new content
 				const existingContentIndex = updatedMessage.content.findIndex(
 					(c) => c.type === content.type,
 				);
 				if (existingContentIndex >= 0) {
 					const existingContent =
 						updatedMessage.content[existingContentIndex];
-					// Type guard: we know it's text or agent_thought from findIndex condition
 					if (
 						existingContent.type === "text" ||
 						existingContent.type === "agent_thought"
@@ -302,7 +191,6 @@ export function useChat(
 					updatedMessage.content.push(content);
 				}
 			} else {
-				// Replace or add non-text content
 				const existingIndex = updatedMessage.content.findIndex(
 					(c) => c.type === content.type,
 				);
@@ -318,15 +206,8 @@ export function useChat(
 		});
 	}, [applyMessageUpdater]);
 
-	/**
-	 * Update or create the last user message with new content.
-	 * Used for session/load to reconstruct user messages from chunks.
-	 *
-	 * Similar to updateLastMessage but targets "user" role instead of "assistant".
-	 */
-	const updateUserMessage = useCallback((content: MessageContent): void => {
+		const updateUserMessage = useCallback((content: MessageContent): void => {
 		applyMessageUpdater((prev) => {
-			// If no messages or last message is not user, create new user message
 			if (prev.length === 0 || prev[prev.length - 1].role !== "user") {
 				const newMessage: ChatMessage = {
 					id: crypto.randomUUID(),
@@ -337,12 +218,10 @@ export function useChat(
 				return [...prev, newMessage];
 			}
 
-			// Update existing last message
 			const lastMessage = prev[prev.length - 1];
 			const updatedMessage = { ...lastMessage };
 
 			if (content.type === "text") {
-				// Append to existing text content or create new
 				const existingContentIndex = updatedMessage.content.findIndex(
 					(c) => c.type === "text",
 				);
@@ -359,7 +238,6 @@ export function useChat(
 					updatedMessage.content.push(content);
 				}
 			} else {
-				// Replace or add non-text content
 				const existingIndex = updatedMessage.content.findIndex(
 					(c) => c.type === content.type,
 				);
@@ -374,11 +252,7 @@ export function useChat(
 		});
 	}, [applyMessageUpdater]);
 
-	/**
-	 * Update a specific message by tool call ID.
-	 * Only updates if the tool call exists in state.
-	 */
-	const updateMessage = useCallback(
+		const updateMessage = useCallback(
 		(toolCallId: string, content: MessageContent): void => {
 			if (content.type !== "tool_call") return;
 
@@ -400,18 +274,11 @@ export function useChat(
 		[applyMessageUpdater],
 	);
 
-	/**
-	 * Upsert a tool call message.
-	 * If a tool call with the given ID exists, it will be updated (merged).
-	 * Otherwise, a new assistant message will be created.
-	 * All logic is inside setMessages callback to avoid race conditions.
-	 */
-	const upsertToolCall = useCallback(
+		const upsertToolCall = useCallback(
 		(toolCallId: string, content: MessageContent): void => {
 			if (content.type !== "tool_call") return;
 
 			applyMessageUpdater((prev) => {
-				// Try to find existing tool call
 				let found = false;
 				const updated = prev.map((message) => ({
 					...message,
@@ -431,7 +298,6 @@ export function useChat(
 					return updated;
 				}
 
-				// Not found - create new message
 				return [
 					...prev,
 					{
@@ -446,15 +312,7 @@ export function useChat(
 		[applyMessageUpdater],
 	);
 
-	/**
-	 * Handle a session update from the agent.
-	 * This is the unified handler for all session update events.
-	 *
-	 * Note: available_commands_update and current_mode_update are not handled here
-	 * as they are session-level updates, not message-level updates.
-	 * They should be handled by useAgentSession.
-	 */
-	const handleSessionUpdate = useCallback(
+		const handleSessionUpdate = useCallback(
 		(update: SessionUpdate): void => {
 			switch (update.type) {
 				case "agent_message_chunk":
@@ -500,10 +358,8 @@ export function useChat(
 					});
 					break;
 
-				// Session-level updates are handled elsewhere (useAgentSession)
 				case "available_commands_update":
 				case "current_mode_update":
-					// These are intentionally not handled here
 					break;
 
 				default: {
@@ -515,10 +371,7 @@ export function useChat(
 		[updateLastMessage, upsertToolCall],
 	);
 
-	/**
-	 * Clear all messages.
-	 */
-	const clearMessages = useCallback((): void => {
+		const clearMessages = useCallback((): void => {
 		const actions: ChatAction[] = [
 			{ type: "clear_messages" },
 			{ type: "set_last_user_message", message: null },
@@ -530,11 +383,7 @@ export function useChat(
 		}
 	}, []);
 
-	/**
-	 * Set initial messages from loaded session history.
-	 * Converts conversation history to ChatMessage format.
-	 */
-	const setInitialMessages = useCallback(
+		const setInitialMessages = useCallback(
 		(
 			history: Array<{
 				role: string;
@@ -542,7 +391,6 @@ export function useChat(
 				timestamp?: string;
 			}>,
 		): void => {
-			// Convert conversation history to ChatMessage format
 			const chatMessages: ChatMessage[] = history.map((msg) => ({
 				id: crypto.randomUUID(),
 				role: msg.role as "user" | "assistant",
@@ -560,12 +408,7 @@ export function useChat(
 		[],
 	);
 
-	/**
-	 * Set messages directly from local storage.
-	 * Unlike setInitialMessages which converts from ACP history format,
-	 * this accepts ChatMessage[] as-is (for resume/fork operations).
-	 */
-	const setMessagesFromLocal = useCallback(
+		const setMessagesFromLocal = useCallback(
 		(localMessages: ChatMessage[]): void => {
 			dispatch({ type: "set_messages", messages: localMessages });
 			dispatch({ type: "send_complete" });
@@ -574,26 +417,16 @@ export function useChat(
 		[],
 	);
 
-	/**
-	 * Clear the current error.
-	 */
-	const clearError = useCallback((): void => {
+		const clearError = useCallback((): void => {
 		dispatch({ type: "clear_error" });
 	}, []);
 
-	/**
-	 * Check if paths should be converted to WSL format.
-	 */
-	const shouldConvertToWsl = useMemo(() => {
+		const shouldConvertToWsl = useMemo(() => {
 		return Platform.isWin && settingsContext.windowsWslMode;
 	}, [settingsContext.windowsWslMode]);
 
-	/**
-	 * Send a message to the agent.
-	 */
-	const sendMessage = useCallback(
+		const sendMessage = useCallback(
 		async (content: string, options: SendMessageOptions): Promise<void> => {
-			// Guard: Need session ID to send
 			if (!sessionContext.sessionId) {
 				dispatch({
 					type: "set_error",
@@ -605,7 +438,6 @@ export function useChat(
 				return;
 			}
 
-			// Phase 1: Prepare prompt using message-service
 			const prepared = await preparePrompt(
 				{
 					message: content,
@@ -624,10 +456,8 @@ export function useChat(
 				mentionService,
 			);
 
-			// Phase 2: Build user message for UI
 			const userMessageContent: MessageContent[] = [];
 
-			// Text part (with or without auto-mention context)
 			if (prepared.autoMentionContext) {
 				userMessageContent.push({
 					type: "text_with_context",
@@ -641,7 +471,6 @@ export function useChat(
 				});
 			}
 
-			// Image parts
 			if (options.images && options.images.length > 0) {
 				for (const img of options.images) {
 					userMessageContent.push({
@@ -660,11 +489,9 @@ export function useChat(
 			};
 			addMessage(userMessage);
 
-			// Phase 3: Set sending state and store original message
 			dispatch({ type: "send_start" });
 			dispatch({ type: "set_last_user_message", message: content });
 
-			// Phase 4: Send prepared prompt to agent using message-service
 			try {
 				const result = await sendPreparedPrompt(
 					{
@@ -677,14 +504,12 @@ export function useChat(
 				);
 
 				if (result.success) {
-					// Success - clear stored message
 					dispatch({ type: "send_complete" });
 					dispatch({
 						type: "set_last_user_message",
 						message: null,
 					});
 				} else {
-					// Error from message-service
 					dispatch({ type: "send_complete" });
 					dispatch({
 						type: "set_error",
@@ -701,7 +526,6 @@ export function useChat(
 					});
 				}
 			} catch (error) {
-				// Unexpected error
 				dispatch({ type: "send_complete" });
 				dispatch({
 					type: "set_error",

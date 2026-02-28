@@ -1,0 +1,83 @@
+import type * as React from "react";
+import type AgentClientPlugin from "../../plugin";
+import type { AttachedImage } from "../../components/chat/ImagePreviewStrip";
+import type { SessionHistoryModal } from "../../components/chat/SessionHistoryModal";
+import type { ImagePromptContent } from "../../domain/models/prompt-content";
+import { useSettings } from "../useSettings";
+import { useMentions } from "../useMentions";
+import { useSlashCommands } from "../useSlashCommands";
+import { useAutoMention } from "../useAutoMention";
+import { useAgentSession } from "../useAgentSession";
+import { useChat } from "../useChat";
+import { usePermission } from "../usePermission";
+import { useAutoExport } from "../useAutoExport";
+import { useSessionHistory } from "../useSessionHistory";
+import type { Logger } from "../../shared/logger";
+import type { IAcpClient } from "../../adapters/acp/acp.adapter";
+import { ObsidianVaultAdapter } from "../../adapters/obsidian/vault.adapter";
+import { NoteMentionService } from "../../adapters/obsidian/mention-service";
+
+export interface AgentInfo {
+	id: string;
+	displayName: string;
+}
+
+export interface UseChatControllerOptions {
+	plugin: AgentClientPlugin;
+	viewId: string;
+	workingDirectory?: string;
+	initialAgentId?: string;
+	config?: {
+		agent?: string;
+		model?: string;
+	};
+}
+
+export interface UseChatControllerReturn {
+	logger: Logger;
+	vaultPath: string;
+	acpAdapter: IAcpClient;
+	vaultAccessAdapter: ObsidianVaultAdapter;
+	noteMentionService: NoteMentionService;
+	settings: ReturnType<typeof useSettings>;
+	session: ReturnType<typeof useAgentSession>["session"];
+	isSessionReady: boolean;
+	messages: ReturnType<typeof useChat>["messages"];
+	isSending: boolean;
+	isUpdateAvailable: boolean;
+	isLoadingSessionHistory: boolean;
+	permission: ReturnType<typeof usePermission>;
+	mentions: ReturnType<typeof useMentions>;
+	autoMention: ReturnType<typeof useAutoMention>;
+	slashCommands: ReturnType<typeof useSlashCommands>;
+	sessionHistory: ReturnType<typeof useSessionHistory>;
+	autoExport: ReturnType<typeof useAutoExport>;
+	activeAgentLabel: string;
+	availableAgents: AgentInfo[];
+	errorInfo:
+		| ReturnType<typeof useChat>["errorInfo"]
+		| ReturnType<typeof useAgentSession>["errorInfo"];
+	handleSendMessage: (
+		content: string,
+		images?: ImagePromptContent[],
+	) => Promise<void>;
+	handleStopGeneration: () => Promise<void>;
+	handleNewChat: (requestedAgentId?: string) => Promise<void>;
+	handleExportChat: () => Promise<void>;
+	handleSwitchAgent: (agentId: string) => Promise<void>;
+	handleRestartAgent: () => Promise<void>;
+	handleClearError: () => void;
+	handleRestoreSession: (sessionId: string, cwd: string) => Promise<void>;
+	handleForkSession: (sessionId: string, cwd: string) => Promise<void>;
+	handleDeleteSession: (sessionId: string) => void;
+	handleOpenHistory: () => void;
+	handleSetMode: (modeId: string) => Promise<void>;
+	handleSetModel: (modelId: string) => Promise<void>;
+	inputValue: string;
+	setInputValue: (value: string) => void;
+	attachedImages: AttachedImage[];
+	setAttachedImages: (images: AttachedImage[]) => void;
+	restoredMessage: string | null;
+	handleRestoredMessageConsumed: () => void;
+	historyModalRef: React.RefObject<SessionHistoryModal | null>;
+}

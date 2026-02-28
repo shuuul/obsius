@@ -1,0 +1,130 @@
+import type { AgentClientPluginSettings } from "../../plugin";
+import type {
+	BaseAgentSettings,
+	ClaudeAgentSettings,
+	GeminiAgentSettings,
+	CodexAgentSettings,
+} from "../../domain/models/agent-config";
+import { toAgentConfig } from "../../shared/settings-utils";
+import type { SessionState, ChatSession } from "../../domain/models/chat-session";
+import type { AgentInfo } from "./types";
+
+export function getDefaultAgentId(settings: AgentClientPluginSettings): string {
+	return settings.defaultAgentId || settings.claude.id;
+}
+
+export function getAvailableAgentsFromSettings(
+	settings: AgentClientPluginSettings,
+): AgentInfo[] {
+	return [
+		{
+			id: settings.claude.id,
+			displayName: settings.claude.displayName || settings.claude.id,
+		},
+		{
+			id: settings.codex.id,
+			displayName: settings.codex.displayName || settings.codex.id,
+		},
+		{
+			id: settings.gemini.id,
+			displayName: settings.gemini.displayName || settings.gemini.id,
+		},
+		...settings.customAgents.map((agent) => ({
+			id: agent.id,
+			displayName: agent.displayName || agent.id,
+		})),
+	];
+}
+
+export function getCurrentAgent(
+	settings: AgentClientPluginSettings,
+	agentId?: string,
+): AgentInfo {
+	const activeId = agentId || getDefaultAgentId(settings);
+	const agents = getAvailableAgentsFromSettings(settings);
+	return (
+		agents.find((agent) => agent.id === activeId) || {
+			id: activeId,
+			displayName: activeId,
+		}
+	);
+}
+
+export function findAgentSettings(
+	settings: AgentClientPluginSettings,
+	agentId: string,
+): BaseAgentSettings | null {
+	if (agentId === settings.claude.id) {
+		return settings.claude;
+	}
+	if (agentId === settings.codex.id) {
+		return settings.codex;
+	}
+	if (agentId === settings.gemini.id) {
+		return settings.gemini;
+	}
+	const customAgent = settings.customAgents.find((agent) => agent.id === agentId);
+	return customAgent || null;
+}
+
+export function buildAgentConfigWithApiKey(
+	settings: AgentClientPluginSettings,
+	agentSettings: BaseAgentSettings,
+	agentId: string,
+	workingDirectory: string,
+) {
+	const baseConfig = toAgentConfig(agentSettings, workingDirectory);
+
+	if (agentId === settings.claude.id) {
+		const claudeSettings = agentSettings as ClaudeAgentSettings;
+		return {
+			...baseConfig,
+			env: {
+				...baseConfig.env,
+				ANTHROPIC_API_KEY: claudeSettings.apiKey,
+			},
+		};
+	}
+	if (agentId === settings.codex.id) {
+		const codexSettings = agentSettings as CodexAgentSettings;
+		return {
+			...baseConfig,
+			env: {
+				...baseConfig.env,
+				OPENAI_API_KEY: codexSettings.apiKey,
+			},
+		};
+	}
+	if (agentId === settings.gemini.id) {
+		const geminiSettings = agentSettings as GeminiAgentSettings;
+		return {
+			...baseConfig,
+			env: {
+				...baseConfig.env,
+				GEMINI_API_KEY: geminiSettings.apiKey,
+			},
+		};
+	}
+
+	return baseConfig;
+}
+
+export function createInitialSession(
+	agentId: string,
+	agentDisplayName: string,
+	workingDirectory: string,
+): ChatSession {
+	return {
+		sessionId: null,
+		state: "disconnected" as SessionState,
+		agentId,
+		agentDisplayName,
+		authMethods: [],
+		availableCommands: undefined,
+		modes: undefined,
+		models: undefined,
+		createdAt: new Date(),
+		lastActivityAt: new Date(),
+		workingDirectory,
+	};
+}

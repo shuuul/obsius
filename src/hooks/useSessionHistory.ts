@@ -3,8 +3,6 @@ import type { IAgentClient } from "../domain/ports/agent-client.port";
 import type { ISettingsAccess } from "../domain/ports/settings-access.port";
 import type {
 	SessionInfo,
-	ListSessionsResult,
-	SavedSessionInfo,
 } from "../domain/models/session-info";
 import type {
 	ChatSession,
@@ -16,10 +14,12 @@ import {
 	getSessionCapabilityFlags,
 	type SessionCapabilityFlags,
 } from "../shared/session-capability-utils";
-
-// ============================================================================
-// Types
-// ============================================================================
+import {
+	fetchSessionsOperation,
+	forkSessionOperation,
+	loadMoreSessionsOperation,
+	restoreSessionOperation,
+} from "./session-history/session-history-ops";
 
 /**
  * Callback invoked when a session is successfully loaded/resumed/forked.
@@ -177,43 +177,8 @@ interface SessionCache {
 	timestamp: number;
 }
 
-// ============================================================================
-// Constants
-// ============================================================================
-
 /** Cache expiry time in milliseconds (5 minutes) */
 const CACHE_EXPIRY_MS = 5 * 60 * 1000;
-
-/**
- * Merge agent sessions with locally saved titles.
- * Prefers local titles over agent-provided titles for better UX.
- *
- * Some agents return poor quality titles (e.g., "ACP Session {id}" or
- * system prompt text), so we prefer locally saved titles when available.
- *
- * @param agentSessions - Sessions from agent's session/list
- * @param localSessions - Locally saved session metadata
- * @returns Sessions with local titles merged in
- */
-function mergeWithLocalTitles(
-	agentSessions: SessionInfo[],
-	localSessions: SavedSessionInfo[],
-): SessionInfo[] {
-	// Create a map for O(1) lookup
-	const localMap = new Map(localSessions.map((s) => [s.sessionId, s]));
-
-	return agentSessions.map((s) => {
-		const local = localMap.get(s.sessionId);
-		return {
-			...s,
-			title: local?.title ?? s.title,
-		};
-	});
-}
-
-// ============================================================================
-// Hook Implementation
-// ============================================================================
 
 /**
  * Hook for managing session history.
@@ -333,12 +298,7 @@ export function useSessionHistory(
 				setLocalSessionIds(
 					new Set(localSessions.map((s) => s.sessionId)),
 				);
-				// Re-merge with local titles to pick up newly saved session titles
-				const sessionsWithLocalTitles = mergeWithLocalTitles(
-					cacheRef.current!.sessions,
-					localSessions,
-				);
-				setSessions(sessionsWithLocalTitles);
+				setSessions(cacheRef.current!.sessions);
 				setNextCursor(cacheRef.current!.nextCursor);
 				setError(null);
 				return;
@@ -349,30 +309,19 @@ export function useSessionHistory(
 			currentCwdRef.current = cwd;
 
 			try {
-				const result: ListSessionsResult =
-					await agentClient.listSessions(cwd);
-
-				// Merge with local titles for better UX
-				// (some agents return poor quality titles)
-				const localSessions = settingsAccess.getSavedSessions(
-					session.agentId,
+				const result = await fetchSessionsOperation({
+					agentClient,
+					settingsAccess,
+					sessionAgentId: session.agentId,
 					cwd,
-				);
-				const sessionsWithLocalTitles = mergeWithLocalTitles(
-					result.sessions,
-					localSessions,
-				);
-
-				// Update state
-				setSessions(sessionsWithLocalTitles);
-				setLocalSessionIds(
-					new Set(localSessions.map((s) => s.sessionId)),
-				);
+				});
+				setSessions(result.sessions);
+				setLocalSessionIds(result.localSessionIds);
 				setNextCursor(result.nextCursor);
 
 				// Update cache (with merged titles)
 				cacheRef.current = {
-					sessions: sessionsWithLocalTitles,
+					sessions: result.sessions,
 					nextCursor: result.nextCursor,
 					cwd,
 					timestamp: Date.now(),
@@ -411,35 +360,24 @@ export function useSessionHistory(
 		setError(null);
 
 		try {
-			const result: ListSessionsResult = await agentClient.listSessions(
-				currentCwdRef.current,
-				nextCursor,
-			);
-
-			// Merge with local titles for better UX
-			// (some agents return poor quality titles)
-			const localSessions = settingsAccess.getSavedSessions(
-				session.agentId,
-				currentCwdRef.current,
-			);
-			const sessionsWithLocalTitles = mergeWithLocalTitles(
-				result.sessions,
-				localSessions,
-			);
+			const result = await loadMoreSessionsOperation({
+				agentClient,
+				settingsAccess,
+				sessionAgentId: session.agentId,
+				cwd: currentCwdRef.current,
+				cursor: nextCursor,
+			});
 
 			// Append new sessions to existing list (use functional setState)
-			setSessions((prev) => [...prev, ...sessionsWithLocalTitles]);
-			setLocalSessionIds(new Set(localSessions.map((s) => s.sessionId)));
+			setSessions((prev) => [...prev, ...result.sessions]);
+			setLocalSessionIds(result.localSessionIds);
 			setNextCursor(result.nextCursor);
 
 			// Update cache with appended sessions (with merged titles)
 			if (cacheRef.current) {
 				cacheRef.current = {
 					...cacheRef.current,
-					sessions: [
-						...cacheRef.current.sessions,
-						...sessionsWithLocalTitles,
-					],
+					sessions: [...cacheRef.current.sessions, ...result.sessions],
 					nextCursor: result.nextCursor,
 					timestamp: Date.now(),
 				};
@@ -469,60 +407,20 @@ export function useSessionHistory(
 			setError(null);
 
 			try {
-				// IMPORTANT: Update session.sessionId BEFORE calling restore
-				// so that session/update notifications are not ignored
-				onSessionLoad(sessionId, undefined, undefined);
-
-				if (capabilities.canLoad) {
-					// Notify that load is starting (to ignore history replay)
-					onLoadStart?.();
-
-					try {
-						// Start loading local messages in parallel with agent load
-						const localMessagesPromise =
-							settingsAccess.loadSessionMessages(sessionId);
-
-						// Use load (agent will replay history via session/update, but we ignore it)
-						const result = await agentClient.loadSession(
-							sessionId,
-							cwd,
-						);
-						onSessionLoad(
-							result.sessionId,
-							result.modes,
-							result.models,
-						);
-
-						// Restore local messages (may have already resolved)
-						const localMessages = await localMessagesPromise;
-						if (localMessages && onMessagesRestore) {
-							onMessagesRestore(localMessages);
-						}
-					} finally {
-						// Notify that load is complete (stop ignoring)
-						onLoadEnd?.();
-					}
-				} else if (capabilities.canResume) {
-					// Use resume (without history replay, restore from local storage)
-					const result = await agentClient.resumeSession(
-						sessionId,
-						cwd,
-					);
-					onSessionLoad(
-						result.sessionId,
-						result.modes,
-						result.models,
-					);
-
-					// Resume doesn't return history, so restore from local storage
-					const localMessages =
-						await settingsAccess.loadSessionMessages(sessionId);
-					if (localMessages && onMessagesRestore) {
-						onMessagesRestore(localMessages);
-					}
-				} else {
-					throw new Error("Session restoration is not supported");
-				}
+				await restoreSessionOperation({
+					agentClient,
+					settingsAccess,
+					capabilities: {
+						canLoad: capabilities.canLoad,
+						canResume: capabilities.canResume,
+					},
+					sessionId,
+					cwd,
+					onSessionLoad,
+					onMessagesRestore,
+					onLoadStart,
+					onLoadEnd,
+				});
 			} catch (err) {
 				const errorMessage =
 					err instanceof Error ? err.message : String(err);
@@ -555,59 +453,17 @@ export function useSessionHistory(
 			setError(null);
 
 			try {
-				const result = await agentClient.forkSession(sessionId, cwd);
-
-				// Update with new session ID and modes/models from result
-				// For fork, the new session ID is returned in result
-				onSessionLoad(result.sessionId, result.modes, result.models);
-
-				// Fork doesn't return history, so restore from original session's local storage
-				const localMessages =
-					await settingsAccess.loadSessionMessages(sessionId);
-				if (localMessages && onMessagesRestore) {
-					onMessagesRestore(localMessages);
-				}
-
-				// Save forked session to history
-				if (session.agentId) {
-					const originalSession = sessions.find(
-						(s) => s.sessionId === sessionId,
-					);
-					const originalTitle = originalSession?.title ?? "Session";
-
-					// Truncate title to 50 characters
-					const maxTitleLength = 50;
-					const prefix = "Fork: ";
-					const maxBaseLength = maxTitleLength - prefix.length;
-					const truncatedTitle =
-						originalTitle.length > maxBaseLength
-							? originalTitle.substring(0, maxBaseLength) + "..."
-							: originalTitle;
-					const newTitle = `${prefix}${truncatedTitle}`;
-
-					const now = new Date().toISOString();
-
-					await settingsAccess.saveSession({
-						sessionId: result.sessionId,
-						agentId: session.agentId,
-						cwd,
-						title: newTitle,
-						createdAt: now,
-						updatedAt: now,
-					});
-
-					// Save messages under new session ID for restore after restart
-					if (localMessages) {
-						void settingsAccess.saveSessionMessages(
-							result.sessionId,
-							session.agentId,
-							localMessages,
-						);
-					}
-				}
-
-				// Invalidate cache since a new session was created
-				invalidateCache();
+				await forkSessionOperation({
+					agentClient,
+					settingsAccess,
+					session,
+					sessions,
+					sessionId,
+					cwd,
+					onSessionLoad,
+					onMessagesRestore,
+					invalidateCache,
+				});
 			} catch (err) {
 				const errorMessage =
 					err instanceof Error ? err.message : String(err);

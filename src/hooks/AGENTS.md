@@ -8,10 +8,10 @@ State transitions are now reducer-backed in `src/hooks/state/` for deterministic
 
 | Hook | Lines | State Owned | Key Deps |
 |------|-------|-------------|----------|
-| `useChatController` | 858 | Combines all below | All hooks + adapters |
-| `useAgentSession` | 967 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
-| `useChat` | 743 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
-| `useSessionHistory` | 734 | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` |
+| `useChatController` | 711 | Combines all below | All hooks + adapters |
+| `useAgentSession` | 566 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
+| `useChat` | 567 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
+| `useSessionHistory` | 590 | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` |
 | `usePermission` | 224 | `activePermission`, approval queue | `IAgentClient` |
 | `useAutoExport` | 162 | None (stateless callbacks) | `ChatExporter` |
 | `useMentions` | 130 | Suggestions dropdown state | `IVaultAccess`, `mention-utils` |
@@ -37,6 +37,13 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
   ├── useAutoExport(plugin)
   └── useSessionHistory(acpAdapter, session, settingsAccess, cwd, callbacks)
 ```
+
+## Extracted Hook Modules
+
+- `chat-controller/types.ts`: exported `UseChatController` interfaces to keep the coordinator lean
+- `chat-controller/history-modal.ts`: pure modal-props builder for `SessionHistoryModal`
+- `agent-session/helpers.ts` + `agent-session/types.ts`: normalization and shared type contracts
+- `session-history/session-history-ops.ts`: pure history list/load/restore/fork helpers
 
 ## Race Condition Patterns
 

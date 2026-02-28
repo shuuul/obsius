@@ -1,21 +1,16 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Notice, FileSystemAdapter } from "obsidian";
 
-import type AgentClientPlugin from "../plugin";
 import type { AttachedImage } from "../components/chat/ImagePreviewStrip";
 import { SessionHistoryModal } from "../components/chat/SessionHistoryModal";
 import { ConfirmDeleteModal } from "../components/chat/ConfirmDeleteModal";
 
-// Service imports
 import { NoteMentionService } from "../adapters/obsidian/mention-service";
-import { getLogger, Logger } from "../shared/logger";
+import { getLogger } from "../shared/logger";
 import { ChatExporter } from "../shared/chat-exporter";
 
-// Adapter imports
 import { ObsidianVaultAdapter } from "../adapters/obsidian/vault.adapter";
-import type { IAcpClient } from "../adapters/acp/acp.adapter";
 
-// Hooks imports
 import { useSettings } from "./useSettings";
 import { useMentions } from "./useMentions";
 import { useSlashCommands } from "./useSlashCommands";
@@ -25,102 +20,23 @@ import { useChat } from "./useChat";
 import { usePermission } from "./usePermission";
 import { useAutoExport } from "./useAutoExport";
 import { useSessionHistory } from "./useSessionHistory";
+import {
+	type UseChatControllerOptions,
+	type UseChatControllerReturn,
+} from "./chat-controller/types";
+import { buildHistoryModalProps } from "./chat-controller/history-modal";
 
-// Domain model imports
 import type {
 	SessionModeState,
 	SessionModelState,
 } from "../domain/models/chat-session";
 import type { ImagePromptContent } from "../domain/models/prompt-content";
 
-// Agent info for display (from plugin.getAvailableAgents())
-interface AgentInfo {
-	id: string;
-	displayName: string;
-}
-
-export interface UseChatControllerOptions {
-	plugin: AgentClientPlugin;
-	viewId: string;
-	workingDirectory?: string;
-	initialAgentId?: string;
-	// TODO(code-block): Configuration for future code block chat view
-	config?: {
-		agent?: string;
-		model?: string;
-	};
-}
-
-export interface UseChatControllerReturn {
-	// Memoized services/adapters
-	logger: Logger;
-	vaultPath: string;
-	acpAdapter: IAcpClient;
-	vaultAccessAdapter: ObsidianVaultAdapter;
-	noteMentionService: NoteMentionService;
-
-	// Settings & State
-	settings: ReturnType<typeof useSettings>;
-	session: ReturnType<typeof useAgentSession>["session"];
-	isSessionReady: boolean;
-	messages: ReturnType<typeof useChat>["messages"];
-	isSending: boolean;
-	isUpdateAvailable: boolean;
-	isLoadingSessionHistory: boolean;
-
-	// Hook returns
-	permission: ReturnType<typeof usePermission>;
-	mentions: ReturnType<typeof useMentions>;
-	autoMention: ReturnType<typeof useAutoMention>;
-	slashCommands: ReturnType<typeof useSlashCommands>;
-	sessionHistory: ReturnType<typeof useSessionHistory>;
-	autoExport: ReturnType<typeof useAutoExport>;
-
-	// Computed values
-	activeAgentLabel: string;
-	availableAgents: AgentInfo[];
-	errorInfo:
-		| ReturnType<typeof useChat>["errorInfo"]
-		| ReturnType<typeof useAgentSession>["errorInfo"];
-
-	// Core callbacks
-	handleSendMessage: (
-		content: string,
-		images?: ImagePromptContent[],
-	) => Promise<void>;
-	handleStopGeneration: () => Promise<void>;
-	handleNewChat: (requestedAgentId?: string) => Promise<void>;
-	handleExportChat: () => Promise<void>;
-	handleSwitchAgent: (agentId: string) => Promise<void>;
-	handleRestartAgent: () => Promise<void>;
-	handleClearError: () => void;
-	handleRestoreSession: (sessionId: string, cwd: string) => Promise<void>;
-	handleForkSession: (sessionId: string, cwd: string) => Promise<void>;
-	handleDeleteSession: (sessionId: string) => void;
-	handleOpenHistory: () => void;
-	handleSetMode: (modeId: string) => Promise<void>;
-	handleSetModel: (modelId: string) => Promise<void>;
-
-	// Input state (for broadcast commands - sidebar only)
-	inputValue: string;
-	setInputValue: (value: string) => void;
-	attachedImages: AttachedImage[];
-	setAttachedImages: (images: AttachedImage[]) => void;
-	restoredMessage: string | null;
-	handleRestoredMessageConsumed: () => void;
-
-	// History modal management
-	historyModalRef: React.RefObject<SessionHistoryModal | null>;
-}
-
 export function useChatController(
 	options: UseChatControllerOptions,
 ): UseChatControllerReturn {
 	const { plugin, viewId, initialAgentId, config } = options;
 
-	// ============================================================
-	// Memoized Services & Adapters
-	// ============================================================
 	const logger = getLogger();
 
 	const vaultPath = useMemo(() => {
@@ -131,7 +47,6 @@ export function useChatController(
 		if (adapter instanceof FileSystemAdapter) {
 			return adapter.getBasePath();
 		}
-		// Fallback for non-FileSystemAdapter (e.g., mobile)
 		return process.cwd();
 	}, [plugin, options.workingDirectory]);
 
@@ -140,7 +55,6 @@ export function useChatController(
 		[plugin],
 	);
 
-	// Cleanup NoteMentionService when component unmounts
 	useEffect(() => {
 		return () => {
 			noteMentionService.destroy();
@@ -156,9 +70,6 @@ export function useChatController(
 		return new ObsidianVaultAdapter(plugin, noteMentionService);
 	}, [plugin, noteMentionService]);
 
-	// ============================================================
-	// Custom Hooks
-	// ============================================================
 	const settings = useSettings(plugin);
 
 	const agentSession = useAgentSession(
@@ -203,7 +114,6 @@ export function useChatController(
 
 	const autoExport = useAutoExport(plugin);
 
-	// Session history hook with callback for session load
 	const handleSessionLoad = useCallback(
 		(
 			sessionId: string,
@@ -251,28 +161,17 @@ export function useChatController(
 		onLoadEnd: handleLoadEnd,
 	});
 
-	// Combined error info (session errors take precedence)
 	const errorInfo =
 		sessionErrorInfo || chat.errorInfo || permission.errorInfo;
 
-	// ============================================================
-	// Local State
-	// ============================================================
 	const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
 	const [restoredMessage, setRestoredMessage] = useState<string | null>(null);
 
-	// Input state (for broadcast commands - sidebar only)
 	const [inputValue, setInputValue] = useState("");
 	const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
 
-	// ============================================================
-	// Refs
-	// ============================================================
 	const historyModalRef = useRef<SessionHistoryModal | null>(null);
 
-	// ============================================================
-	// Computed Values
-	// ============================================================
 	const activeAgentLabel = useMemo(() => {
 		const activeId = session.agentId;
 		if (activeId === plugin.settings.claude.id) {
@@ -300,9 +199,6 @@ export function useChatController(
 		return plugin.getAvailableAgents();
 	}, [plugin]);
 
-	// ============================================================
-	// Callbacks
-	// ============================================================
 	const handleSendMessage = useCallback(
 		async (content: string, images?: ImagePromptContent[]) => {
 			const isFirstMessage = messages.length === 0;
@@ -316,7 +212,6 @@ export function useChatController(
 				images,
 			});
 
-			// Save session metadata locally on first message
 			if (isFirstMessage && session.sessionId) {
 				await sessionHistory.saveSessionLocally(
 					session.sessionId,
@@ -353,13 +248,11 @@ export function useChatController(
 			const isAgentSwitch =
 				requestedAgentId && requestedAgentId !== session.agentId;
 
-			// Skip if already empty AND not switching agents
 			if (messages.length === 0 && !isAgentSwitch) {
 				new Notice("[Agent Client] Already a new session");
 				return;
 			}
 
-			// Cancel ongoing generation before starting new chat
 			if (chat.isSending) {
 				await agentSession.cancelOperation();
 			}
@@ -368,7 +261,6 @@ export function useChatController(
 				`[Debug] Creating new session${isAgentSwitch ? ` with agent: ${requestedAgentId}` : ""}...`,
 			);
 
-			// Auto-export current chat before starting new one (if has messages)
 			if (messages.length > 0) {
 				await autoExport.autoExportIfEnabled(
 					"newChat",
@@ -385,7 +277,6 @@ export function useChatController(
 				: session.agentId;
 			await agentSession.restartSession(newAgentId);
 
-			// Invalidate session history cache when creating new session
 			sessionHistory.invalidateCache();
 		},
 		[
@@ -436,12 +327,10 @@ export function useChatController(
 	const handleRestartAgent = useCallback(async () => {
 		logger.log("[useChatController] Restarting agent process...");
 
-		// Auto-export current chat before restart (if has messages)
 		if (messages.length > 0) {
 			await autoExport.autoExportIfEnabled("newChat", messages, session);
 		}
 
-		// Clear messages for fresh start
 		chat.clearMessages();
 
 		try {
@@ -461,9 +350,6 @@ export function useChatController(
 		setRestoredMessage(null);
 	}, []);
 
-	// ============================================================
-	// Session History Modal Callbacks
-	// ============================================================
 	const handleRestoreSession = useCallback(
 		async (sessionId: string, cwd: string) => {
 			try {
@@ -536,27 +422,31 @@ export function useChatController(
 	);
 
 	const handleOpenHistory = useCallback(() => {
-		// Create modal if it doesn't exist
+		const historyModalProps = buildHistoryModalProps({
+			sessions: sessionHistory.sessions,
+			loading: sessionHistory.loading,
+			error: sessionHistory.error,
+			hasMore: sessionHistory.hasMore,
+			currentCwd: vaultPath,
+			canList: sessionHistory.canList,
+			canRestore: sessionHistory.canRestore,
+			canFork: sessionHistory.canFork,
+			isUsingLocalSessions: sessionHistory.isUsingLocalSessions,
+			localSessionIds: sessionHistory.localSessionIds,
+			isAgentReady: isSessionReady,
+			debugMode: settings.debugMode,
+			onRestoreSession: handleRestoreSession,
+			onForkSession: handleForkSession,
+			onDeleteSession: handleDeleteSession,
+			onLoadMore: handleLoadMore,
+			onFetchSessions: handleFetchSessions,
+		});
+
 		if (!historyModalRef.current) {
-			historyModalRef.current = new SessionHistoryModal(plugin.app, {
-				sessions: sessionHistory.sessions,
-				loading: sessionHistory.loading,
-				error: sessionHistory.error,
-				hasMore: sessionHistory.hasMore,
-				currentCwd: vaultPath,
-				canList: sessionHistory.canList,
-				canRestore: sessionHistory.canRestore,
-				canFork: sessionHistory.canFork,
-				isUsingLocalSessions: sessionHistory.isUsingLocalSessions,
-				localSessionIds: sessionHistory.localSessionIds,
-				isAgentReady: isSessionReady,
-				debugMode: settings.debugMode,
-				onRestoreSession: handleRestoreSession,
-				onForkSession: handleForkSession,
-				onDeleteSession: handleDeleteSession,
-				onLoadMore: handleLoadMore,
-				onFetchSessions: handleFetchSessions,
-			});
+			historyModalRef.current = new SessionHistoryModal(
+				plugin.app,
+				historyModalProps,
+			);
 		}
 		historyModalRef.current.open();
 		void sessionHistory.fetchSessions(vaultPath);
@@ -587,28 +477,29 @@ export function useChatController(
 		[agentSession],
 	);
 
-	// Update modal props when session history state changes
 	useEffect(() => {
 		if (historyModalRef.current) {
-			historyModalRef.current.updateProps({
-				sessions: sessionHistory.sessions,
-				loading: sessionHistory.loading,
-				error: sessionHistory.error,
-				hasMore: sessionHistory.hasMore,
-				currentCwd: vaultPath,
-				canList: sessionHistory.canList,
-				canRestore: sessionHistory.canRestore,
-				canFork: sessionHistory.canFork,
-				isUsingLocalSessions: sessionHistory.isUsingLocalSessions,
-				localSessionIds: sessionHistory.localSessionIds,
-				isAgentReady: isSessionReady,
-				debugMode: settings.debugMode,
-				onRestoreSession: handleRestoreSession,
-				onForkSession: handleForkSession,
-				onDeleteSession: handleDeleteSession,
-				onLoadMore: handleLoadMore,
-				onFetchSessions: handleFetchSessions,
-			});
+			historyModalRef.current.updateProps(
+				buildHistoryModalProps({
+					sessions: sessionHistory.sessions,
+					loading: sessionHistory.loading,
+					error: sessionHistory.error,
+					hasMore: sessionHistory.hasMore,
+					currentCwd: vaultPath,
+					canList: sessionHistory.canList,
+					canRestore: sessionHistory.canRestore,
+					canFork: sessionHistory.canFork,
+					isUsingLocalSessions: sessionHistory.isUsingLocalSessions,
+					localSessionIds: sessionHistory.localSessionIds,
+					isAgentReady: isSessionReady,
+					debugMode: settings.debugMode,
+					onRestoreSession: handleRestoreSession,
+					onForkSession: handleForkSession,
+					onDeleteSession: handleDeleteSession,
+					onLoadMore: handleLoadMore,
+					onFetchSessions: handleFetchSessions,
+				}),
+			);
 		}
 	}, [
 		sessionHistory.sessions,
@@ -629,16 +520,11 @@ export function useChatController(
 		handleFetchSessions,
 	]);
 
-	// ============================================================
-	// Effects - Session Lifecycle
-	// ============================================================
-	// Initialize session on mount
 	useEffect(() => {
 		logger.log("[Debug] Starting connection setup via useAgentSession...");
 		void agentSession.createSession(config?.agent || initialAgentId);
 	}, [agentSession.createSession, config?.agent, initialAgentId]);
 
-	// TODO(code-block): Apply configured model when session is ready
 	useEffect(() => {
 		if (config?.model && isSessionReady && session.models) {
 			const modelExists = session.models.availableModels.some(
@@ -660,7 +546,6 @@ export function useChatController(
 		logger,
 	]);
 
-	// Refs for cleanup (to access latest values in cleanup function)
 	const messagesRef = useRef(messages);
 	const sessionRef = useRef(session);
 	const autoExportRef = useRef(autoExport);
@@ -670,7 +555,6 @@ export function useChatController(
 	autoExportRef.current = autoExport;
 	closeSessionRef.current = agentSession.closeSession;
 
-	// Cleanup on unmount only - auto-export and close session
 	useEffect(() => {
 		return () => {
 			logger.log(
@@ -687,13 +571,8 @@ export function useChatController(
 		};
 	}, [logger]);
 
-	// ============================================================
-	// Effects - ACP Adapter Callbacks
-	// ============================================================
-	// Register unified session update callback
 	useEffect(() => {
 		acpAdapter.onSessionUpdate((update) => {
-			// Filter by sessionId - ignore updates from old sessions
 			if (session.sessionId && update.sessionId !== session.sessionId) {
 				logger.log(
 					`[useChatController] Ignoring update for old session: ${update.sessionId} (current: ${session.sessionId})`,
@@ -701,22 +580,17 @@ export function useChatController(
 				return;
 			}
 
-			// During session/load, ignore history replay messages but process session-level updates
 			if (isLoadingSessionHistory) {
-				// Only process session-level updates during load
 				if (update.type === "available_commands_update") {
 					agentSession.updateAvailableCommands(update.commands);
 				} else if (update.type === "current_mode_update") {
 					agentSession.updateCurrentMode(update.currentModeId);
 				}
-				// Ignore all message-related updates (history replay)
 				return;
 			}
 
-			// Route message-related updates to useChat
 			chat.handleSessionUpdate(update);
 
-			// Route session-level updates to useAgentSession
 			if (update.type === "available_commands_update") {
 				agentSession.updateAvailableCommands(update.commands);
 			} else if (update.type === "current_mode_update") {
@@ -733,14 +607,10 @@ export function useChatController(
 		agentSession.updateCurrentMode,
 	]);
 
-	// Register updateMessage callback for permission UI updates
 	useEffect(() => {
 		acpAdapter.setUpdateMessageCallback(chat.updateMessage);
 	}, [acpAdapter, chat.updateMessage]);
 
-	// ============================================================
-	// Effects - Update Check
-	// ============================================================
 	useEffect(() => {
 		plugin
 			.checkForUpdates()
@@ -750,16 +620,12 @@ export function useChatController(
 			});
 	}, [plugin, logger]);
 
-	// ============================================================
-	// Effects - Save Session Messages on Turn End
-	// ============================================================
 	const prevIsSendingRef = useRef<boolean>(false);
 
 	useEffect(() => {
 		const wasSending = prevIsSendingRef.current;
 		prevIsSendingRef.current = isSending;
 
-		// Save when turn ends (isSending: true → false) and has messages
 		if (
 			wasSending &&
 			!isSending &&
@@ -773,9 +639,6 @@ export function useChatController(
 		}
 	}, [isSending, session.sessionId, messages, sessionHistory, logger]);
 
-	// ============================================================
-	// Effects - Auto-mention Active Note Tracking
-	// ============================================================
 	useEffect(() => {
 		let isMounted = true;
 
@@ -796,18 +659,13 @@ export function useChatController(
 		};
 	}, [autoMention.updateActiveNote, vaultAccessAdapter]);
 
-	// ============================================================
-	// Return
-	// ============================================================
 	return {
-		// Services & Adapters
 		logger,
 		vaultPath,
 		acpAdapter,
 		vaultAccessAdapter,
 		noteMentionService,
 
-		// Settings & State
 		settings,
 		session,
 		isSessionReady,
@@ -816,7 +674,6 @@ export function useChatController(
 		isUpdateAvailable,
 		isLoadingSessionHistory,
 
-		// Hook returns
 		permission,
 		mentions,
 		autoMention,
@@ -824,12 +681,10 @@ export function useChatController(
 		sessionHistory,
 		autoExport,
 
-		// Computed values
 		activeAgentLabel,
 		availableAgents,
 		errorInfo,
 
-		// Core callbacks
 		handleSendMessage,
 		handleStopGeneration,
 		handleNewChat,
@@ -844,7 +699,6 @@ export function useChatController(
 		handleSetMode,
 		handleSetModel,
 
-		// Input state
 		inputValue,
 		setInputValue,
 		attachedImages,
@@ -852,7 +706,6 @@ export function useChatController(
 		restoredMessage,
 		handleRestoredMessageConsumed,
 
-		// History modal management
 		historyModalRef,
 	};
 }

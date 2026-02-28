@@ -48,6 +48,10 @@ Status: In progress
   - `src/plugin/agent-ops.ts`
   - `src/plugin/update-check.ts`
   - `src/plugin/view-helpers.ts`
+- Settings UI split into section modules:
+  - `src/components/settings/sections/core-sections.ts`
+  - `src/components/settings/sections/agent-sections.ts`
+  - `src/components/settings/AgentClientSettingTab.ts` reduced to coordinator (~118 LOC)
 - Added Zod runtime schema boundary for settings and session payloads
 - Clean break behavior implemented on incompatible persisted data
 
@@ -69,16 +73,10 @@ Status: In progress
 - `npm run docs:build`: pass
 
 ## Remaining Large Files (next targets)
-- `src/components/settings/AgentClientSettingTab.ts`
-- `src/components/chat/ChatInput.tsx`
 - `src/components/chat/ChatView.tsx`
 - `src/components/chat/FloatingChatView.tsx`
 - `src/components/chat/ToolCallRenderer.tsx`
-- `src/hooks/useAgentSession.ts`
-- `src/hooks/useChat.ts`
 - `src/hooks/useChatController.ts`
-- `src/hooks/useSessionHistory.ts`
-- `src/shared/message-service.ts`
 
 ## Risks and Controls
 - Risk: behavioral drift during module extraction

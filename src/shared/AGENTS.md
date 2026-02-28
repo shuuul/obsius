@@ -1,12 +1,15 @@
 # Shared Utilities Guide
 
-15 pure utility files — no React dependencies. Business logic extracted from hooks/adapters for reuse and testability.
+Pure utility modules with no React dependencies. Business logic extracted from hooks/adapters for reuse and testability.
 
 ## Utility Catalog
 
 | File | Lines | Purpose | Consumers |
 |------|-------|---------|-----------|
-| `message-service.ts` | 689 | Prompt preparation: mention processing, auto-mention, WSL path conversion, auth retry | `useChat` |
+| `message-service.ts` | 12 | Facade re-export for message-service modules | `useChat` |
+| `message-service/prompt-preparation.ts` | 356 | Prompt preparation: mention processing, auto-mention, WSL path conversion | `useChat` |
+| `message-service/prompt-sending.ts` | 235 | Prompt send path + auth retry + content type mapping | `useChat` |
+| `message-service/types.ts` | 53 | Message-service shared types | `useChat` |
 | `chat-exporter.ts` | 552 | Export messages to markdown files, image handling (base64/file/obsidian) | `useAutoExport` |
 | `terminal-manager.ts` | 286 | Spawn terminal processes, poll output, platform shell wrapping | `AcpAdapter` |
 | `chat-view-registry.ts` | 219 | Multi-view management: register/unregister/focus/broadcast/navigate | `plugin.ts` |
@@ -24,7 +27,7 @@
 
 ## Key Patterns
 
-**message-service.ts** (`preparePrompt` + `sendPreparedPrompt`):
+**message-service modules** (`preparePrompt` + `sendPreparedPrompt`):
 - Separates display content (original text + images) from agent content (processed mentions → file paths/URIs)
 - Supports `embeddedContext` capability: attaches note content as `resource` type instead of text
 - Auth retry: catches `AUTHENTICATION_REQUIRED` error, invokes `authenticate()`, retries once

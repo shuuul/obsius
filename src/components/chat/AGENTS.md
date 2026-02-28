@@ -20,7 +20,8 @@ ChatView (ItemView, 880 lines) ─── Obsidian sidebar leaf
         │                 └── InlineHeader          ─ plan entries
         ├── SuggestionDropdown  ─ @mention + /command dropdown
         ├── ImagePreviewStrip   ─ attached image thumbnails
-        ├── ChatInput           ─ textarea + send button (1095 lines)
+        ├── ChatInput           ─ textarea + send button (507 lines)
+        │     └── chat-input/     use-image-attachments, use-chat-input-behavior, InputActions, etc.
         └── ErrorOverlay        ─ session error display
 
 FloatingChatView (820 lines) ─── standalone window, NOT an ItemView

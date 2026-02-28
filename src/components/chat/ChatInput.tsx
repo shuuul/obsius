@@ -1,10 +1,9 @@
 import * as React from "react";
-const { useRef, useState, useEffect, useCallback } = React;
-import { setIcon, DropdownComponent, Notice } from "obsidian";
+const { useRef, useEffect, useCallback } = React;
+import { setIcon } from "obsidian";
 
 import type AgentClientPlugin from "../../plugin";
 import type { IChatViewHost } from "./types";
-import type { NoteMetadata } from "../../domain/ports/vault-access.port";
 import type {
 	SlashCommand,
 	SessionModeState,
@@ -18,33 +17,15 @@ import type { ChatMessage } from "../../domain/models/chat-message";
 import { SuggestionDropdown } from "./SuggestionDropdown";
 import { ErrorOverlay } from "./ErrorOverlay";
 import { ImagePreviewStrip, type AttachedImage } from "./ImagePreviewStrip";
+import { AutoMentionBadge } from "./chat-input/AutoMentionBadge";
+import { InputActions } from "./chat-input/InputActions";
+import { useChatInputBehavior } from "./chat-input/use-chat-input-behavior";
+import { useImageAttachments } from "./chat-input/use-image-attachments";
+import { useObsidianDropdown } from "./chat-input/use-obsidian-dropdown";
 import { useInputHistory } from "../../hooks/useInputHistory";
 import { getLogger } from "../../shared/logger";
 import type { ErrorInfo } from "../../domain/models/agent-error";
 import { useSettings } from "../../hooks/useSettings";
-
-// ============================================================================
-// Image Constants
-// ============================================================================
-
-/** Maximum image size in MB */
-const MAX_IMAGE_SIZE_MB = 5;
-
-/** Maximum image size in bytes */
-const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
-
-/** Maximum number of images per message */
-const MAX_IMAGE_COUNT = 10;
-
-/** Supported image MIME types (whitelist) */
-const SUPPORTED_IMAGE_TYPES = [
-	"image/png",
-	"image/jpeg",
-	"image/gif",
-	"image/webp",
-] as const;
-
-type SupportedImageType = (typeof SUPPORTED_IMAGE_TYPES)[number];
 
 /**
  * Props for ChatInput component
@@ -168,287 +149,50 @@ export function ChatInput({
 		(plugin.app.vault as any).getConfig("spellcheck") ?? true;
 	/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 
-	// Local state (hint and command are still local - not needed for broadcast)
-	const [hintText, setHintText] = useState<string | null>(null);
-	const [commandText, setCommandText] = useState<string>("");
-	const [isDraggingOver, setIsDraggingOver] = useState(false);
-
 	// Input history navigation (ArrowUp/ArrowDown)
 	const { handleHistoryKeyDown, resetHistory } = useInputHistory(
 		messages,
 		onInputChange,
 	);
 
-	// Refs
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
-	const dragCounterRef = useRef(0);
 	const sendButtonRef = useRef<HTMLButtonElement>(null);
-	const modeDropdownRef = useRef<HTMLDivElement>(null);
-	const modeDropdownInstance = useRef<DropdownComponent | null>(null);
-	const modelDropdownRef = useRef<HTMLDivElement>(null);
-	const modelDropdownInstance = useRef<DropdownComponent | null>(null);
+	const availableModes = modes?.availableModes;
+	const currentModeId = modes?.currentModeId;
+	const modeDropdownRef = useObsidianDropdown(
+		availableModes?.map((mode) => ({ id: mode.id, label: mode.name })),
+		currentModeId,
+		onModeChange,
+	);
+	const availableModels = models?.availableModels;
+	const currentModelId = models?.currentModelId;
+	const modelDropdownRef = useObsidianDropdown(
+		availableModels?.map((model) => ({
+			id: model.modelId,
+			label: model.name,
+		})),
+		currentModelId,
+		onModelChange,
+	);
+	const {
+		isDraggingOver,
+		removeImage,
+		handlePaste,
+		handleDragOver,
+		handleDragEnter,
+		handleDragLeave,
+		handleDrop,
+	} = useImageAttachments({
+		supportsImages,
+		attachedImages,
+		onAttachedImagesChange,
+	});
 
 	// Clear attached images when agent changes
 	useEffect(() => {
 		onAttachedImagesChange([]);
 	}, [agentId, onAttachedImagesChange]);
 
-	/**
-	 * Add an image to the attached images list.
-	 * Simple addition - validation is done in handlePaste.
-	 */
-	const addImage = useCallback(
-		(image: AttachedImage) => {
-			// Safety check for max count
-			if (attachedImages.length >= MAX_IMAGE_COUNT) {
-				return;
-			}
-			onAttachedImagesChange([...attachedImages, image]);
-		},
-		[attachedImages, onAttachedImagesChange],
-	);
-
-	/**
-	 * Remove an image from the attached images list.
-	 */
-	const removeImage = useCallback(
-		(id: string) => {
-			onAttachedImagesChange(
-				attachedImages.filter((img) => img.id !== id),
-			);
-		},
-		[attachedImages, onAttachedImagesChange],
-	);
-
-	/**
-	 * Convert a File to Base64 string.
-	 */
-	const fileToBase64 = useCallback(async (file: File): Promise<string> => {
-		return new Promise((resolve, reject) => {
-			const reader = new FileReader();
-			reader.onload = () => {
-				const result = reader.result as string;
-				// Extract base64 part from "data:image/png;base64,..."
-				const base64 = result.split(",")[1];
-				resolve(base64);
-			};
-			reader.onerror = reject;
-			reader.readAsDataURL(file);
-		});
-	}, []);
-
-	/**
-	 * Process and attach image files.
-	 * Common logic for paste and drop handlers.
-	 */
-	const processImageFiles = useCallback(
-		async (files: File[]) => {
-			let addedCount = 0;
-
-			for (const file of files) {
-				// Check image count
-				if (attachedImages.length + addedCount >= MAX_IMAGE_COUNT) {
-					new Notice(
-						`[Agent Client] Maximum ${MAX_IMAGE_COUNT} images allowed`,
-					);
-					break;
-				}
-
-				// Check file size (before conversion - memory efficiency)
-				if (file.size > MAX_IMAGE_SIZE_BYTES) {
-					new Notice(
-						`[Agent Client] Image too large (max ${MAX_IMAGE_SIZE_MB}MB)`,
-					);
-					continue;
-				}
-
-				// Convert to Base64 and add
-				try {
-					const base64 = await fileToBase64(file);
-					addImage({
-						id: crypto.randomUUID(),
-						data: base64,
-						mimeType: file.type,
-					});
-					addedCount++;
-				} catch (error) {
-					console.error("Failed to convert image:", error);
-					new Notice("[Agent Client] Failed to attach image");
-				}
-			}
-		},
-		[attachedImages.length, addImage, fileToBase64],
-	);
-
-	/**
-	 * Handle paste event for image attachment.
-	 */
-	const handlePaste = useCallback(
-		async (e: React.ClipboardEvent) => {
-			const items = e.clipboardData?.items;
-			if (!items) return;
-
-			// Extract image files from clipboard
-			const imageFiles: File[] = [];
-			for (const item of Array.from(items)) {
-				if (
-					SUPPORTED_IMAGE_TYPES.includes(
-						item.type as SupportedImageType,
-					)
-				) {
-					const file = item.getAsFile();
-					if (file) imageFiles.push(file);
-				}
-			}
-
-			if (imageFiles.length === 0) return;
-
-			e.preventDefault();
-
-			if (!supportsImages) {
-				new Notice(
-					"[Agent Client] This agent does not support image attachments",
-				);
-				return;
-			}
-
-			await processImageFiles(imageFiles);
-		},
-		[supportsImages, processImageFiles],
-	);
-
-	/**
-	 * Handle drag over event to allow drop.
-	 */
-	const handleDragOver = useCallback((e: React.DragEvent) => {
-		if (e.dataTransfer?.types.includes("Files")) {
-			e.preventDefault();
-			e.dataTransfer.dropEffect = "copy";
-		}
-	}, []);
-
-	/**
-	 * Handle drag enter event for visual feedback.
-	 * Uses counter to handle child element enter/leave correctly.
-	 */
-	const handleDragEnter = useCallback((e: React.DragEvent) => {
-		if (e.dataTransfer?.types.includes("Files")) {
-			e.preventDefault();
-			dragCounterRef.current++;
-			if (dragCounterRef.current === 1) {
-				setIsDraggingOver(true);
-			}
-		}
-	}, []);
-
-	/**
-	 * Handle drag leave event to reset visual feedback.
-	 */
-	const handleDragLeave = useCallback((e: React.DragEvent) => {
-		dragCounterRef.current--;
-		if (dragCounterRef.current === 0) {
-			setIsDraggingOver(false);
-		}
-	}, []);
-
-	/**
-	 * Handle drop event for image files.
-	 */
-	const handleDrop = useCallback(
-		async (e: React.DragEvent) => {
-			dragCounterRef.current = 0;
-			setIsDraggingOver(false);
-
-			const files = e.dataTransfer?.files;
-			if (!files || files.length === 0) return;
-
-			// Filter to supported image types
-			const imageFiles = Array.from(files).filter((file) =>
-				SUPPORTED_IMAGE_TYPES.includes(file.type as SupportedImageType),
-			);
-
-			if (imageFiles.length === 0) return;
-
-			e.preventDefault();
-
-			if (!supportsImages) {
-				new Notice(
-					"[Agent Client] This agent does not support image attachments",
-				);
-				return;
-			}
-
-			await processImageFiles(imageFiles);
-		},
-		[supportsImages, processImageFiles],
-	);
-
-	/**
-	 * Common logic for setting cursor position after text replacement.
-	 */
-	const setTextAndFocus = useCallback(
-		(newText: string) => {
-			onInputChange(newText);
-
-			// Set cursor position to end of text
-			window.setTimeout(() => {
-				const textarea = textareaRef.current;
-				if (textarea) {
-					const cursorPos = newText.length;
-					textarea.selectionStart = cursorPos;
-					textarea.selectionEnd = cursorPos;
-					textarea.focus();
-				}
-			}, 0);
-		},
-		[onInputChange],
-	);
-
-	/**
-	 * Handle mention selection from dropdown.
-	 */
-	const selectMention = useCallback(
-		(suggestion: NoteMetadata) => {
-			const newText = mentions.selectSuggestion(inputValue, suggestion);
-			setTextAndFocus(newText);
-		},
-		[mentions, inputValue, setTextAndFocus],
-	);
-
-	/**
-	 * Handle slash command selection from dropdown.
-	 */
-	const handleSelectSlashCommand = useCallback(
-		(command: SlashCommand) => {
-			const newText = slashCommands.selectSuggestion(inputValue, command);
-			onInputChange(newText);
-
-			// Setup hint overlay if command has hint
-			if (command.hint) {
-				const cmdText = `/${command.name} `;
-				setCommandText(cmdText);
-				setHintText(command.hint);
-			} else {
-				// No hint - clear hint state
-				setHintText(null);
-				setCommandText("");
-			}
-
-			// Place cursor right after command name (before hint text)
-			window.setTimeout(() => {
-				const textarea = textareaRef.current;
-				if (textarea) {
-					const cursorPos = command.hint
-						? `/${command.name} `.length
-						: newText.length;
-					textarea.selectionStart = cursorPos;
-					textarea.selectionEnd = cursorPos;
-					textarea.focus();
-				}
-			}, 0);
-		},
-		[slashCommands, inputValue, onInputChange],
-	);
 
 	/**
 	 * Adjust textarea height based on content.
@@ -563,78 +307,6 @@ export function ChatInput({
 		resetHistory,
 	]);
 
-	/**
-	 * Handle dropdown keyboard navigation.
-	 */
-	const handleDropdownKeyPress = useCallback(
-		(e: React.KeyboardEvent): boolean => {
-			const isSlashCommandActive = slashCommands.isOpen;
-			const isMentionActive = mentions.isOpen;
-
-			if (!isSlashCommandActive && !isMentionActive) {
-				return false;
-			}
-
-			// Arrow navigation
-			if (e.key === "ArrowDown") {
-				e.preventDefault();
-				if (isSlashCommandActive) {
-					slashCommands.navigate("down");
-				} else {
-					mentions.navigate("down");
-				}
-				return true;
-			}
-
-			if (e.key === "ArrowUp") {
-				e.preventDefault();
-				if (isSlashCommandActive) {
-					slashCommands.navigate("up");
-				} else {
-					mentions.navigate("up");
-				}
-				return true;
-			}
-
-			// Select item (Enter or Tab)
-			if (e.key === "Enter" || e.key === "Tab") {
-				// Skip Enter during IME composition (allow Tab to still work)
-				if (e.key === "Enter" && e.nativeEvent.isComposing) {
-					return false;
-				}
-				e.preventDefault();
-				if (isSlashCommandActive) {
-					const selectedCommand =
-						slashCommands.suggestions[slashCommands.selectedIndex];
-					if (selectedCommand) {
-						handleSelectSlashCommand(selectedCommand);
-					}
-				} else {
-					const selectedSuggestion =
-						mentions.suggestions[mentions.selectedIndex];
-					if (selectedSuggestion) {
-						selectMention(selectedSuggestion);
-					}
-				}
-				return true;
-			}
-
-			// Close dropdown (Escape)
-			if (e.key === "Escape") {
-				e.preventDefault();
-				if (isSlashCommandActive) {
-					slashCommands.close();
-				} else {
-					mentions.close();
-				}
-				return true;
-			}
-
-			return false;
-		},
-		[slashCommands, mentions, handleSelectSlashCommand, selectMention],
-	);
-
 	// Button disabled state - also allow sending if images are attached
 	const isButtonDisabled =
 		!isSending &&
@@ -642,85 +314,28 @@ export function ChatInput({
 			!isSessionReady ||
 			isRestoringSession);
 
-	/**
-	 * Handle keyboard events in the textarea.
-	 */
-	const handleKeyDown = useCallback(
-		(e: React.KeyboardEvent) => {
-			// Handle dropdown navigation first
-			if (handleDropdownKeyPress(e)) {
-				return;
-			}
-
-			// Handle input history navigation (ArrowUp/ArrowDown)
-			if (handleHistoryKeyDown(e, textareaRef.current)) {
-				return;
-			}
-
-			// Normal input handling - check if should send based on shortcut setting
-			const hasCmdCtrl = e.metaKey || e.ctrlKey;
-			if (
-				e.key === "Enter" &&
-				(!e.nativeEvent.isComposing || hasCmdCtrl)
-			) {
-				const shouldSend =
-					settings.sendMessageShortcut === "enter"
-						? !e.shiftKey // Enter mode: send unless Shift is pressed
-						: hasCmdCtrl; // Cmd+Enter mode: send only with Cmd/Ctrl
-
-				if (shouldSend) {
-					e.preventDefault();
-					if (!isButtonDisabled && !isSending) {
-						void handleSendOrStop();
-					}
-				}
-				// If not shouldSend, allow default behavior (newline)
-			}
-		},
-		[
-			handleDropdownKeyPress,
-			handleHistoryKeyDown,
-			isSending,
-			isButtonDisabled,
-			handleSendOrStop,
-			settings.sendMessageShortcut,
-		],
-	);
-
-	/**
-	 * Handle input changes in the textarea.
-	 */
-	const handleInputChange = useCallback(
-		(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-			const newValue = e.target.value;
-			const cursorPosition = e.target.selectionStart || 0;
-
-			logger.log(
-				"[DEBUG] Input changed:",
-				newValue,
-				"cursor:",
-				cursorPosition,
-			);
-
-			onInputChange(newValue);
-
-			// Hide hint overlay when user modifies the input
-			if (hintText) {
-				const expectedText = commandText + hintText;
-				if (newValue !== expectedText) {
-					setHintText(null);
-					setCommandText("");
-				}
-			}
-
-			// Update mention suggestions
-			void mentions.updateSuggestions(newValue, cursorPosition);
-
-			// Update slash command suggestions
-			slashCommands.updateSuggestions(newValue, cursorPosition);
-		},
-		[logger, hintText, commandText, mentions, slashCommands, onInputChange],
-	);
+	const {
+		hintText,
+		commandText,
+		handleInputChange,
+		handleKeyDown,
+		handleSelectSlashCommand,
+		selectMention,
+		setHintText,
+		setCommandText,
+	} = useChatInputBehavior({
+		mentions,
+		slashCommands,
+		inputValue,
+		onInputChange,
+		textareaRef,
+		handleHistoryKeyDown,
+		sendMessageShortcut: settings.sendMessageShortcut,
+		isSending,
+		isButtonDisabled,
+		handleSendOrStop,
+		logger,
+	});
 
 	// Adjust textarea height when input changes
 	useEffect(() => {
@@ -779,128 +394,6 @@ export function ChatInput({
 		}
 	}, [restoredMessage, onRestoredMessageConsumed, inputValue, onInputChange]);
 
-	// Stable references for callbacks
-	const onModeChangeRef = useRef(onModeChange);
-	onModeChangeRef.current = onModeChange;
-
-	// Initialize Mode dropdown (only when availableModes change)
-	const availableModes = modes?.availableModes;
-	const currentModeId = modes?.currentModeId;
-
-	useEffect(() => {
-		const containerEl = modeDropdownRef.current;
-		if (!containerEl) return;
-
-		// Only show dropdown if there are multiple modes
-		if (!availableModes || availableModes.length <= 1) {
-			// Clean up existing dropdown if modes become unavailable
-			if (modeDropdownInstance.current) {
-				containerEl.empty();
-				modeDropdownInstance.current = null;
-			}
-			return;
-		}
-
-		// Create dropdown if not exists
-		if (!modeDropdownInstance.current) {
-			const dropdown = new DropdownComponent(containerEl);
-			modeDropdownInstance.current = dropdown;
-
-			// Add options
-			for (const mode of availableModes) {
-				dropdown.addOption(mode.id, mode.name);
-			}
-
-			// Set initial value
-			if (currentModeId) {
-				dropdown.setValue(currentModeId);
-			}
-
-			// Handle change - use ref to avoid recreating dropdown on callback change
-			dropdown.onChange((value) => {
-				if (onModeChangeRef.current) {
-					onModeChangeRef.current(value);
-				}
-			});
-		}
-
-		// Cleanup on unmount or when availableModes change
-		return () => {
-			if (modeDropdownInstance.current) {
-				containerEl.empty();
-				modeDropdownInstance.current = null;
-			}
-		};
-	}, [availableModes]);
-
-	// Update dropdown value when currentModeId changes (separate effect)
-	useEffect(() => {
-		if (modeDropdownInstance.current && currentModeId) {
-			modeDropdownInstance.current.setValue(currentModeId);
-		}
-	}, [currentModeId]);
-
-	// Stable references for model callbacks
-	const onModelChangeRef = useRef(onModelChange);
-	onModelChangeRef.current = onModelChange;
-
-	// Initialize Model dropdown (only when availableModels change)
-	const availableModels = models?.availableModels;
-	const currentModelId = models?.currentModelId;
-
-	useEffect(() => {
-		const containerEl = modelDropdownRef.current;
-		if (!containerEl) return;
-
-		// Only show dropdown if there are multiple models
-		if (!availableModels || availableModels.length <= 1) {
-			// Clean up existing dropdown if models become unavailable
-			if (modelDropdownInstance.current) {
-				containerEl.empty();
-				modelDropdownInstance.current = null;
-			}
-			return;
-		}
-
-		// Create dropdown if not exists
-		if (!modelDropdownInstance.current) {
-			const dropdown = new DropdownComponent(containerEl);
-			modelDropdownInstance.current = dropdown;
-
-			// Add options
-			for (const model of availableModels) {
-				dropdown.addOption(model.modelId, model.name);
-			}
-
-			// Set initial value
-			if (currentModelId) {
-				dropdown.setValue(currentModelId);
-			}
-
-			// Handle change - use ref to avoid recreating dropdown on callback change
-			dropdown.onChange((value) => {
-				if (onModelChangeRef.current) {
-					onModelChangeRef.current(value);
-				}
-			});
-		}
-
-		// Cleanup on unmount or when availableModels change
-		return () => {
-			if (modelDropdownInstance.current) {
-				containerEl.empty();
-				modelDropdownInstance.current = null;
-			}
-		};
-	}, [availableModels]);
-
-	// Update dropdown value when currentModelId changes (separate effect)
-	useEffect(() => {
-		if (modelDropdownInstance.current && currentModelId) {
-			modelDropdownInstance.current.setValue(currentModelId);
-		}
-	}, [currentModelId]);
-
 	// Placeholder text
 	const placeholder = `Message ${agentLabel} - @ to mention notes${availableCommands.length > 0 ? ", / for commands" : ""}`;
 
@@ -950,51 +443,10 @@ export function ChatInput({
 				onDragLeave={handleDragLeave}
 				onDrop={(e) => void handleDrop(e)}
 			>
-				{/* Auto-mention Badge */}
-				{autoMentionEnabled && autoMention.activeNote && (
-					<div className="agent-client-auto-mention-inline">
-						<span
-							className={`agent-client-mention-badge ${autoMention.isDisabled ? "agent-client-disabled" : ""}`}
-						>
-							@{autoMention.activeNote.name}
-							{autoMention.activeNote.selection && (
-								<span className="agent-client-selection-indicator">
-									{":"}
-									{autoMention.activeNote.selection.from
-										.line + 1}
-									-
-									{autoMention.activeNote.selection.to.line +
-										1}
-								</span>
-							)}
-						</span>
-						<button
-							className="agent-client-auto-mention-toggle-btn"
-							onClick={(e) => {
-								const newDisabledState =
-									!autoMention.isDisabled;
-								autoMention.toggle(newDisabledState);
-								const iconName = newDisabledState
-									? "x"
-									: "plus";
-								setIcon(e.currentTarget, iconName);
-							}}
-							title={
-								autoMention.isDisabled
-									? "Enable auto-mention"
-									: "Temporarily disable auto-mention"
-							}
-							ref={(el) => {
-								if (el) {
-									const iconName = autoMention.isDisabled
-										? "plus"
-										: "x";
-									setIcon(el, iconName);
-								}
-							}}
-						/>
-					</div>
-				)}
+				<AutoMentionBadge
+					autoMentionEnabled={autoMentionEnabled}
+					autoMention={autoMention}
+				/>
 
 				{/* Textarea with Hint Overlay */}
 				<div className="agent-client-textarea-wrapper">
@@ -1032,63 +484,23 @@ export function ChatInput({
 					/>
 				)}
 
-				{/* Input Actions (Mode Selector + Model Selector + Send Button) */}
-				<div className="agent-client-chat-input-actions">
-					{/* Mode Selector */}
-					{modes && modes.availableModes.length > 1 && (
-						<div
-							className="agent-client-mode-selector"
-							title={
-								modes.availableModes.find(
-									(m) => m.id === modes.currentModeId,
-								)?.description ?? "Select mode"
-							}
-						>
-							<div ref={modeDropdownRef} />
-							<span
-								className="agent-client-mode-selector-icon"
-								ref={(el) => {
-									if (el) setIcon(el, "chevron-down");
-								}}
-							/>
-						</div>
-					)}
-
-					{/* Model Selector (experimental) */}
-					{models && models.availableModels.length > 1 && (
-						<div
-							className="agent-client-model-selector"
-							title={
-								models.availableModels.find(
-									(m) => m.modelId === models.currentModelId,
-								)?.description ?? "Select model"
-							}
-						>
-							<div ref={modelDropdownRef} />
-							<span
-								className="agent-client-model-selector-icon"
-								ref={(el) => {
-									if (el) setIcon(el, "chevron-down");
-								}}
-							/>
-						</div>
-					)}
-
-					{/* Send/Stop Button */}
-					<button
-						ref={sendButtonRef}
-						onClick={() => void handleSendOrStop()}
-						disabled={isButtonDisabled}
-						className={`agent-client-chat-send-button ${isSending ? "sending" : ""} ${isButtonDisabled ? "agent-client-disabled" : ""}`}
-						title={
-							!isSessionReady
-								? "Connecting..."
-								: isSending
-									? "Stop generation"
-									: "Send message"
-						}
-					></button>
-				</div>
+				<InputActions
+					modes={modes}
+					models={models}
+					modeDropdownRef={modeDropdownRef}
+					modelDropdownRef={modelDropdownRef}
+					sendButtonRef={sendButtonRef}
+					isSending={isSending}
+					isButtonDisabled={isButtonDisabled}
+					buttonTitle={
+						!isSessionReady
+							? "Connecting..."
+							: isSending
+								? "Stop generation"
+								: "Send message"
+					}
+					onSendOrStop={() => void handleSendOrStop()}
+				/>
 			</div>
 		</div>
 	);

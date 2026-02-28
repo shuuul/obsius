@@ -21,7 +21,7 @@ src/
 ├── hooks/state/              # Pure reducer/action modules for deterministic state transitions
 ├── components/
 │   ├── chat/                 # ChatView + 22 sub-components (23 files)
-│   └── settings/             # AgentClientSettingTab (1 file)
+│   └── settings/             # Thin tab coordinator + section renderers
 └── shared/                   # Pure utility functions, no React deps (15 files)
 ```
 
@@ -33,7 +33,7 @@ src/
 | Modify message types | `domain/models/chat-message.ts` + `session-update.ts` | Then handle in `useChat.handleSessionUpdate()` |
 | Change ACP protocol | `adapters/acp/` modules + `acp.adapter.ts` composition | See `adapters/acp/AGENTS.md` |
 | UI changes | `components/chat/` | See `components/chat/AGENTS.md` |
-| Settings changes | `plugin.ts` (interface) + `components/settings/AgentClientSettingTab.ts` (UI) | |
+| Settings changes | `plugin.ts` (interface) + `components/settings/sections/` (UI sections) | `AgentClientSettingTab.ts` is now a thin coordinator |
 | Debug | Settings → Debug Mode ON → DevTools → filter `[AcpAdapter]`, `[useChat]`, `[NoteMentionService]` | |
 | Hot reload | Install [pjeby/hot-reload](https://github.com/pjeby/hot-reload) in vault | Auto-reloads on `npm run dev` build |
 
@@ -41,7 +41,7 @@ src/
 
 ```
 ChatView.tsx / FloatingChatView.tsx
-    └── useChatController()  ← Central coordinator (858 lines)
+    └── useChatController()  ← Central coordinator (~711 lines)
             ├── Creates adapters via useMemo:
             │   ├── AcpAdapter (from plugin registry)
             │   ├── ObsidianVaultAdapter
@@ -61,7 +61,7 @@ ChatView.tsx / FloatingChatView.tsx
 ## Data Flow
 ```
 User input → ChatInput → useChatController.handleSendMessage()
-  → useChat.sendMessage() → preparePrompt() (shared/message-service.ts)
+  → useChat.sendMessage() → preparePrompt() (shared/message-service/prompt-preparation.ts)
     → sendPreparedPrompt() → agentClient.sendPrompt() → ACP JSON-RPC → agent process
 
 Agent response → AcpAdapter.sessionUpdate() → onSessionUpdate callback
