@@ -3,7 +3,7 @@
 A persistent, draggable chat window that floats over your workspace. Perfect for quick conversations without leaving your current view.
 
 <p align="center">
-  <img src="/images/floating-chat-view.webp" alt="Floating chat window open over the editor" />
+_Screenshot omitted in this fork._
 </p>
 
 ## Overview
@@ -28,7 +28,7 @@ Enable the floating chat in **Settings → Agent Client → Floating chat → Sh
 4. Start chatting — the window works just like the sidebar chat
 
 <p align="center">
-  <img src="/images/floating-chat-button.webp" alt="Floating button in the bottom-right corner" width="200" />
+_Screenshot omitted in this fork._
 </p>
 
 ## Moving and Resizing
@@ -51,7 +51,7 @@ Open more than one floating chat window to run parallel conversations.
 When multiple windows exist, clicking the floating button shows an instance menu:
 
 <p align="center">
-  <img src="/images/floating-chat-instance-menu.webp" alt="Instance menu with multiple sessions listed" width="300" />
+_Screenshot omitted in this fork._
 </p>
 
 - Click a session name to expand that window

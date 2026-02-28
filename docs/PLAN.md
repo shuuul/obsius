@@ -19,12 +19,12 @@ Last updated: 2026-03-01
   - `src/hooks/AGENTS.md`
   - `src/components/chat/AGENTS.md`
   - `.github/copilot-instructions.md`
-- `npm run docs:build` currently fails because deleted media assets are still referenced in docs pages (starting with `/demo.mp4` in `docs/index.md`).
 
 ## P2 Legacy Surface Audit (ongoing)
 - Continue removing dead legacy artifacts when they are confirmed unused.
 - Completed in this pass:
   - removed `esbuild.config.mjs` (obsolete after Vite migration)
+  - removed broken docs media embeds that referenced deleted `docs/public/*` assets
 
 ## Definition of Done For This Backlog
 - No core source file above 600 LOC.

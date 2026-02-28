@@ -35,9 +35,8 @@ features:
 ---
 
 <div style="max-width: 800px; margin: 2rem auto;">
-  <video controls autoplay loop muted playsinline style="width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-    <source src="/demo.mp4" type="video/mp4">
-  </video>
+
+_Demo video omitted in this fork._
 </div>
 
 ## What is Agent Client?

@@ -27,7 +27,7 @@ If your agent doesn't support images, you'll see a notification when attempting 
 3. The input area highlights when you drag over it
 
 <p align="center">
-  <img src="/images/sending-images.webp" alt="Sending Images" width="400" />
+_Screenshot omitted in this fork._
 </p>
 
 ## Managing Attachments
@@ -38,7 +38,7 @@ Attached images appear as thumbnails below the text area.
 - **Images are sent with your message**: When you send, all attached images are included
 
 <p align="center">
-  <img src="/images/remove-image.webp" alt="Remove image button" width="400" />
+_Screenshot omitted in this fork._
 </p>
 
 ## Supported Formats

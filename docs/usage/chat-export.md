@@ -7,7 +7,7 @@ Save your conversations with AI agents for future reference.
 Click the **export button** in the chat header to export the current conversation.
 
 <p align="center">
-  <img src="/images/export.webp" alt="Export button in chat header" width="400" />
+_Screenshot omitted in this fork._
 </p>
 
 ## Export Settings

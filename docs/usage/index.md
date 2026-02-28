@@ -7,7 +7,7 @@ You can open the Agent Client chat panel in two ways:
 - **Ribbon Icon**: Click the robot icon in the left ribbon
 
 <p align="center">
-  <img src="/images/ribbon-icon.webp" alt="Ribbon Icon" />
+_Screenshot omitted in this fork._
 </p>
 
 - **Command Palette**: Open the command palette (`Cmd/Ctrl + P`) and search for **"Open agent chat"**
@@ -21,7 +21,7 @@ The chat panel opens in the right sidebar.
 3. Wait for the agent's response
 
 <p align="center">
-  <img src="/images/sending-messages.webp" alt="Sending Messages" />
+_Screenshot omitted in this fork._
 </p>
 
 ## Sending Images
@@ -34,7 +34,7 @@ You can attach images to your messages by pasting or dragging and dropping.
 Attached images appear as thumbnails below the text area. Click the **×** on a thumbnail to remove it.
 
 <p align="center">
-  <img src="/images/sending-images.webp" alt="Sending Images" width="400" />
+_Screenshot omitted in this fork._
 </p>
 
 ::: tip
@@ -54,13 +54,13 @@ To switch agents for the current view:
 This is a one-time change for that view only.
 
 <p align="center">
-  <img src="/images/switch-agent.webp" alt="Switch agent menu" width="400" />
+_Screenshot omitted in this fork._
 </p>
 
 ::: tip
 To change the default agent for new chat views, go to **Settings → Agent Client → Default agent**.
 
-<img src="/images/switch-default-agent.webp" alt="Default agent setting" />
+_Screenshot omitted in this fork._
 :::
 
 ## Multiple Chat Views
