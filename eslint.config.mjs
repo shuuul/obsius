@@ -35,7 +35,7 @@ export default defineConfig([
 				"warn",
 				{
 					brands: [
-						"Agent Client",
+						"Obsius",
 						"Claude Code",
 						"Gemini CLI",
 						"Codex",

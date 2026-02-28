@@ -1,6 +1,6 @@
-# Contributing to Agent Client Plugin
+# Contributing to Obsius
 
-Thank you for your interest in contributing to the Agent Client plugin!
+Thank you for your interest in contributing to Obsius!
 
 ## Before You Start
 
@@ -49,10 +49,10 @@ This plugin focuses on **ACP client implementation** + **features that make ACP 
 # Navigate to your vault's plugins directory
 cd /path/to/your/vault/.obsidian/plugins
 
-# Clone the repository as "agent-client"
+# Clone the repository as "obsius"
 # The directory name must match the id in manifest.json
-git clone https://github.com/RAIT-09/obsidian-agent-client.git agent-client
-cd agent-client
+git clone https://github.com/shuuul/obsidian-acp.git obsius
+cd obsius
 
 # Install dependencies
 npm install
@@ -63,7 +63,7 @@ npm run dev
 
 ### Testing in Obsidian
 
-1. After cloning to `.obsidian/plugins/agent-client`, run `npm run dev`
+1. After cloning to `.obsidian/plugins/obsius`, run `npm run dev`
 2. Enable the plugin in Obsidian Settings → Community Plugins
 3. Code changes trigger automatic rebuilds, but you need to reload the plugin (toggle it off/on in Community Plugins) to see changes
 

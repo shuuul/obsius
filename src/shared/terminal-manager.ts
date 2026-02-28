@@ -35,7 +35,7 @@ export class TerminalManager {
 
 		// Check current platform
 		if (!Platform.isDesktopApp) {
-			throw new Error("Agent Client is only available on desktop");
+			throw new Error("Obsius is only available on desktop");
 		}
 
 		// Set up environment variables

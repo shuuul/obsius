@@ -12,18 +12,18 @@ This plugin is awaiting approval for **Obsidian Community Plugins**. For now, us
 2. In Obsidian settings, go to **Community Plugins → BRAT → Add Beta Plugin**
 3. Paste this repo URL:
    ```
-   https://github.com/RAIT-09/obsidian-agent-client
+   https://github.com/shuuul/obsidian-acp
    ```
 4. BRAT will download the latest release and keep it auto-updated
-5. Enable **Agent Client** from the plugin list
+5. Enable **Obsius** from the plugin list
 
 ### Manual Installation
 
-1. Download the latest release files from [GitHub Releases](https://github.com/RAIT-09/obsidian-agent-client/releases):
+1. Download the latest release files from [GitHub Releases](https://github.com/shuuul/obsidian-acp/releases):
    - `main.js`
    - `manifest.json`
    - `styles.css`
-2. Create the plugin folder: `VaultFolder/.obsidian/plugins/agent-client/`
+2. Create the plugin folder: `VaultFolder/.obsidian/plugins/obsius/`
 3. Place the downloaded files in this folder
 4. Enable the plugin in **Obsidian Settings → Community Plugins**
 
@@ -60,7 +60,7 @@ where.exe node
 
 ### Configure Node.js Path
 
-1. Open **Settings → Agent Client**
+1. Open **Settings → Obsius**
 2. Enter the Node.js path in the **Node.js path** field
 
 ## Next Steps

@@ -510,7 +510,7 @@ export default class AgentClientPlugin extends Plugin {
 
 		if (resetReason) {
 			new Notice(
-				`[Agent Client] Settings were reset due to incompatible schema (${resetReason}). Clean break policy is active from schema version ${SETTINGS_SCHEMA_VERSION}.`,
+				`[Obsius] Settings were reset due to incompatible schema (${resetReason}). Clean break policy is active from schema version ${SETTINGS_SCHEMA_VERSION}.`,
 			);
 			await this.saveSettings();
 		}

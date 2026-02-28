@@ -22,7 +22,7 @@ where.exe your-agent
 
 :::
 
-3. Open **Settings → Agent Client** and scroll to **Custom Agents** section.
+3. Open **Settings → Obsius** and scroll to **Custom Agents** section.
 
 4. Click **Add custom agent**.
 

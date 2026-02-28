@@ -1,11 +1,10 @@
 {
-	"id": "agent-client",
-	"name": "Agent Client",
+	"id": "obsius",
+	"name": "Obsius",
 	"version": "0.8.3",
 	"minAppVersion": "1.5.0",
 	"description": "Chat with AI agents via the Agent Client Protocol directly from your vault.",
-	"author": "RAIT-09",
-	"authorUrl": "https://github.com/RAIT-09",
-	"fundingUrl": "https://www.buymeacoffee.com/rait09",
+	"author": "shuuul",
+	"authorUrl": "https://github.com/shuuul",
 	"isDesktopOnly": true
 }

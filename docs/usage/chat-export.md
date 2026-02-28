@@ -12,11 +12,11 @@ _Screenshot omitted in this fork._
 
 ## Export Settings
 
-Configure export options in **Settings → Agent Client → Export**:
+Configure export options in **Settings → Obsius → Export**:
 
 | Setting | Description |
 |---------|-------------|
-| **Export folder** | Folder where chat exports will be saved (default: `Agent Client`) |
+| **Export folder** | Folder where chat exports will be saved (default: `Obsius`) |
 | **Filename** | Template for filenames. Use `{date}` and `{time}` as placeholders |
 | **Frontmatter tag** | Tag added to exported notes (default: `agent-client`). Supports nested tags like `projects/agent-client` |
 | **Auto-export on new chat** | Automatically export when starting a new chat |

@@ -1,5 +1,5 @@
 /**
- * Main entry point for the Agent Client Plugin
+ * Main entry point for the Obsius plugin
  *
  * This file serves as the plugin entry point for Obsidian.
  * The actual implementation is in plugin.ts

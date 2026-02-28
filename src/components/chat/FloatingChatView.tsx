@@ -638,7 +638,7 @@ function FloatingChatComponent({
 					const success = await permission.approveActivePermission();
 					if (!success) {
 						new Notice(
-							"[Agent Client] No active permission request",
+							"[Obsius] No active permission request",
 						);
 					}
 				})();
@@ -660,7 +660,7 @@ function FloatingChatComponent({
 					const success = await permission.rejectActivePermission();
 					if (!success) {
 						new Notice(
-							"[Agent Client] No active permission request",
+							"[Obsius] No active permission request",
 						);
 					}
 				})();

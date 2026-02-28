@@ -3,7 +3,7 @@ import * as semver from "semver";
 
 async function fetchLatestStable(): Promise<string | null> {
 	const response = await requestUrl({
-		url: "https://api.github.com/repos/RAIT-09/obsidian-agent-client/releases/latest",
+		url: "https://api.github.com/repos/shuuul/obsidian-acp/releases/latest",
 	});
 	const data = response.json as { tag_name?: string };
 	return data.tag_name ? semver.clean(data.tag_name) : null;
@@ -11,7 +11,7 @@ async function fetchLatestStable(): Promise<string | null> {
 
 async function fetchLatestPrerelease(): Promise<string | null> {
 	const response = await requestUrl({
-		url: "https://api.github.com/repos/RAIT-09/obsidian-agent-client/releases",
+		url: "https://api.github.com/repos/shuuul/obsidian-acp/releases",
 	});
 	const releases = response.json as Array<{
 		tag_name: string;
@@ -37,13 +37,13 @@ export async function checkForUpdates(currentVersionInput: string): Promise<bool
 
 		if (hasNewerStable || hasNewerPrerelease) {
 			const newestVersion = hasNewerStable ? latestStable : latestPrerelease;
-			new Notice(`[Agent Client] Update available: v${newestVersion}`);
+			new Notice(`[Obsius] Update available: v${newestVersion}`);
 			return true;
 		}
 	} else {
 		const latestStable = await fetchLatestStable();
 		if (latestStable && semver.gt(latestStable, currentVersion)) {
-			new Notice(`[Agent Client] Update available: v${latestStable}`);
+			new Notice(`[Obsius] Update available: v${latestStable}`);
 			return true;
 		}
 	}

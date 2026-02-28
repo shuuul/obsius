@@ -57,9 +57,9 @@ export function useSessionHistoryHandlers(
 				logger.log(`[useChatController] Restoring session: ${sessionId}`);
 				clearMessages();
 				await sessionHistory.restoreSession(sessionId, cwd);
-				new Notice("[Agent Client] Session restored");
+				new Notice("[Obsius] Session restored");
 			} catch (error) {
-				new Notice("[Agent Client] Failed to restore session");
+				new Notice("[Obsius] Failed to restore session");
 				logger.error("Session restore error:", error);
 			}
 		},
@@ -72,9 +72,9 @@ export function useSessionHistoryHandlers(
 				logger.log(`[useChatController] Forking session: ${sessionId}`);
 				clearMessages();
 				await sessionHistory.forkSession(sessionId, cwd);
-				new Notice("[Agent Client] Session forked");
+				new Notice("[Obsius] Session forked");
 			} catch (error) {
-				new Notice("[Agent Client] Failed to fork session");
+				new Notice("[Obsius] Failed to fork session");
 				logger.error("Session fork error:", error);
 			}
 		},
@@ -97,9 +97,9 @@ export function useSessionHistoryHandlers(
 							`[useChatController] Deleting session: ${sessionId}`,
 						);
 						await sessionHistory.deleteSession(sessionId);
-						new Notice("[Agent Client] Session deleted");
+						new Notice("[Obsius] Session deleted");
 					} catch (error) {
-						new Notice("[Agent Client] Failed to delete session");
+						new Notice("[Obsius] Failed to delete session");
 						logger.error("Session delete error:", error);
 					}
 				},

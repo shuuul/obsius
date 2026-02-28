@@ -63,12 +63,12 @@ export function useImageAttachments({
 
 			for (const file of files) {
 				if (attachedImages.length + addedCount >= MAX_IMAGE_COUNT) {
-					new Notice(`[Agent Client] Maximum ${MAX_IMAGE_COUNT} images allowed`);
+					new Notice(`[Obsius] Maximum ${MAX_IMAGE_COUNT} images allowed`);
 					break;
 				}
 
 				if (file.size > MAX_IMAGE_SIZE_BYTES) {
-					new Notice(`[Agent Client] Image too large (max ${MAX_IMAGE_SIZE_MB}MB)`);
+					new Notice(`[Obsius] Image too large (max ${MAX_IMAGE_SIZE_MB}MB)`);
 					continue;
 				}
 
@@ -82,7 +82,7 @@ export function useImageAttachments({
 					addedCount++;
 				} catch (error) {
 					console.error("Failed to convert image:", error);
-					new Notice("[Agent Client] Failed to attach image");
+					new Notice("[Obsius] Failed to attach image");
 				}
 			}
 		},
@@ -106,7 +106,7 @@ export function useImageAttachments({
 			e.preventDefault();
 
 			if (!supportsImages) {
-				new Notice("[Agent Client] This agent does not support image attachments");
+				new Notice("[Obsius] This agent does not support image attachments");
 				return;
 			}
 
@@ -154,7 +154,7 @@ export function useImageAttachments({
 
 			e.preventDefault();
 			if (!supportsImages) {
-				new Notice("[Agent Client] This agent does not support image attachments");
+				new Notice("[Obsius] This agent does not support image attachments");
 				return;
 			}
 

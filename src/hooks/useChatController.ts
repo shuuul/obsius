@@ -248,7 +248,7 @@ export function useChatController(
 				requestedAgentId && requestedAgentId !== session.agentId;
 
 			if (messages.length === 0 && !isAgentSwitch) {
-				new Notice("[Agent Client] Already a new session");
+				new Notice("[Obsius] Already a new session");
 				return;
 			}
 
@@ -292,7 +292,7 @@ export function useChatController(
 
 	const handleExportChat = useCallback(async () => {
 		if (messages.length === 0) {
-			new Notice("[Agent Client] No messages to export");
+			new Notice("[Obsius] No messages to export");
 			return;
 		}
 
@@ -307,9 +307,9 @@ export function useChatController(
 				session.createdAt,
 				openFile,
 			);
-			new Notice(`[Agent Client] Chat exported to ${filePath}`);
+			new Notice(`[Obsius] Chat exported to ${filePath}`);
 		} catch (error) {
-			new Notice("[Agent Client] Failed to export chat");
+			new Notice("[Obsius] Failed to export chat");
 			logger.error("Export error:", error);
 		}
 	}, [messages, session, plugin, logger]);
@@ -334,9 +334,9 @@ export function useChatController(
 
 		try {
 			await agentSession.forceRestartAgent();
-			new Notice("[Agent Client] Agent restarted");
+			new Notice("[Obsius] Agent restarted");
 		} catch (error) {
-			new Notice("[Agent Client] Failed to restart agent");
+			new Notice("[Obsius] Failed to restart agent");
 			logger.error("Restart error:", error);
 		}
 	}, [logger, messages, session, autoExport, chat, agentSession]);

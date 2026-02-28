@@ -1,25 +1,13 @@
-<h1 align="center">Agent Client Plugin for Obsidian</h1>
-
-<p align="center">
-  <b>This is a community fork of the <a href="https://github.com/RAIT-09/obsidian-agent-client">original repository</a>.</b>
-</p>
+<h1 align="center">Obsius — AI Agents in Obsidian</h1>
 
 <p align="center">
 
 <p align="center">
-  <img src="https://img.shields.io/github/downloads/RAIT-09/obsidian-agent-client/total" alt="GitHub Downloads">
-  <img src="https://img.shields.io/github/license/RAIT-09/obsidian-agent-client" alt="License">
-  <img src="https://img.shields.io/github/v/release/RAIT-09/obsidian-agent-client" alt="GitHub release">
-  <img src="https://img.shields.io/github/last-commit/RAIT-09/obsidian-agent-client" alt="GitHub last commit">
-  <a href="https://github.com/RAIT-09/obsidian-agent-client/discussions"><img src="https://img.shields.io/github/discussions/RAIT-09/obsidian-agent-client" alt="GitHub Discussions"></a>
-</p>
-
-<p align="center">
-  <a href="README.ja.md">日本語はこちら</a>
-</p>
-
-<p align="center">
-  <a href="https://www.buymeacoffee.com/rait09" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="180" height="50" ></a>
+  <img src="https://img.shields.io/github/downloads/shuuul/obsidian-acp/total" alt="GitHub Downloads">
+  <img src="https://img.shields.io/github/license/shuuul/obsidian-acp" alt="License">
+  <img src="https://img.shields.io/github/v/release/shuuul/obsidian-acp" alt="GitHub release">
+  <img src="https://img.shields.io/github/last-commit/shuuul/obsidian-acp" alt="GitHub last commit">
+  <a href="https://github.com/shuuul/obsidian-acp/discussions"><img src="https://img.shields.io/github/discussions/shuuul/obsidian-acp" alt="GitHub Discussions"></a>
 </p>
 
 Bring AI agents (Claude Code, Codex, Gemini CLI) directly into Obsidian. Chat with your AI assistant right from your vault.
@@ -47,13 +35,13 @@ https://github.com/user-attachments/assets/1c538349-b3fb-44dd-a163-7331cbca7824
 
 1. Install the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin
 2. Go to **Settings → BRAT → Add Beta Plugin**
-3. Paste: `https://github.com/RAIT-09/obsidian-agent-client`
-4. Enable **Agent Client** from the plugin list
+3. Paste: `https://github.com/shuuul/obsidian-acp`
+4. Enable **Obsius** from the plugin list
 
 ### Manual Installation
 
-1. Download `main.js`, `manifest.json`, `styles.css` from [Releases](https://github.com/RAIT-09/obsidian-agent-client/releases)
-2. Place them in `VaultFolder/.obsidian/plugins/agent-client/`
+1. Download `main.js`, `manifest.json`, `styles.css` from [Releases](https://github.com/shuuul/obsidian-acp/releases)
+2. Place them in `VaultFolder/.obsidian/plugins/obsius/`
 3. Enable the plugin in **Settings → Community Plugins**
 
 ## Quick Start
@@ -81,7 +69,7 @@ Open a terminal (Terminal on macOS/Linux, PowerShell on Windows) and run the fol
    where.exe claude-agent-acp
    ```
 
-4. **Configure** in **Settings → Agent Client**:
+4. **Configure** in **Settings → Obsius**:
    - **Node.js path**: e.g., `/usr/local/bin/node`
    - **Built-in agents → Claude Code → Path**: e.g., `/usr/local/bin/claude-agent-acp` (not `claude`)
    - **API key**: Add your key, or leave empty if logged in via CLI
@@ -90,12 +78,12 @@ Open a terminal (Terminal on macOS/Linux, PowerShell on Windows) and run the fol
 
 ### Setup Guides
 
-- [Claude Code](https://rait-09.github.io/obsidian-agent-client/agent-setup/claude-code.html)
-- [Codex](https://rait-09.github.io/obsidian-agent-client/agent-setup/codex.html)
-- [Gemini CLI](https://rait-09.github.io/obsidian-agent-client/agent-setup/gemini-cli.html)
-- [Custom Agents](https://rait-09.github.io/obsidian-agent-client/agent-setup/custom-agents.html) (OpenCode, Qwen Code, Kiro, Mistral Vibe, etc.)
+- [Claude Code](https://shuuul.github.io/obsidian-acp/agent-setup/claude-code.html)
+- [Codex](https://shuuul.github.io/obsidian-acp/agent-setup/codex.html)
+- [Gemini CLI](https://shuuul.github.io/obsidian-acp/agent-setup/gemini-cli.html)
+- [Custom Agents](https://shuuul.github.io/obsidian-acp/agent-setup/custom-agents.html) (OpenCode, Qwen Code, Kiro, Mistral Vibe, etc.)
 
-**[Full Documentation](https://rait-09.github.io/obsidian-agent-client/)**
+**[Full Documentation](https://shuuul.github.io/obsidian-acp/)**
 
 ## Requirements
 
@@ -127,4 +115,4 @@ Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=RAIT-09/obsidian-agent-client&type=Date)](https://www.star-history.com/#RAIT-09/obsidian-agent-client&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=shuuul/obsidian-acp&type=Date)](https://www.star-history.com/#shuuul/obsidian-acp&Date)

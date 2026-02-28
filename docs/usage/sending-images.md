@@ -9,7 +9,7 @@ Image attachments are agent-specific. Not all agents support image attachments.
 ::: tip
 If your agent doesn't support images, you'll see a notification when attempting to attach one:
 
-`[Agent Client] This agent does not support image attachments`
+`[Obsius] This agent does not support image attachments`
 :::
 
 ## Attaching Images
@@ -59,6 +59,6 @@ _Screenshot omitted in this fork._
 
 ::: info
 If you exceed these limits, a notification will inform you:
-- `[Agent Client] Image too large (max 5MB)`
-- `[Agent Client] Maximum 10 images allowed`
+- `[Obsius] Image too large (max 5MB)`
+- `[Obsius] Maximum 10 images allowed`
 :::

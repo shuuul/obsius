@@ -1,20 +1,20 @@
 import { defineConfig } from "vitepress";
 
 export default defineConfig({
-  title: "Agent Client",
+  title: "Obsius",
   description:
     "Obsidian plugin for AI agent integration - Chat with Claude Code, Codex, Gemini CLI and more",
 
   // GitHub Pages base path
-  base: "/obsidian-agent-client/",
+  base: "/obsidian-acp/",
 
   head: [
-    ["link", { rel: "icon", type: "image/x-icon", href: "/obsidian-agent-client/favicon.ico" }],
-    ["link", { rel: "icon", type: "image/png", sizes: "32x32", href: "/obsidian-agent-client/favicon-32x32.png" }],
-    ["link", { rel: "icon", type: "image/png", sizes: "16x16", href: "/obsidian-agent-client/favicon-16x16.png" }],
-    ["link", { rel: "apple-touch-icon", sizes: "180x180", href: "/obsidian-agent-client/apple-touch-icon.png" }],
+    ["link", { rel: "icon", type: "image/x-icon", href: "/obsidian-acp/favicon.ico" }],
+    ["link", { rel: "icon", type: "image/png", sizes: "32x32", href: "/obsidian-acp/favicon-32x32.png" }],
+    ["link", { rel: "icon", type: "image/png", sizes: "16x16", href: "/obsidian-acp/favicon-16x16.png" }],
+    ["link", { rel: "apple-touch-icon", sizes: "180x180", href: "/obsidian-acp/apple-touch-icon.png" }],
     ["meta", { name: "og:type", content: "website" }],
-    ["meta", { name: "og:title", content: "Agent Client for Obsidian" }],
+    ["meta", { name: "og:title", content: "Obsius — AI Agents in Obsidian" }],
     [
       "meta",
       {
@@ -26,7 +26,7 @@ export default defineConfig({
       "meta",
       {
         name: "og:url",
-        content: "https://rait-09.github.io/obsidian-agent-client/",
+        content: "https://shuuul.github.io/obsidian-acp/",
       },
     ],
   ],
@@ -37,13 +37,13 @@ export default defineConfig({
       { text: "Getting Started", link: "/getting-started/" },
       { text: "Agent Setup", link: "/agent-setup/" },
       { text: "Usage", link: "/usage/" },
-      { text: "GitHub", link: "https://github.com/RAIT-09/obsidian-agent-client" },
+      { text: "GitHub", link: "https://github.com/shuuul/obsidian-acp" },
     ],
 
     sidebar: [
       {
         text: "Introduction",
-        items: [{ text: "What is Agent Client?", link: "/" }],
+        items: [{ text: "What is Obsius?", link: "/" }],
       },
       {
         text: "Getting Started",
@@ -99,13 +99,13 @@ export default defineConfig({
     socialLinks: [
       {
         icon: "github",
-        link: "https://github.com/RAIT-09/obsidian-agent-client",
+        link: "https://github.com/shuuul/obsidian-acp",
       },
     ],
 
     footer: {
       message: "Released under the Apache 2.0 License.",
-      copyright: "Copyright © 2025-present RAIT-09",
+      copyright: "Copyright © 2025-present shuuul",
     },
 
     search: {

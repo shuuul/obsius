@@ -374,7 +374,7 @@ function renderExportSection(
 		.setDesc("Folder where chat exports will be saved")
 		.addText((text) =>
 			text
-				.setPlaceholder("Agent Client")
+				.setPlaceholder("Obsius")
 				.setValue(plugin.settings.exportSettings.defaultFolder)
 				.onChange(async (value) => {
 					plugin.settings.exportSettings.defaultFolder = value;
@@ -389,7 +389,7 @@ function renderExportSection(
 		)
 		.addText((text) =>
 			text
-				.setPlaceholder("agent_client_{date}_{time}")
+				.setPlaceholder("obsius_{date}_{time}")
 				.setValue(plugin.settings.exportSettings.filenameTemplate)
 				.onChange(async (value) => {
 					plugin.settings.exportSettings.filenameTemplate = value;
@@ -400,11 +400,11 @@ function renderExportSection(
 	new Setting(containerEl)
 		.setName("Frontmatter tag")
 		.setDesc(
-			"Tag to add to exported notes. Supports nested tags (e.g., projects/agent-client). Leave empty to disable.",
+			"Tag to add to exported notes. Supports nested tags (e.g., projects/obsius). Leave empty to disable.",
 		)
 		.addText((text) =>
 			text
-				.setPlaceholder("agent-client")
+				.setPlaceholder("obsius")
 				.setValue(plugin.settings.exportSettings.frontmatterTag)
 				.onChange(async (value) => {
 					plugin.settings.exportSettings.frontmatterTag = value;
@@ -451,7 +451,7 @@ function renderExportSection(
 				.setDesc("Folder path for exported images (relative to vault root)")
 				.addText((text) =>
 					text
-						.setPlaceholder("Agent Client")
+						.setPlaceholder("Obsius")
 						.setValue(plugin.settings.exportSettings.imageCustomFolder)
 						.onChange(async (value) => {
 							plugin.settings.exportSettings.imageCustomFolder = value;

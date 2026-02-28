@@ -139,7 +139,7 @@ export function useAutoExport(plugin: AgentClientPlugin): UseAutoExportReturn {
 
 				if (filePath) {
 					// Show success notification
-					new Notice(`[Agent Client] Chat exported to ${filePath}`);
+					new Notice(`[Obsius] Chat exported to ${filePath}`);
 
 					// Log success
 					const context =
@@ -148,7 +148,7 @@ export function useAutoExport(plugin: AgentClientPlugin): UseAutoExportReturn {
 				}
 			} catch {
 				// Show error notification
-				new Notice("[Agent Client] Failed to export chat");
+				new Notice("[Obsius] Failed to export chat");
 				// Error already logged in exportChat
 			}
 		},

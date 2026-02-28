@@ -244,8 +244,8 @@ export async function initializeOperation(args: {
 			terminal: true,
 		},
 		clientInfo: {
-			name: "obsidian-agent-client",
-			title: "Agent Client for Obsidian",
+			name: "obsidian-acp",
+			title: "Obsius",
 			version: pluginVersion,
 		},
 	});

@@ -2,7 +2,7 @@
 
 ## Opening the Chat Panel
 
-You can open the Agent Client chat panel in two ways:
+You can open the Obsius chat panel in two ways:
 
 - **Ribbon Icon**: Click the robot icon in the left ribbon
 
@@ -58,7 +58,7 @@ _Screenshot omitted in this fork._
 </p>
 
 ::: tip
-To change the default agent for new chat views, go to **Settings → Agent Client → Default agent**.
+To change the default agent for new chat views, go to **Settings → Obsius → Default agent**.
 
 _Screenshot omitted in this fork._
 :::
@@ -74,7 +74,7 @@ See [Multi-Session Chat](/usage/multi-session) for details on:
 
 ## Floating Chat
 
-A draggable, resizable chat window that floats over your workspace. Enable it in **Settings → Agent Client → Floating chat**.
+A draggable, resizable chat window that floats over your workspace. Enable it in **Settings → Obsius → Floating chat**.
 
 See [Floating Chat](/usage/floating-chat) for details.
 

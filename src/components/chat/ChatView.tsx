@@ -49,7 +49,7 @@ function ChatComponent({
 	// Platform Check
 	// ============================================================
 	if (!Platform.isDesktopApp) {
-		throw new Error("Agent Client is only available on desktop");
+		throw new Error("Obsius is only available on desktop");
 	}
 
 	// ============================================================
@@ -460,7 +460,7 @@ function ChatComponent({
 					const success = await permission.approveActivePermission();
 					if (!success) {
 						new Notice(
-							"[Agent Client] No active permission request",
+							"[Obsius] No active permission request",
 						);
 					}
 				})();
@@ -485,7 +485,7 @@ function ChatComponent({
 					const success = await permission.rejectActivePermission();
 					if (!success) {
 						new Notice(
-							"[Agent Client] No active permission request",
+							"[Obsius] No active permission request",
 						);
 					}
 				})();

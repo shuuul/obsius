@@ -169,20 +169,20 @@ export const registerPermissionCommands = (host: AgentOpsHost): void => {
 export const broadcastPrompt = (host: AgentOpsHost): void => {
 	const allViews = host.viewRegistry.getAll();
 	if (allViews.length === 0) {
-		new Notice("[Agent Client] No chat views open");
+		new Notice("[Obsius] No chat views open");
 		return;
 	}
 
 	const inputState = host.viewRegistry.toFocused((v) => v.getInputState());
 	if (!inputState || (inputState.text.trim() === "" && inputState.images.length === 0)) {
-		new Notice("[Agent Client] No prompt to broadcast");
+		new Notice("[Obsius] No prompt to broadcast");
 		return;
 	}
 
 	const focusedId = host.viewRegistry.getFocusedId();
 	const targetViews = allViews.filter((v) => v.viewId !== focusedId);
 	if (targetViews.length === 0) {
-		new Notice("[Agent Client] No other chat views to broadcast to");
+		new Notice("[Obsius] No other chat views to broadcast to");
 		return;
 	}
 
@@ -194,13 +194,13 @@ export const broadcastPrompt = (host: AgentOpsHost): void => {
 export const broadcastSend = async (host: AgentOpsHost): Promise<void> => {
 	const allViews = host.viewRegistry.getAll();
 	if (allViews.length === 0) {
-		new Notice("[Agent Client] No chat views open");
+		new Notice("[Obsius] No chat views open");
 		return;
 	}
 
 	const sendableViews = allViews.filter((v) => v.canSend());
 	if (sendableViews.length === 0) {
-		new Notice("[Agent Client] No views ready to send");
+		new Notice("[Obsius] No views ready to send");
 		return;
 	}
 
@@ -210,12 +210,12 @@ export const broadcastSend = async (host: AgentOpsHost): Promise<void> => {
 export const broadcastCancel = async (host: AgentOpsHost): Promise<void> => {
 	const allViews = host.viewRegistry.getAll();
 	if (allViews.length === 0) {
-		new Notice("[Agent Client] No chat views open");
+		new Notice("[Obsius] No chat views open");
 		return;
 	}
 
 	await Promise.allSettled(allViews.map((v) => v.cancelOperation()));
-	new Notice("[Agent Client] Cancel broadcast to all views");
+	new Notice("[Obsius] Cancel broadcast to all views");
 };
 
 export const registerBroadcastCommands = (host: AgentOpsHost): void => {

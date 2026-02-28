@@ -28,7 +28,7 @@ where.exe codex-acp
 
 :::
 
-3. Open **Settings → Agent Client** and set the **Codex path** to the path found above.
+3. Open **Settings → Obsius** and set the **Codex path** to the path found above.
 
 ## Authentication
 
@@ -37,7 +37,7 @@ Choose one of the following methods:
 ### Option A: API Key
 
 1. Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Enter the API key in **Settings → Agent Client → Codex → API key**
+2. Enter the API key in **Settings → Obsius → Codex → API key**
 
 ### Option B: Account Login
 
@@ -61,7 +61,7 @@ codex
 
 Follow the prompts to authenticate with your OpenAI account.
 
-3. In **Settings → Agent Client**, leave the **API key field empty**.
+3. In **Settings → Obsius**, leave the **API key field empty**.
 
 ::: tip
 The ChatGPT app uses a different authentication system. Having ChatGPT running does **not** authenticate the plugin — you must log in via the CLI.

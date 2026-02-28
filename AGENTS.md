@@ -1,4 +1,4 @@
-# Agent Client Plugin - LLM Developer Guide
+# Obsius - LLM Developer Guide
 
 **Generated:** 2026-03-01 | **Commit:** ee8e386 | **Branch:** master
 
@@ -35,7 +35,6 @@ src/
 | UI changes | `components/chat/` | See `components/chat/AGENTS.md` |
 | Settings changes | `plugin.ts` (interface) + `components/settings/sections/` (UI sections) | `AgentClientSettingTab.ts` is now a thin coordinator |
 | Debug | Settings → Debug Mode ON → DevTools → filter `[AcpAdapter]`, `[useChat]`, `[NoteMentionService]` | |
-| Hot reload | Install [pjeby/hot-reload](https://github.com/pjeby/hot-reload) in vault | Auto-reloads on `npm run dev` build |
 
 ## Architecture: Hook Composition Pattern
 
