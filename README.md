@@ -1,6 +1,12 @@
 <h1 align="center">Agent Client Plugin for Obsidian</h1>
 
 <p align="center">
+  <b>This is a community fork of the <a href="https://github.com/RAIT-09/obsidian-agent-client">original repository</a>.</b>
+</p>
+
+<p align="center">
+
+<p align="center">
   <img src="https://img.shields.io/github/downloads/RAIT-09/obsidian-agent-client/total" alt="GitHub Downloads">
   <img src="https://img.shields.io/github/license/RAIT-09/obsidian-agent-client" alt="License">
   <img src="https://img.shields.io/github/v/release/RAIT-09/obsidian-agent-client" alt="GitHub release">
