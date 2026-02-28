@@ -9,13 +9,13 @@
 - Session lifecycle + agent switching: `src/hooks/useAgentSession.ts`.
 - Message state + streaming updates: `src/hooks/useChat.ts`.
 - ACP process + JSON-RPC wiring: `src/adapters/acp/acp.adapter.ts`.
-- Pure message prep/sending (mentions, auto-mention, WSL path conversion): `src/shared/message-service.ts`.
+- Pure message prep/sending (mentions, auto-mention, WSL path conversion): `src/shared/message-service/`.
 - Domain contracts only (no deps): `src/domain/models/*`, `src/domain/ports/*`.
 
 ## Architectural rules (project-specific)
 - Keep `src/domain/**` dependency-free: **no** `obsidian` imports, **no** `@agentclientprotocol/sdk` imports.
-- Add new behavior as **hooks** under `src/hooks/` and compose them in `ChatView.tsx` (avoid introducing ViewModel/UseCase classes).
-- Put non-React business logic in `src/shared/` as **pure functions** (see `message-service.ts`).
+- Add new behavior as **hooks** under `src/hooks/` and compose them in `useChatController.ts` (avoid introducing ViewModel/UseCase classes).
+- Put non-React business logic in `src/shared/` as **pure functions** (see `message-service/` modules).
 - Adapters implement ports and isolate protocol/platform churn (ACP changes should mostly stay in `src/adapters/acp/`).
 
 ## SessionUpdate / tool-call update flow (critical)
@@ -31,9 +31,9 @@
 - Keep styling in `styles.css` (avoid JS style manipulation).
 
 ## Developer workflows
-- Dev watch build: `npm run dev` (esbuild watch; outputs `main.js`).
-- Production build: `npm run build` (runs `tsc -noEmit -skipLibCheck` then esbuild production).
-- Formatting: `npm run format` / `npm run format:check` (Prettier).
+- Dev watch build: `npm run dev` (Vite watch build; outputs `main.js`).
+- Production build: `npm run build` (runs `tsc --noEmit -skipLibCheck` then Vite production build).
+- Formatting: `npm run format` / `npm run format:check` (Biome).
 - Linting: `npm run lint` / `npm run lint:fix`.
 - Docs site: `npm run docs:dev`, `npm run docs:build`, `npm run docs:preview`.
 
