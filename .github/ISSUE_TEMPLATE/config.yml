@@ -1,11 +1,11 @@
 blank_issues_enabled: true
 contact_links:
   - name: Ask a Question
-    url: https://github.com/shuuul/obsidian-acp/discussions/categories/q-a
+    url: https://github.com/shuuul/obsius/discussions/categories/q-a
     about: Ask questions about usage or configuration in Discussions
   - name: Share an Idea
-    url: https://github.com/shuuul/obsidian-acp/discussions/categories/ideas
+    url: https://github.com/shuuul/obsius/discussions/categories/ideas
     about: Propose and discuss early-stage feature ideas in Discussions
   - name: Documentation
-    url: https://shuuul.github.io/obsidian-acp/
+    url: https://shuuul.github.io/obsius/
     about: Check the documentation before opening an issue

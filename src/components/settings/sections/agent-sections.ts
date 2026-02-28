@@ -290,10 +290,10 @@ function renderOpenCodeSettings(
 	new Setting(sectionEl)
 		.setName("Path")
 		.setDesc(
-			'Absolute path to the opencode-ai binary. On macOS/Linux, use "which opencode-ai", and on Windows, use "where opencode-ai" to find it.',
+			'Absolute path to the opencode binary. On macOS/Linux, use "which opencode", and on Windows, use "where opencode" to find it.',
 		)
 		.addText((text) => {
-			text.setPlaceholder("Absolute path to OpenCode") // eslint-disable-line obsidianmd/ui/sentence-case
+			text.setPlaceholder("e.g. /opt/homebrew/bin/opencode") // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(opencode.command)
 				.onChange(async (value) => {
 					plugin.settings.opencode.command = value.trim();

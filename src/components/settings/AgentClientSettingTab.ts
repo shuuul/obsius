@@ -39,7 +39,7 @@ export class AgentClientSettingTab extends PluginSettingTab {
 		docContainer.createSpan({ text: "Need help? Check out the " });
 		docContainer.createEl("a", {
 			text: "documentation", // eslint-disable-line obsidianmd/ui/sentence-case
-			href: "https://shuuul.github.io/obsidian-acp/",
+			href: "https://shuuul.github.io/obsius/",
 		});
 		docContainer.createSpan({ text: "." });
 

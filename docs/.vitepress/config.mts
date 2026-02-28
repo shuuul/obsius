@@ -6,13 +6,13 @@ export default defineConfig({
     "Obsidian plugin for AI agent integration - Chat with Claude Code, OpenCode, Codex, Gemini CLI and more",
 
   // GitHub Pages base path
-  base: "/obsidian-acp/",
+  base: "/obsius/",
 
   head: [
-    ["link", { rel: "icon", type: "image/x-icon", href: "/obsidian-acp/favicon.ico" }],
-    ["link", { rel: "icon", type: "image/png", sizes: "32x32", href: "/obsidian-acp/favicon-32x32.png" }],
-    ["link", { rel: "icon", type: "image/png", sizes: "16x16", href: "/obsidian-acp/favicon-16x16.png" }],
-    ["link", { rel: "apple-touch-icon", sizes: "180x180", href: "/obsidian-acp/apple-touch-icon.png" }],
+    ["link", { rel: "icon", type: "image/x-icon", href: "/obsius/favicon.ico" }],
+    ["link", { rel: "icon", type: "image/png", sizes: "32x32", href: "/obsius/favicon-32x32.png" }],
+    ["link", { rel: "icon", type: "image/png", sizes: "16x16", href: "/obsius/favicon-16x16.png" }],
+    ["link", { rel: "apple-touch-icon", sizes: "180x180", href: "/obsius/apple-touch-icon.png" }],
     ["meta", { name: "og:type", content: "website" }],
     ["meta", { name: "og:title", content: "Obsius — AI Agents in Obsidian" }],
     [
@@ -26,7 +26,7 @@ export default defineConfig({
       "meta",
       {
         name: "og:url",
-        content: "https://shuuul.github.io/obsidian-acp/",
+        content: "https://shuuul.github.io/obsius/",
       },
     ],
   ],
@@ -37,7 +37,7 @@ export default defineConfig({
       { text: "Getting Started", link: "/getting-started/" },
       { text: "Agent Setup", link: "/agent-setup/" },
       { text: "Usage", link: "/usage/" },
-      { text: "GitHub", link: "https://github.com/shuuul/obsidian-acp" },
+      { text: "GitHub", link: "https://github.com/shuuul/obsius" },
     ],
 
     sidebar: [
@@ -100,7 +100,7 @@ export default defineConfig({
     socialLinks: [
       {
         icon: "github",
-        link: "https://github.com/shuuul/obsidian-acp",
+        link: "https://github.com/shuuul/obsius",
       },
     ],
 

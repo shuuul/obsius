@@ -244,7 +244,7 @@ export async function initializeOperation(args: {
 			terminal: true,
 		},
 		clientInfo: {
-			name: "obsidian-acp",
+			name: "obsius",
 			title: "Obsius",
 			version: pluginVersion,
 		},

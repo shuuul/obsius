@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-acp",
+	"name": "obsius",
 	"version": "0.8.3",
 	"description": "Use AI coding agents via the Agent Client Protocol directly inside Obsidian",
 	"main": "main.js",
@@ -51,8 +51,8 @@
 	},
 	"dependencies": {
 		"@agentclientprotocol/sdk": "^0.14.1",
-		"@codemirror/state": "6.5.4",
-		"@codemirror/view": "^6.39.15",
+		"@codemirror/state": "6.5.0",
+		"@codemirror/view": "6.38.6",
 		"diff": "^8.0.2",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",
