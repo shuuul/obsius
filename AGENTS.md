@@ -1,6 +1,6 @@
 # Obsius - LLM Developer Guide
 
-**Generated:** 2026-03-01 | **Commit:** efe6dc3 | **Branch:** master
+**Generated:** 2026-03-02 | **Commit:** e8b8ba2 | **Branch:** master
 
 ## Overview
 Obsidian desktop plugin for AI chat (OpenCode, Claude Code, Codex, Gemini CLI, custom agents). React 19 + TypeScript, communicating via Agent Client Protocol (ACP) over JSON-RPC stdin/stdout. Multi-tab chat sessions in a sidebar view.
@@ -9,10 +9,11 @@ Obsidian desktop plugin for AI chat (OpenCode, Claude Code, Codex, Gemini CLI, c
 ```
 src/
 ├── main.ts                   # Re-exports plugin.ts
-├── plugin.ts                 # Obsidian plugin lifecycle composition root (~457 lines)
+├── plugin.ts                 # Obsidian plugin lifecycle composition root (~458 lines)
 ├── plugin/                   # Extracted plugin modules
 │   ├── agent-ops.ts          # Agent CRUD commands + broadcast helpers (~238 lines)
-│   ├── editor-context.ts     # Editor/file context menus + context reference handling (~344 lines)
+│   ├── editor-context.ts     # Editor/file context menus + context reference handling (~342 lines)
+│   ├── inline-edit.ts        # Inline edit: selection → agent prompt flow (~185 lines)
 │   ├── update-check.ts       # GitHub release version check (~56 lines)
 │   └── view-helpers.ts       # View creation/focus helpers (~66 lines)
 ├── domain/                   # Pure types + interfaces — ZERO external deps
@@ -21,15 +22,16 @@ src/
 ├── adapters/
 │   ├── acp/                  # ACP protocol modules: lifecycle, runtime ops, routing, terminal, permissions (10 files)
 │   └── obsidian/             # VaultAdapter, SettingsStore, MentionService (3 files)
-├── hooks/                    # React custom hooks (12 hooks + 5 state modules + 5 extracted modules)
+├── hooks/                    # React custom hooks (16 hooks + 5 state modules + 5 extracted modules)
 │   ├── state/                # Pure reducer/action modules for deterministic state transitions
 │   ├── chat-controller/      # Extracted coordinator helpers (types + session-history-handlers)
 │   ├── agent-session/        # Session normalization helpers
 │   └── session-history/      # History list/load/restore/fork helpers
 ├── components/
-│   ├── chat/                 # ChatView + 30 sub-components (19 top-level + 11 in chat-input/)
-│   └── settings/             # Thin tab coordinator + 3 section renderers
-└── shared/                   # Pure utility functions (21 files)
+│   ├── chat/                 # ChatView + 32 sub-components (21 top-level + 11 in chat-input/)
+│   ├── picker/               # Unified picker panel for mentions + slash commands (4 files)
+│   └── settings/             # Thin tab coordinator + 4 section renderers
+└── shared/                   # Pure utility functions (24 files)
 ```
 
 ## Where To Look
@@ -41,7 +43,9 @@ src/
 | Change ACP protocol | `adapters/acp/` modules + `acp.adapter.ts` composition | See `adapters/acp/AGENTS.md` |
 | UI changes | `components/chat/` | See `components/chat/AGENTS.md` |
 | Settings changes | `plugin.ts` (interface) + `components/settings/sections/` (UI sections) | `AgentClientSettingTab.ts` is thin coordinator |
+| Add picker provider | `components/picker/` | Implement provider matching `PickerProvider` type |
 | Add input UI element | `components/chat/chat-input/` | 11 files: RichTextarea, InputActions, SelectorButton, etc. |
+| Inline edit | `plugin/inline-edit.ts` | Selection → agent prompt with diff viewer |
 | Tab management | `hooks/useTabs.ts` + `components/chat/TabBar.tsx` + `TabContent.tsx` | Multi-tab chat sessions |
 | Editor context menus | `plugin/editor-context.ts` | Selection, file, folder context references |
 | Debug | Settings → Debug Mode ON → DevTools → filter `[AcpAdapter]`, `[useChat]`, `[NoteMentionService]` | |
@@ -55,16 +59,20 @@ ChatView.tsx
             │   ├── AcpAdapter (from plugin registry)
             │   ├── ObsidianVaultAdapter
             │   └── NoteMentionService
-            └── Composes 9 hooks:
+            └── Composes 13 hooks:
                 ├── useSettings()          → useSyncExternalStore subscription
                 ├── useAgentSession()      → session lifecycle, agent switching
                 ├── useChat()              → messages, streaming, tool calls
                 ├── usePermission()        → permission request handling
                 ├── useMentions()          → @[[note]] suggestions
-                ├── useSlashCommands()     → /command suggestions
+                ├── useSlashCommands()     → /command suggestions + token handling
                 ├── useAutoMention()       → active note tracking
                 ├── useSessionHistory()    → session list, load, resume, fork
-                └── useTabs()             → multi-tab management (max 4 tabs)
+                ├── useTabs()             → multi-tab management (max 4 tabs)
+                ├── usePicker()           → unified picker panel (mentions + commands)
+                ├── useModelFiltering()   → model search/filter state
+                ├── useSessionRestore()   → session file restoration from disk
+                └── useUpdateCheck()      → GitHub release update check
 ```
 
 ## Data Flow
@@ -143,17 +151,22 @@ npm run docs:build       # VitePress build
 ```
 
 ## Notes
-- **Tests exist**: Vitest with coverage gates for reducer/routing/schema modules (test/ directory, 7 files including setup)
+- **Tests exist**: Vitest with coverage gates for reducer/routing/schema modules (test/ directory, 9 files including setup)
 - **CI**: PR workflow enforces typecheck, lint, tests with coverage, plugin build, and docs build
 - **Multi-session**: `ChatViewRegistry` manages sidebar views with independent ACP sessions
 - **Multi-tab**: `useTabs` hook supports up to 4 concurrent chat tabs per view, each with its own agent/session
 - **Session history**: Agent-side (`listSessions`) + local persistence (`sessions/{id}.json`)
 - **Settings validation**: `settings-schema.ts` uses Zod for runtime validation with schema versioning (v4)
 - **Context references**: Editor context menus (selection, file, folder) inject `ChatContextReference` tokens into chat input via `chat-context-token.ts`
+- **Picker system**: `components/picker/` provides unified `UnifiedPickerPanel` for @mentions and /commands with pluggable providers
+- **Inline edit**: `plugin/inline-edit.ts` enables selection-based editing via agent prompt with diff viewer
+- **Session restore**: `useSessionRestore` + `session-file-restoration.ts` detect and restore orphaned session files from disk
+- **Settings migrations**: `settings-migrations.ts` handles schema version upgrades with typed migration functions
+- **Slash command tokens**: `slash-command-token.ts` encodes/decodes slash commands as inline tokens in message text
 - **Current decomposition state**:
-  - `src/plugin.ts` (~457 LOC) is thin orchestrator; command/update/view/context helpers in `src/plugin/`
+  - `src/plugin.ts` (~458 LOC) is thin orchestrator; command/update/view/context/inline-edit helpers in `src/plugin/`
   - `src/adapters/acp/acp.adapter.ts` (~505 LOC) is composition root; concern modules under `src/adapters/acp/`
-  - `ChatView.tsx` (~538 LOC), `ChatInput.tsx` (~399 LOC) — input logic extracted to `chat-input/` (11 files)
+  - `ChatView.tsx` (~531 LOC), `ChatInput.tsx` (~552 LOC) — input logic extracted to `chat-input/` (11 files)
   - `SessionHistoryContent.tsx` (~498 LOC) — largest React component
 - **Undocumented API**: `vault.adapter.ts` uses `editor.cm` (CodeMirror 6 internal) for selection tracking
 - **ACP SDK**: `@agentclientprotocol/sdk ^0.14.1` — protocol may evolve

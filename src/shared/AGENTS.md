@@ -12,9 +12,9 @@ Pure utility modules with no React dependencies. Business logic extracted from h
 | `message-service/types.ts` | 53 | Message-service shared types | `useChat` |
 | `terminal-manager.ts` | 277 | Spawn terminal processes, poll output, platform shell wrapping | `AcpAdapter` |
 | `chat-view-registry.ts` | 214 | Multi-view management: register/unregister/focus/broadcast/navigate | `plugin.ts` |
-| `chat-context-token.ts` | ~150 | Context reference token parsing, creation, extraction, badge formatting | `ChatInput`, `TextWithMentions`, `editor-context` |
+| `chat-context-token.ts` | ~299 | Context reference token parsing, creation, extraction, badge formatting | `ChatInput`, `TextWithMentions`, `editor-context` |
 | `acp-error-utils.ts` | 205 | ACP JSON-RPC error extraction, user-friendly `ErrorInfo` generation | `useChat`, `useAgentSession` |
-| `settings-schema.ts` | 198 | Zod-based settings validation with schema versioning (v4) | `SettingsStore` |
+| `settings-schema.ts` | 220 | Zod-based settings validation with schema versioning (v4) | `SettingsStore` |
 | `tool-icons.ts` | 221 | Tool title/kind -> Obsidian Lucide icon name mapping | `ToolCallRenderer` |
 | `settings-utils.ts` | 164 | `sanitizeArgs`, `normalizeEnvVars`, `toAgentConfig` conversion | `useAgentSession`, `AgentClientSettingTab` |
 | `mention-utils.ts` | 138 | `detectMention`, `replaceMention`, `extractMentionedNotes` parsing | `useMentions`, `message-service` |
@@ -26,6 +26,12 @@ Pure utility modules with no React dependencies. Business logic extracted from h
 | `shell-utils.ts` | ~36 | `escapeShellArgWindows`, `getLoginShell`, `resolveCommandFromShell` | `AcpAdapter`, `TerminalManager` |
 | `display-settings.ts` | ~36 | `parseChatFontSize` — clamped integer parse (10-30) | `plugin.ts` |
 | `plugin-notice.ts` | 10 | `pluginNotice` — prefixed `Notice` wrapper | hooks, plugin, components |
+| `agent-display-name.ts` | 20 | Agent display name resolution from config | Settings UI, headers |
+| `command-classification.ts` | 69 | Classify slash commands by category (mode, model, action, etc.) | `usePicker`, `command-provider` |
+| `session-file-restoration.ts` | 54 | Detect and restore orphaned session files from disk | `useSessionRestore` |
+| `settings-migrations.ts` | 66 | Schema version migration functions for settings upgrades | `SettingsStore` |
+| `slash-command-token.ts` | 36 | Encode/decode slash commands as inline tokens in message text | `useSlashCommands`, `prompt-preparation` |
+| `vault-path.ts` | 9 | Vault path resolution helper | `plugin.ts`, hooks |
 | `logger.ts` | 44 | `Logger` class + `getLogger` singleton — debug-mode gated logging | everywhere |
 
 ## Key Patterns
@@ -46,6 +52,19 @@ Pure utility modules with no React dependencies. Business logic extracted from h
 - Zod schemas validate persisted settings on load (migration safety net)
 - `SETTINGS_SCHEMA_VERSION` (currently 4) tracks breaking changes
 - `satisfies z.ZodType<T>` pattern ensures schema stays in sync with TypeScript types
+
+**settings-migrations.ts**:
+- Typed migration functions keyed by schema version
+- Runs automatically when stored settings have older version than current
+- Each migration transforms the settings object to the next version's shape
+
+**slash-command-token.ts**:
+- Encodes slash commands (e.g., `/compact`) as inline tokens in message text before sending
+- Decoded by prompt preparation to apply command effects during send
+
+**session-file-restoration.ts**:
+- Scans session directory for orphaned `.json` files not tracked in settings
+- Returns restorable sessions for `useSessionRestore` to offer to the user
 
 **chat-view-registry.ts**:
 - Views self-register on mount, unregister on close

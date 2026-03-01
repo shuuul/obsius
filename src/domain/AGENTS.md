@@ -19,7 +19,7 @@ domain/
     ├── agent-client.port.ts    # IAgentClient — 423 lines, full agent communication contract
     ├── vault-access.port.ts    # IVaultAccess — note search, read, active file tracking (~94 lines)
     ├── settings-access.port.ts # ISettingsAccess — settings CRUD + session persistence (~131 lines)
-    └── chat-view-container.port.ts # IChatViewContainer + ChatViewContextReference — view registration, focus, broadcast, context (~101 lines)
+    └── chat-view-container.port.ts # IChatViewContainer + ChatViewContextReference — view registration, focus, broadcast, context (~123 lines)
 ```
 
 ## Critical Types

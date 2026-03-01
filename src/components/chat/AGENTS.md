@@ -1,16 +1,16 @@
 # Chat Components Guide
 
-30 components for the chat UI. Entry point: `ChatView` (sidebar/Obsidian leaf). Includes `chat-input/` subdirectory with 11 files for input-related components and hooks.
+32 components for the chat UI. Entry point: `ChatView` (sidebar/Obsidian leaf). Includes `chat-input/` subdirectory with 11 files for input-related components and hooks. Picker panel in `components/picker/` (4 files).
 
 ## Component Tree
 
 ```
-ChatView (ItemView, ~538 lines) ─── Obsidian sidebar leaf
+ChatView (ItemView, ~531 lines) ─── Obsidian sidebar leaf
   └── ChatComponent (React)
         ├── ChatHeader          ─ agent dropdown, session controls, update badge (~178 lines)
         │     ├── TabBar              ─ numbered tab badges (1,2,3…) (~59 lines)
         │     └── HeaderButton × 4    ─ new tab / new session / history / settings
-        └── TabContent          ─ per-tab chat view container (~209 lines)
+        └── TabContent          ─ per-tab chat view container (~373 lines)
               ├── SessionHistoryPopover ─ floating session list panel
               │     └── SessionHistoryContent ─ session list + restore/fork/delete (~498 lines)
               │           └── ConfirmDeleteModal (Obsidian Modal)
@@ -25,17 +25,26 @@ ChatView (ItemView, ~538 lines) ─── Obsidian sidebar leaf
               │                 │     └── PermissionRequestSection ─ approve/deny buttons
               │                 ├── CollapsibleThought    ─ agent reasoning toggle
               │                 └── CollapsibleSection    ─ generic collapsible wrapper (~41 lines)
-              ├── SuggestionDropdown  ─ @mention + /command dropdown (~147 lines)
-              └── ChatInput           ─ input orchestrator (~399 lines)
+              ├── RestoredSessionToolbar ─ session restore accept/discard bar (~87 lines)
+              ├── SessionChangesModal   ─ modal showing session file changes (~114 lines)
+              ├── DiffViewer            ─ side-by-side diff display for inline edits (~74 lines)
+              ├── SuggestionDropdown  ─ @mention + /command dropdown (~140 lines)
+              └── ChatInput           ─ input orchestrator (~552 lines)
                     ├── ErrorOverlay        ─ error banner above input
                     ├── SuggestionDropdown  ─ (mentions + slash commands, 2 instances)
                     ├── ContextBadgeStrip   ─ auto-mention + context reference badges
-                    ├── RichTextarea        ─ contenteditable input (~348 lines)
+                    ├── RichTextarea        ─ contenteditable input (~550 lines)
                     ├── ImagePreviewStrip   ─ attached image thumbnails
                     └── InputActions        ─ mode/model selectors + send/stop (~106 lines)
                           ├── SelectorButton (mode) ─ portal-based popover (~164 lines)
                           ├── SelectorButton (model)
                           └── Send/Stop button
+
+Picker (components/picker/):
+  UnifiedPickerPanel  ─ unified picker for mentions + commands (~296 lines)
+  mention-provider.ts ─ @mention picker provider (~178 lines)
+  command-provider.ts ─ /command picker provider (~71 lines)
+  types.ts            ─ PickerProvider, PickerItem interfaces (~78 lines)
 
 Standalone:
   HeaderButton        ─ reusable icon button for header
@@ -50,6 +59,10 @@ Standalone:
 **ChatView**: Extends `ItemView`. Manages Obsidian leaf lifecycle, view state persistence (agent ID), `IChatViewContainer` implementation for registry. Creates React root in `onOpen()`, destroys in `onClose()`. Workspace event handling delegated to `useWorkspaceEvents` hook.
 
 `ChatComponent` calls `useChatController()` — all logic lives in hooks.
+
+## Picker System
+
+`UnifiedPickerPanel` (in `components/picker/`) provides a unified autocomplete panel triggered by `@` (mentions) or `/` (slash commands) in the input. Pluggable via `PickerProvider` interface — each provider defines trigger character, search logic, and item rendering. `usePicker` hook manages panel open/close and selection state.
 
 ## Tab System
 
@@ -71,6 +84,10 @@ Input-related components extracted from `ChatInput.tsx`. Contains:
 - **2 icon maps**: `mode-icons.ts`, `file-icons.ts`
 
 Note: hooks in `chat-input/` use `kebab-case` naming (not `usePascalCase`) since they're input-specific, not controller-level.
+
+## Session Restore
+
+`RestoredSessionToolbar` renders an accept/discard bar when `useSessionRestore` detects orphaned session files on disk. `SessionChangesModal` shows the detailed file changes. `DiffViewer` displays side-by-side diffs for inline edit results.
 
 ## Rendering Patterns
 

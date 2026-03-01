@@ -1,6 +1,6 @@
 # Hooks Layer Guide
 
-Central coordinator pattern: `useChatController` composes 9 specialized hooks + creates adapters via `useMemo`. View-level concerns extracted to `useWorkspaceEvents`.
+Central coordinator pattern: `useChatController` composes 13 specialized hooks + creates adapters via `useMemo`. View-level concerns extracted to `useWorkspaceEvents`.
 
 State transitions are reducer-backed in `src/hooks/state/` for deterministic updates and easier test coverage.
 
@@ -8,17 +8,21 @@ State transitions are reducer-backed in `src/hooks/state/` for deterministic upd
 
 | Hook | Lines | State Owned | Key Deps |
 |------|-------|-------------|----------|
-| `useChatController` | 624 | Combines all below | All hooks + adapters |
+| `useChatController` | 524 | Combines all below | All hooks + adapters |
 | `useAgentSession` | 628 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
 | `useChat` | 552 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
 | `useSessionHistory` | 577 | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` |
 | `usePermission` | 234 | `activePermission`, approval queue | `IAgentClient` |
 | `useMentions` | 130 | Suggestions dropdown state | `IVaultAccess`, `mention-utils` |
-| `useSlashCommands` | 140 | Suggestions dropdown state | `SlashCommand[]` |
+| `useSlashCommands` | 150 | Suggestions dropdown + token handling | `SlashCommand[]` |
 | `useAutoMention` | ~90 | `activeNote`, `isDisabled` | `IVaultAccess` |
 | `useInputHistory` | 139 | History index (ref-based) | `ChatMessage[]` |
 | `useTabs` | 114 | `tabs[]`, `activeTabId` (max 4) | `ChatTab`, agent info |
 | `useSettings` | ~30 | None — delegates to `useSyncExternalStore` | `plugin.settingsStore` |
+| `usePicker` | 160 | Picker panel open/selection state | `PickerProvider[]` |
+| `useModelFiltering` | 98 | Model search/filter state | `SessionModelState` |
+| `useSessionRestore` | 147 | Session file restoration state | `ISettingsAccess`, session files |
+| `useUpdateCheck` | 19 | Update available flag | Plugin version |
 | `useWorkspaceEvents` | 127 | None (effect-only) | `Workspace` events |
 
 ## Composition Flow
@@ -36,6 +40,10 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
   ├── useMentions(vaultAccess, plugin)
   ├── useSlashCommands(session.availableCommands, autoMention.toggle)
   ├── useAutoMention(vaultAccess)
+  ├── usePicker(mentionProvider, commandProvider)
+  ├── useModelFiltering(session.availableModels)
+  ├── useSessionRestore(settingsAccess, sessionFiles)
+  ├── useUpdateCheck(plugin)
   ├── useSessionHistory(acpAdapter, session, settingsAccess, cwd, callbacks)
   └── useSessionHistoryHandlers(app, sessionHistory, logger, vaultPath, clearMessages)
 ```
