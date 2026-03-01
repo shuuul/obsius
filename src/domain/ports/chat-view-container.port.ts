@@ -114,4 +114,10 @@ export interface IChatViewContainer {
 	 * Used for focus detection and DOM queries.
 	 */
 	getContainerEl(): HTMLElement;
+
+	/**
+	 * Get the text of the last assistant message in the active tab.
+	 * Returns null if no assistant message exists.
+	 */
+	getLastAssistantText?(): string | null;
 }

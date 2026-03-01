@@ -5,7 +5,6 @@ import type { SlashCommand } from "../../../domain/models/chat-session";
 import type { NoteMetadata } from "../../../domain/ports/vault-access.port";
 import type { UseMentionsReturn } from "../../../hooks/useMentions";
 import type { UseSlashCommandsReturn } from "../../../hooks/useSlashCommands";
-import type { Logger } from "../../../shared/logger";
 import {
 	buildMessageWithContextTokens,
 	createChatContextToken,
@@ -27,7 +26,6 @@ interface UseChatInputBehaviorParams {
 	isSending: boolean;
 	isButtonDisabled: boolean;
 	handleSendOrStop: () => Promise<void>;
-	logger: Logger;
 }
 
 export function useChatInputBehavior({
@@ -41,7 +39,6 @@ export function useChatInputBehavior({
 	isSending,
 	isButtonDisabled,
 	handleSendOrStop,
-	logger,
 }: UseChatInputBehaviorParams) {
 	const [hintText, setHintText] = useState<string | null>(null);
 	const [commandText, setCommandText] = useState<string>("");
@@ -64,7 +61,10 @@ export function useChatInputBehavior({
 	const handleSelectSlashCommand = useCallback(
 		(command: SlashCommand) => {
 			const { contexts } = extractChatContextTokensFromMessage(inputValue);
-			const commandOnlyText = slashCommands.selectSuggestion(inputValue, command);
+			const commandOnlyText = slashCommands.selectSuggestion(
+				inputValue,
+				command,
+			);
 			const newText = buildMessageWithContextTokens(
 				commandOnlyText.trim(),
 				contexts.map((ctx) => {
@@ -190,8 +190,6 @@ export function useChatInputBehavior({
 
 	const handleRichInput = useCallback(
 		(text: string, cursorPos: number) => {
-			logger.log("[DEBUG] Rich input changed:", text, "cursor:", cursorPos);
-
 			onInputChange(text);
 			if (hintText) {
 				const expectedText = commandText + hintText;
@@ -206,7 +204,7 @@ export function useChatInputBehavior({
 			void mentions.updateSuggestions(text, cursorPos);
 			slashCommands.updateSuggestions(text, cursorPos);
 		},
-		[logger, onInputChange, hintText, commandText, mentions, slashCommands],
+		[onInputChange, hintText, commandText, mentions, slashCommands],
 	);
 
 	return {

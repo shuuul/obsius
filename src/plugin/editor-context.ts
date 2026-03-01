@@ -46,9 +46,7 @@ function normalizeEditorSelection(selection: EditorSelection): {
 	return { from: head, to: anchor };
 }
 
-function getFocusedView(
-	host: EditorContextHost,
-): IChatViewContainer | null {
+function getFocusedView(host: EditorContextHost): IChatViewContainer | null {
 	return host.viewRegistry.toFocused((view) => view);
 }
 
@@ -187,7 +185,10 @@ function getMarkdownFilePathForLeaf(leaf: WorkspaceLeaf): string | null {
 	return typeof state?.file === "string" ? state.file : null;
 }
 
-function findExistingLeafForFile(app: App, filePath: string): WorkspaceLeaf | null {
+function findExistingLeafForFile(
+	app: App,
+	filePath: string,
+): WorkspaceLeaf | null {
 	const mostRecent = app.workspace.getMostRecentLeaf();
 	if (mostRecent && getMarkdownFilePathForLeaf(mostRecent) === filePath) {
 		return mostRecent;
@@ -260,11 +261,7 @@ function computeSelectionRange(
 		};
 	}
 
-	if (
-		from.ch === 0 &&
-		to.ch === 0 &&
-		from.line < to.line
-	) {
+	if (from.ch === 0 && to.ch === 0 && from.line < to.line) {
 		const lastLine = Math.max(0, editor.lineCount() - 1);
 		if (to.line < lastLine) {
 			return {
@@ -331,7 +328,8 @@ export async function openContextReferenceInEditor(
 	const editor = view.editor;
 
 	if (reference.type === "selection" && reference.selection) {
-		const normalizedSelection = normalizeChatContextReference(reference).selection!;
+		const normalizedSelection =
+			normalizeChatContextReference(reference).selection!;
 		const { from, to } = computeSelectionRange(editor, normalizedSelection);
 		editor.setSelection(from, to);
 		editor.scrollIntoView({ from, to }, true);

@@ -1,4 +1,10 @@
-import { Plugin, WorkspaceLeaf, Notice, addIcon, type IconName } from "obsidian";
+import {
+	Plugin,
+	WorkspaceLeaf,
+	Notice,
+	addIcon,
+	type IconName,
+} from "obsidian";
 import { ChatView, VIEW_TYPE_CHAT } from "./components/chat/ChatView";
 import { ChatViewRegistry } from "./shared/chat-view-registry";
 import {
@@ -40,9 +46,9 @@ import {
 } from "./plugin/editor-context";
 import { checkForUpdates } from "./plugin/update-check";
 import { createNewChatLeaf, focusChatTextarea } from "./plugin/view-helpers";
+import { registerInlineEditCommand } from "./plugin/inline-edit";
 import type { ChatContextReference } from "./shared/chat-context-token";
 
-// Re-export for backward compatibility
 export type { AgentEnvVar, CustomAgentSettings };
 
 /**
@@ -127,8 +133,8 @@ export default class AgentClientPlugin extends Plugin {
 	/** Registry for all chat view containers */
 	viewRegistry = new ChatViewRegistry();
 
-	/** Map of viewId to AcpAdapter for multi-session support */
-	private _adapters: Map<string, AcpAdapter> = new Map();
+	/** Map of sessionKey (tab ID) to AcpAdapter — each tab owns one ACP session */
+	private _sessionAdapters: Map<string, AcpAdapter> = new Map();
 
 	async onload() {
 		await this.loadSettings();
@@ -205,6 +211,7 @@ export default class AgentClientPlugin extends Plugin {
 		this.registerPermissionCommands();
 		this.registerBroadcastCommands();
 		registerEditorContextMenus(this);
+		registerInlineEditCommand(this);
 
 		this.addSettingTab(new AgentClientSettingTab(this.app, this));
 
@@ -213,15 +220,15 @@ export default class AgentClientPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on("quit", () => {
 				// Fire and forget - don't block Obsidian from quitting
-				for (const [viewId, adapter] of this._adapters) {
+				for (const [sessionKey, adapter] of this._sessionAdapters) {
 					adapter.disconnect().catch((error) => {
 						console.warn(
-							`[AgentClient] Quit cleanup error for view ${viewId}:`,
+							`[AgentClient] Quit cleanup error for session ${sessionKey}:`,
 							error,
 						);
 					});
 				}
-				this._adapters.clear();
+				this._sessionAdapters.clear();
 			}),
 		);
 	}
@@ -232,37 +239,35 @@ export default class AgentClientPlugin extends Plugin {
 	}
 
 	/**
-	 * Get or create an AcpAdapter for a specific view.
-	 * Each ChatView has its own adapter for independent sessions.
+	 * Get or create an AcpAdapter for a session key (tab ID).
+	 * Each chat tab owns one ACP session via its adapter.
 	 */
-	getOrCreateAdapter(viewId: string): AcpAdapter {
-		let adapter = this._adapters.get(viewId);
+	getOrCreateSessionAdapter(sessionKey: string): AcpAdapter {
+		let adapter = this._sessionAdapters.get(sessionKey);
 		if (!adapter) {
 			adapter = new AcpAdapter(this);
-			this._adapters.set(viewId, adapter);
+			this._sessionAdapters.set(sessionKey, adapter);
 		}
 		return adapter;
 	}
 
 	/**
-	 * Remove and disconnect the adapter for a specific view.
-	 * Called when a ChatView is closed.
+	 * Remove and disconnect the adapter for a session key.
+	 * Called when a chat tab or view is closed.
 	 */
-	async removeAdapter(viewId: string): Promise<void> {
-		const adapter = this._adapters.get(viewId);
+	async removeSessionAdapter(sessionKey: string): Promise<void> {
+		const adapter = this._sessionAdapters.get(sessionKey);
 		if (adapter) {
 			try {
 				await adapter.disconnect();
 			} catch (error) {
 				console.warn(
-					`[AgentClient] Failed to disconnect adapter for view ${viewId}:`,
+					`[AgentClient] Failed to disconnect adapter for session ${sessionKey}:`,
 					error,
 				);
 			}
-			this._adapters.delete(viewId);
+			this._sessionAdapters.delete(sessionKey);
 		}
-		// Note: lastActiveChatViewId is now managed by viewRegistry
-		// Clearing happens automatically when view is unregistered
 	}
 
 	/**
@@ -330,10 +335,6 @@ export default class AgentClientPlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * Create a new leaf for ChatView based on the configured location setting.
-	 * @param isAdditional - true when opening additional views (e.g., Open New View)
-	 */
 	/**
 	 * Open a new chat view with a specific agent.
 	 * Always creates a new view (doesn't reuse existing).

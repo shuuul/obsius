@@ -43,7 +43,6 @@ export interface UseChatControllerReturn {
 	isSessionReady: boolean;
 	messages: ReturnType<typeof useChat>["messages"];
 	isSending: boolean;
-	isUpdateAvailable: boolean;
 	isLoadingSessionHistory: boolean;
 	permission: ReturnType<typeof usePermission>;
 	mentions: ReturnType<typeof useMentions>;

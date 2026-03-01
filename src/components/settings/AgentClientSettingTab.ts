@@ -3,8 +3,8 @@ import type AgentClientPlugin from "../../plugin";
 import {
 	getAgentOptions,
 	renderBuiltInAgentSettings,
-	renderCustomAgents,
 } from "./sections/agent-sections";
+import { renderCustomAgents } from "./sections/custom-agent-sections";
 import { renderCoreSections } from "./sections/core-sections";
 
 export class AgentClientSettingTab extends PluginSettingTab {

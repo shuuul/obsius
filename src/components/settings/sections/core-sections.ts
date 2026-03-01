@@ -227,9 +227,7 @@ function renderDisplaySection(
 
 	new Setting(containerEl)
 		.setName("Completion sound")
-		.setDesc(
-			"Play a short chime when an agent finishes responding.",
-		)
+		.setDesc("Play a short chime when an agent finishes responding.")
 		.addToggle((toggle) =>
 			toggle
 				.setValue(plugin.settings.displaySettings.completionSound)

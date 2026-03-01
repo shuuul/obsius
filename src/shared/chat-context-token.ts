@@ -30,7 +30,9 @@ function comparePosition(a: EditorPosition, b: EditorPosition): number {
 	return a.ch - b.ch;
 }
 
-function normalizeSelection(selection: ChatContextSelection): ChatContextSelection {
+function normalizeSelection(
+	selection: ChatContextSelection,
+): ChatContextSelection {
 	if (comparePosition(selection.from, selection.to) <= 0) {
 		return selection;
 	}
@@ -155,7 +157,9 @@ export function parseChatContextToken(
 	}
 }
 
-export function createChatContextToken(reference: ChatContextReference): string {
+export function createChatContextToken(
+	reference: ChatContextReference,
+): string {
 	const normalized = normalizeChatContextReference(reference);
 	const serialized: SerializedChatContextReference = {
 		version: 1,
@@ -189,14 +193,20 @@ export function appendChatContextToken(
 	const key = getChatContextReferenceKey(normalized);
 	if (existingKeys.has(key)) {
 		const rebuiltTokens = contexts.map((ctx) => createChatContextToken(ctx));
-		return buildMessageWithContextTokens(messageWithoutContextTokens, rebuiltTokens);
+		return buildMessageWithContextTokens(
+			messageWithoutContextTokens,
+			rebuiltTokens,
+		);
 	}
 
 	const rebuiltTokens = [
 		...contexts.map((ctx) => createChatContextToken(ctx)),
 		token,
 	];
-	return buildMessageWithContextTokens(messageWithoutContextTokens, rebuiltTokens);
+	return buildMessageWithContextTokens(
+		messageWithoutContextTokens,
+		rebuiltTokens,
+	);
 }
 
 export function buildMessageWithContextTokens(

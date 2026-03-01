@@ -4,6 +4,7 @@ import type {
 	ChatViewLocation,
 	SendMessageShortcut,
 } from "../plugin";
+import { hasMigrationPath, migrateSettings } from "./settings-migrations";
 
 export const SETTINGS_SCHEMA_VERSION = 4;
 
@@ -169,6 +170,7 @@ export const createDefaultSettings = (): AgentClientPluginSettings => ({
 export function parseStoredSettings(raw: unknown): {
 	settings: AgentClientPluginSettings;
 	resetReason?: string;
+	migrated?: boolean;
 } {
 	if (!raw || typeof raw !== "object") {
 		return {
@@ -177,16 +179,23 @@ export function parseStoredSettings(raw: unknown): {
 		};
 	}
 
-	const candidate = raw as Record<string, unknown>;
+	let candidate = raw as Record<string, unknown>;
+	const storedVersion = (candidate.schemaVersion as number) ?? 0;
+	let migrated = false;
 
-	if (candidate.schemaVersion !== SETTINGS_SCHEMA_VERSION) {
-		return {
-			settings: createDefaultSettings(),
-			resetReason: `schema version mismatch (expected ${SETTINGS_SCHEMA_VERSION})`,
-		};
+	if (storedVersion !== SETTINGS_SCHEMA_VERSION) {
+		if (hasMigrationPath(storedVersion, SETTINGS_SCHEMA_VERSION)) {
+			const result = migrateSettings(candidate, SETTINGS_SCHEMA_VERSION);
+			candidate = result.data;
+			migrated = result.migrated;
+		} else {
+			return {
+				settings: createDefaultSettings(),
+				resetReason: `no migration path from schema v${storedVersion} to v${SETTINGS_SCHEMA_VERSION}`,
+			};
+		}
 	}
 
-	// Back-fill defaults for fields added within the current schema version
 	if (
 		candidate.displaySettings &&
 		typeof candidate.displaySettings === "object"
@@ -207,5 +216,5 @@ export function parseStoredSettings(raw: unknown): {
 		};
 	}
 
-	return { settings: parsed.data };
+	return { settings: parsed.data, migrated };
 }

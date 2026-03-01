@@ -11,11 +11,17 @@ import {
 	parseChatContextToken,
 	type ChatContextReference,
 } from "../../../shared/chat-context-token";
+import { parseSlashCommandToken } from "../../../shared/slash-command-token";
 
 export interface RichTextareaHandle {
 	focus(): void;
 	insertMentionAtContext(
 		name: string,
+		contextStart: number,
+		contextEnd: number,
+	): void;
+	insertSlashCommandAtContext(
+		commandName: string,
 		contextStart: number,
 		contextEnd: number,
 	): void;
@@ -116,6 +122,26 @@ function createContextBadgeElement(
 	return badge;
 }
 
+function createSlashCommandBadgeElement(commandName: string): HTMLSpanElement {
+	const badge = document.createElement("span");
+	badge.className = "obsius-inline-mention-badge obsius-inline-slash-badge";
+	badge.contentEditable = "false";
+	badge.dataset.slashCommand = commandName;
+
+	const icon = document.createElement("span");
+	icon.className = "obsius-inline-mention-icon";
+	icon.dataset.icon = "terminal";
+	icon.textContent = "";
+	badge.appendChild(icon);
+
+	const nameSpan = document.createElement("span");
+	nameSpan.className = "obsius-inline-mention-name";
+	nameSpan.textContent = `/${commandName}`;
+	badge.appendChild(nameSpan);
+
+	return badge;
+}
+
 function extractContent(editor: HTMLDivElement): {
 	text: string;
 	cursorPos: number;
@@ -147,6 +173,13 @@ function extractContent(editor: HTMLDivElement): {
 					foundCursor = true;
 				}
 				text += contextToken;
+			} else if (node.dataset.slashCommand) {
+				const slashToken = `@[obsius-slash:${node.dataset.slashCommand}]`;
+				if (!foundCursor && (node === focusNode || node.contains(focusNode))) {
+					cursorPos = text.length + slashToken.length;
+					foundCursor = true;
+				}
+				text += slashToken;
 			} else if (node.dataset.mention) {
 				const mentionText = `@[[${node.dataset.mention}]]`;
 				if (!foundCursor && (node === focusNode || node.contains(focusNode))) {
@@ -183,7 +216,8 @@ function buildContentFromText(
 ) {
 	editor.innerHTML = "";
 
-	const regex = /@\[obsius-context:[A-Za-z0-9_-]+\]|@\[\[([^\]]+)\]\]/g;
+	const regex =
+		/@\[obsius-context:[A-Za-z0-9_-]+\]|@\[obsius-slash:([^\]]+)\]|@\[\[([^\]]+)\]\]/g;
 	let lastIndex = 0;
 	let match: RegExpExecArray | null;
 
@@ -204,8 +238,15 @@ function buildContentFromText(
 			} else {
 				editor.appendChild(document.createTextNode(token));
 			}
+		} else if (token.startsWith("@[obsius-slash:")) {
+			const cmdName = parseSlashCommandToken(token);
+			if (cmdName) {
+				editor.appendChild(createSlashCommandBadgeElement(cmdName));
+			} else {
+				editor.appendChild(document.createTextNode(token));
+			}
 		} else {
-			editor.appendChild(createBadgeElement(match[1]));
+			editor.appendChild(createBadgeElement(match[2] ?? match[1]));
 		}
 		lastIndex = match.index + match[0].length;
 	}
@@ -253,6 +294,14 @@ function findNodeAtPlainTextOffset(
 				return { node: child, offset: targetOffset - accumulated };
 			}
 			accumulated += len;
+		} else if (child instanceof HTMLElement && child.dataset.slashCommand) {
+			const slashLen = `@[obsius-slash:${child.dataset.slashCommand}]`.length;
+			if (accumulated + slashLen >= targetOffset) {
+				const next = child.nextSibling;
+				if (next) return { node: next, offset: 0 };
+				return null;
+			}
+			accumulated += slashLen;
 		} else if (child instanceof HTMLElement && child.dataset.mention) {
 			const mentionLen = `@[[${child.dataset.mention}]]`.length;
 			if (accumulated + mentionLen >= targetOffset) {
@@ -363,11 +412,44 @@ export const RichTextarea = forwardRef<RichTextareaHandle, RichTextareaProps>(
 			[fireContentChange],
 		);
 
+		const insertSlashCommandAtContext = useCallback(
+			(commandName: string, contextStart: number, contextEnd: number) => {
+				const editor = editorRef.current;
+				if (!editor) return;
+
+				const startPos = findNodeAtPlainTextOffset(editor, contextStart);
+				const endPos = findNodeAtPlainTextOffset(editor, contextEnd);
+				if (!startPos || !endPos) return;
+
+				const sel = window.getSelection();
+				if (!sel) return;
+
+				const range = document.createRange();
+				range.setStart(startPos.node, startPos.offset);
+				range.setEnd(endPos.node, endPos.offset);
+				range.deleteContents();
+
+				const badge = createSlashCommandBadgeElement(commandName);
+				const space = document.createTextNode(" ");
+				range.insertNode(space);
+				range.insertNode(badge);
+
+				range.setStartAfter(space);
+				range.setEndAfter(space);
+				sel.removeAllRanges();
+				sel.addRange(range);
+
+				fireContentChange();
+			},
+			[fireContentChange],
+		);
+
 		useImperativeHandle(
 			ref,
 			() => ({
 				focus: () => editorRef.current?.focus(),
 				insertMentionAtContext,
+				insertSlashCommandAtContext,
 				setContent: (text: string) => {
 					if (editorRef.current) {
 						buildContentFromText(
@@ -394,7 +476,7 @@ export const RichTextarea = forwardRef<RichTextareaHandle, RichTextareaProps>(
 				},
 				getElement: () => editorRef.current,
 			}),
-			[insertMentionAtContext, fireContentChange, onContextBadgeClick],
+			[insertMentionAtContext, insertSlashCommandAtContext, fireContentChange, onContextBadgeClick],
 		);
 
 		const handleInput = useCallback(() => {

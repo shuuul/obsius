@@ -1,6 +1,5 @@
 import * as React from "react";
 const { useRef, useEffect } = React;
-import { getLogger } from "../../shared/logger";
 import type AgentClientPlugin from "../../plugin";
 import type { IChatViewHost } from "./types";
 import type { NoteMetadata } from "../../domain/ports/vault-access.port";
@@ -59,12 +58,6 @@ export function SuggestionDropdown({
 	view,
 }: SuggestionDropdownProps) {
 	const dropdownRef = useRef<HTMLDivElement>(null);
-	const logger = getLogger();
-
-	logger.log(`[DEBUG] SuggestionDropdown (${type}) rendering with:`, {
-		itemsCount: items.length,
-		selectedIndex,
-	});
 
 	// Handle mouse clicks outside dropdown to close
 	useEffect(() => {

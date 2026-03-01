@@ -1,46 +1,66 @@
 import { useState, useCallback } from "react";
 import type { SlashCommand } from "../domain/models/chat-session";
 
+export interface SlashCommandContext {
+	query: string;
+	/** Start position of the `/` in the input */
+	start: number;
+	/** End position of the query (cursor position) */
+	end: number;
+}
+
 export interface UseSlashCommandsReturn {
-	/** Filtered slash command suggestions */
 	suggestions: SlashCommand[];
-	/** Currently selected index in the dropdown */
 	selectedIndex: number;
-	/** Whether the dropdown is open */
 	isOpen: boolean;
+	context: SlashCommandContext | null;
 
-	/**
-	 * Update slash command suggestions based on current input.
-	 * Slash commands only trigger when input starts with '/'.
-	 */
 	updateSuggestions: (input: string, cursorPosition: number) => void;
-
-	/**
-	 * Select a slash command from the dropdown.
-	 * @returns Updated input text with command (e.g., "/web ")
-	 */
 	selectSuggestion: (input: string, command: SlashCommand) => string;
-
-	/** Navigate the dropdown selection */
 	navigate: (direction: "up" | "down") => void;
-
-	/** Close the dropdown */
 	close: () => void;
 }
 
-/**
- * Hook for managing slash command dropdown state and logic.
- *
- * @param availableCommands - Available slash commands from the agent session
- * @param onAutoMentionToggle - Callback to enable/disable auto-mention
- *        (slash commands require auto-mention to be disabled so "/" stays at the start)
- */
+function detectSlashCommand(
+	input: string,
+	cursorPosition: number,
+): SlashCommandContext | null {
+	const textUpToCursor = input.slice(0, cursorPosition);
+
+	let slashPos = -1;
+	for (let i = textUpToCursor.length - 1; i >= 0; i--) {
+		const ch = textUpToCursor[i];
+		if (ch === "/") {
+			if (i === 0 || /\s/.test(textUpToCursor[i - 1])) {
+				slashPos = i;
+				break;
+			}
+			return null;
+		}
+		if (/\s/.test(ch)) {
+			return null;
+		}
+	}
+
+	if (slashPos === -1) return null;
+
+	const afterSlash = textUpToCursor.slice(slashPos + 1);
+	if (afterSlash.includes(" ")) return null;
+
+	return {
+		query: afterSlash.toLowerCase(),
+		start: slashPos,
+		end: cursorPosition,
+	};
+}
+
 export function useSlashCommands(
 	availableCommands: SlashCommand[],
 	onAutoMentionToggle?: (disabled: boolean) => void,
 ): UseSlashCommandsReturn {
 	const [suggestions, setSuggestions] = useState<SlashCommand[]>([]);
 	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [context, setContext] = useState<SlashCommandContext | null>(null);
 
 	const isOpen = suggestions.length > 0;
 
@@ -48,76 +68,64 @@ export function useSlashCommands(
 		(input: string, cursorPosition: number) => {
 			const wasOpen = suggestions.length > 0;
 
-			// Slash commands only trigger at the very beginning of input
-			if (!input.startsWith("/")) {
-				// Re-enable auto-mention only if dropdown was showing
-				// (meaning it was disabled by slash command detection)
+			const ctx = detectSlashCommand(input, cursorPosition);
+
+			if (!ctx) {
 				if (wasOpen) {
 					onAutoMentionToggle?.(false);
 				}
 				setSuggestions([]);
 				setSelectedIndex(0);
+				setContext(null);
 				return;
 			}
 
-			// Extract query after '/'
-			const textUpToCursor = input.slice(0, cursorPosition);
-			const afterSlash = textUpToCursor.slice(1); // Remove leading '/'
-
-			// If there's a space, the command is complete and user is typing arguments
-			// Close dropdown but keep auto-mention disabled
-			if (afterSlash.includes(" ")) {
-				setSuggestions([]);
-				setSelectedIndex(0);
-				// Keep auto-mention disabled (slash command is still active)
-				onAutoMentionToggle?.(true);
-				return;
-			}
-
-			const query = afterSlash.toLowerCase();
-
-			// Filter available commands
 			const filtered = availableCommands.filter((cmd) =>
-				cmd.name.toLowerCase().includes(query),
+				cmd.name.toLowerCase().includes(ctx.query),
 			);
 
 			setSuggestions(filtered);
 			setSelectedIndex(0);
-			// Disable auto-mention when slash command is detected
-			// (ACP requires slash commands to be at the very beginning)
+			setContext(ctx);
 			onAutoMentionToggle?.(true);
 		},
 		[availableCommands, onAutoMentionToggle, suggestions.length],
 	);
 
 	const selectSuggestion = useCallback(
-		(_input: string, command: SlashCommand): string => {
-			// Return only the command text (hint will be shown as overlay in UI)
-			const commandText = `/${command.name} `;
+		(input: string, command: SlashCommand): string => {
+			if (!context) {
+				const commandText = `/${command.name} `;
+				setSuggestions([]);
+				setSelectedIndex(0);
+				setContext(null);
+				return commandText;
+			}
 
-			// Close dropdown
+			const before = input.slice(0, context.start);
+			const after = input.slice(context.end);
+			const commandText = `/${command.name} `;
+			const newText = before + commandText + after;
+
 			setSuggestions([]);
 			setSelectedIndex(0);
+			setContext(null);
 
-			return commandText;
+			return newText;
 		},
-		[],
+		[context],
 	);
 
 	const navigate = useCallback(
 		(direction: "up" | "down") => {
-			if (suggestions.length === 0) {
-				return;
-			}
+			if (suggestions.length === 0) return;
 
 			const maxIndex = suggestions.length - 1;
-
 			setSelectedIndex((current) => {
 				if (direction === "down") {
 					return Math.min(current + 1, maxIndex);
-				} else {
-					return Math.max(current - 1, 0);
 				}
+				return Math.max(current - 1, 0);
 			});
 		},
 		[suggestions.length],
@@ -126,12 +134,14 @@ export function useSlashCommands(
 	const close = useCallback(() => {
 		setSuggestions([]);
 		setSelectedIndex(0);
+		setContext(null);
 	}, []);
 
 	return {
 		suggestions,
 		selectedIndex,
 		isOpen,
+		context,
 		updateSuggestions,
 		selectSuggestion,
 		navigate,

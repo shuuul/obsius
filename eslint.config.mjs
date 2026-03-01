@@ -55,7 +55,7 @@ export default defineConfig([
 						"Debian",
 						"Base64",
 					],
-					acronyms: ["API", "URL", "JSON", "WSL", "MCP", "ID"],
+					acronyms: ["AI", "API", "URL", "JSON", "WSL", "MCP", "ID"],
 					enforceCamelCaseLower: true,
 				},
 			],

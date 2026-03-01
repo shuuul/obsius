@@ -14,7 +14,15 @@ import type { UseMentionsReturn } from "../../hooks/useMentions";
 import type { UseSlashCommandsReturn } from "../../hooks/useSlashCommands";
 import type { UseAutoMentionReturn } from "../../hooks/useAutoMention";
 import type { ChatMessage } from "../../domain/models/chat-message";
-import { SuggestionDropdown } from "./SuggestionDropdown";
+import type { IVaultAccess } from "../../domain/ports/vault-access.port";
+import { UnifiedPickerPanel } from "../picker/UnifiedPickerPanel";
+import {
+	FilePickerProvider,
+	FolderPickerProvider,
+} from "../picker/mention-provider";
+import { CommandPickerProvider } from "../picker/command-provider";
+import { usePicker } from "../../hooks/usePicker";
+import { classifyCommands } from "../../shared/command-classification";
 import { ErrorOverlay } from "./ErrorOverlay";
 import { ImagePreviewStrip, type AttachedImage } from "./ImagePreviewStrip";
 import { InputActions, type SendButtonState } from "./chat-input/InputActions";
@@ -25,7 +33,6 @@ import {
 import { useChatInputBehavior } from "./chat-input/use-chat-input-behavior";
 import { useImageAttachments } from "./chat-input/use-image-attachments";
 import { useInputHistory } from "../../hooks/useInputHistory";
-import { getLogger } from "../../shared/logger";
 import type { ErrorInfo } from "../../domain/models/agent-error";
 import { useSettings } from "../../hooks/useSettings";
 import type { ChatContextReference } from "../../shared/chat-context-token";
@@ -62,6 +69,7 @@ export interface ChatInputProps {
 	errorInfo: ErrorInfo | null;
 	onClearError: () => void;
 	messages: ChatMessage[];
+	vaultAccess: IVaultAccess;
 }
 
 export function ChatInput({
@@ -92,9 +100,166 @@ export function ChatInput({
 	errorInfo,
 	onClearError,
 	messages,
+	vaultAccess,
 }: ChatInputProps) {
-	const logger = getLogger();
 	const settings = useSettings(plugin);
+
+	const richTextareaRef = useRef<RichTextareaHandle>(null);
+
+	const fileProvider = React.useMemo(
+		() =>
+			new FilePickerProvider(vaultAccess, (note) => {
+				const ctx = mentions.context;
+				if (ctx) {
+					richTextareaRef.current?.insertMentionAtContext(
+						note.name,
+						ctx.start,
+						ctx.end,
+					);
+					mentions.close();
+				}
+			}),
+		[vaultAccess, mentions],
+	);
+
+	const folderProvider = React.useMemo(
+		() =>
+			new FolderPickerProvider(
+				() => {
+					const seen = new Set<string>();
+					for (const f of plugin.app.vault.getAllLoadedFiles()) {
+						if ("children" in f && f.path) {
+							seen.add(f.path);
+						}
+					}
+					return Array.from(seen).sort();
+				},
+				(folderPath) => {
+					const ctx = mentions.context;
+					if (ctx) {
+						richTextareaRef.current?.insertMentionAtContext(
+							folderPath,
+							ctx.start,
+							ctx.end,
+						);
+						mentions.close();
+					}
+				},
+			),
+		[plugin.app.vault, mentions],
+	);
+
+	const mentionProviders = React.useMemo(
+		() => [fileProvider, folderProvider],
+		[fileProvider, folderProvider],
+	);
+
+	const classified = React.useMemo(
+		() => classifyCommands(availableCommands),
+		[availableCommands],
+	);
+
+	const handleCommandSelect = useCallback(
+		(cmd: SlashCommand) => {
+			const ctx = slashCommands.context;
+			if (ctx) {
+				richTextareaRef.current?.insertSlashCommandAtContext(
+					cmd.name,
+					ctx.start,
+					ctx.end,
+				);
+			} else {
+				const token = `@[obsius-slash:${cmd.name}] `;
+				onInputChange(token);
+				richTextareaRef.current?.setContent(token);
+			}
+			slashCommands.close();
+			richTextareaRef.current?.focus();
+		},
+		[slashCommands, onInputChange],
+	);
+
+	const cmdProvider = React.useMemo(
+		() =>
+			new CommandPickerProvider({
+				category: "command",
+				icon: "terminal",
+				getCommands: () => classified.commands,
+				onSelect: handleCommandSelect,
+			}),
+		[classified.commands, handleCommandSelect],
+	);
+
+	const mcpProvider = React.useMemo(
+		() =>
+			new CommandPickerProvider({
+				category: "mcp",
+				icon: "globe",
+				getCommands: () => classified.mcp,
+				onSelect: handleCommandSelect,
+			}),
+		[classified.mcp, handleCommandSelect],
+	);
+
+	const skillProvider = React.useMemo(
+		() =>
+			new CommandPickerProvider({
+				category: "skill",
+				icon: "sparkles",
+				getCommands: () => classified.skills,
+				onSelect: handleCommandSelect,
+			}),
+		[classified.skills, handleCommandSelect],
+	);
+
+	const commandProviders = React.useMemo(
+		() =>
+			[cmdProvider, mcpProvider, skillProvider].filter(
+				(p) => p.search("").length > 0 || true,
+			),
+		[cmdProvider, mcpProvider, skillProvider],
+	);
+
+	const mentionPicker = usePicker(mentionProviders);
+	const commandPicker = usePicker(commandProviders);
+
+	const prevMentionOpen = useRef(false);
+	useEffect(() => {
+		if (mentions.isOpen && !prevMentionOpen.current) {
+			mentionPicker.open(mentions.context?.query ?? "");
+		} else if (!mentions.isOpen && prevMentionOpen.current) {
+			mentionPicker.close();
+		}
+		prevMentionOpen.current = mentions.isOpen;
+	}, [mentions.isOpen, mentions.context?.query, mentionPicker]);
+
+	const prevCommandOpen = useRef(false);
+	useEffect(() => {
+		if (slashCommands.isOpen && !prevCommandOpen.current) {
+			commandPicker.open("");
+		} else if (!slashCommands.isOpen && prevCommandOpen.current) {
+			commandPicker.close();
+		}
+		prevCommandOpen.current = slashCommands.isOpen;
+	}, [slashCommands.isOpen, commandPicker]);
+
+	const prevMentionPickerOpen = useRef(false);
+	useEffect(() => {
+		if (!mentionPicker.isOpen && prevMentionPickerOpen.current) {
+			mentions.close();
+			richTextareaRef.current?.focus();
+		}
+		prevMentionPickerOpen.current = mentionPicker.isOpen;
+	}, [mentionPicker.isOpen, mentions, richTextareaRef]);
+
+	const prevCommandPickerOpen = useRef(false);
+	useEffect(() => {
+		if (!commandPicker.isOpen && prevCommandPickerOpen.current) {
+			slashCommands.close();
+			richTextareaRef.current?.focus();
+		}
+		prevCommandPickerOpen.current = commandPicker.isOpen;
+	}, [commandPicker.isOpen, slashCommands, richTextareaRef]);
 
 	/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 	const obsidianSpellcheck: boolean =
@@ -115,7 +280,6 @@ export function ChatInput({
 		inputValue,
 	);
 
-	const richTextareaRef = useRef<RichTextareaHandle>(null);
 	const sendButtonRef = useRef<HTMLButtonElement>(null);
 	const {
 		isDraggingOver,
@@ -191,8 +355,6 @@ export function ChatInput({
 		commandText,
 		handleRichInput,
 		handleKeyDown,
-		handleSelectSlashCommand,
-		selectMention,
 		setHintText,
 		setCommandText,
 	} = useChatInputBehavior({
@@ -206,7 +368,6 @@ export function ChatInput({
 		isSending,
 		isButtonDisabled,
 		handleSendOrStop,
-		logger,
 	});
 
 	useEffect(() => {
@@ -317,27 +478,19 @@ export function ChatInput({
 				/>
 			)}
 
-			{mentions.isOpen && (
-				<SuggestionDropdown
-					type="mention"
-					items={mentions.suggestions}
-					selectedIndex={mentions.selectedIndex}
-					onSelect={selectMention}
-					onClose={mentions.close}
-					plugin={plugin}
-					view={view}
+			{mentionPicker.isOpen && (
+				<UnifiedPickerPanel
+					picker={mentionPicker}
+					mode="mention"
+					onKeyDown={() => false}
 				/>
 			)}
 
-			{slashCommands.isOpen && (
-				<SuggestionDropdown
-					type="slash-command"
-					items={slashCommands.suggestions}
-					selectedIndex={slashCommands.selectedIndex}
-					onSelect={handleSelectSlashCommand}
-					onClose={slashCommands.close}
-					plugin={plugin}
-					view={view}
+			{commandPicker.isOpen && !mentionPicker.isOpen && (
+				<UnifiedPickerPanel
+					picker={commandPicker}
+					mode="command"
+					onKeyDown={() => false}
 				/>
 			)}
 

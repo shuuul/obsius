@@ -12,6 +12,7 @@ import {
 	extractChatContextTokensFromMessage,
 	type ChatContextReference,
 } from "../chat-context-token";
+import { extractSlashCommandTokens } from "../slash-command-token";
 import { convertWindowsPathToWsl } from "../wsl-utils";
 import { buildFileUri } from "../path-utils";
 import {
@@ -26,8 +27,9 @@ export async function preparePrompt(
 	vaultAccess: IVaultAccess,
 	mentionService: IMentionService,
 ): Promise<PreparePromptResult> {
+	const { messageWithSlashAsText } = extractSlashCommandTokens(input.message);
 	const { messageWithoutContextTokens, contexts } =
-		extractChatContextTokensFromMessage(input.message);
+		extractChatContextTokensFromMessage(messageWithSlashAsText);
 	const mentionedNotes = extractMentionedNotes(
 		messageWithoutContextTokens,
 		mentionService,

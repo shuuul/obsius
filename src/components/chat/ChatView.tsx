@@ -1,4 +1,9 @@
-import { ItemView, Platform, type WorkspaceLeaf, type IconName } from "obsidian";
+import {
+	ItemView,
+	Platform,
+	type WorkspaceLeaf,
+	type IconName,
+} from "obsidian";
 import * as React from "react";
 
 import type {
@@ -16,7 +21,9 @@ import { useWorkspaceEvents } from "../../hooks/useWorkspaceEvents";
 import type AgentClientPlugin from "../../plugin";
 import { playCompletionSound } from "../../shared/completion-sound";
 import { getLogger, type Logger } from "../../shared/logger";
+import { resolveAgentDisplayName } from "../../shared/agent-display-name";
 import { useSettings } from "../../hooks/useSettings";
+import { useUpdateCheck } from "../../hooks/useUpdateCheck";
 import { ChatHeader } from "./ChatHeader";
 import { TabContent, type TabContentActions } from "./TabContent";
 
@@ -57,16 +64,7 @@ function ChatComponent({
 		return plugin.getAvailableAgents();
 	}, [plugin]);
 
-	const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
-
-	useEffect(() => {
-		plugin
-			.checkForUpdates()
-			.then(setIsUpdateAvailable)
-			.catch((error) => {
-				logger.error("Failed to check for updates:", error);
-			});
-	}, [plugin, logger]);
+	const isUpdateAvailable = useUpdateCheck(plugin);
 
 	// Agent ID restoration from workspace
 	useEffect(() => {
@@ -97,7 +95,7 @@ function ChatComponent({
 	// Tab close handler: clean up adapter
 	const handleTabClose = useCallback(
 		(tabId: string) => {
-			void plugin.removeAdapter(tabId);
+			void plugin.removeSessionAdapter(tabId);
 			view.unregisterTabAdapter(tabId);
 		},
 		[plugin, view],
@@ -141,28 +139,10 @@ function ChatComponent({
 		}
 	}, [tabState.tabs, view]);
 
-	// Compute agent label from active tab's agentId
-	const activeAgentLabel = useMemo(() => {
-		const activeId = tabState.activeTab.agentId;
-		if (activeId === plugin.settings.claude.id) {
-			return plugin.settings.claude.displayName || plugin.settings.claude.id;
-		}
-		if (activeId === plugin.settings.opencode.id) {
-			return (
-				plugin.settings.opencode.displayName || plugin.settings.opencode.id
-			);
-		}
-		if (activeId === plugin.settings.codex.id) {
-			return plugin.settings.codex.displayName || plugin.settings.codex.id;
-		}
-		if (activeId === plugin.settings.gemini.id) {
-			return plugin.settings.gemini.displayName || plugin.settings.gemini.id;
-		}
-		const custom = plugin.settings.customAgents.find(
-			(agent) => agent.id === activeId,
-		);
-		return custom?.displayName || custom?.id || activeId;
-	}, [tabState.activeTab.agentId, plugin.settings]);
+	const activeAgentLabel = useMemo(
+		() => resolveAgentDisplayName(plugin.settings, tabState.activeTab.agentId),
+		[tabState.activeTab.agentId, plugin.settings],
+	);
 
 	const handleOpenSettings = useCallback(() => {
 		const appWithSettings = plugin.app as unknown as AppWithSettings;
@@ -267,6 +247,8 @@ function ChatComponent({
 			cancel: async () => {
 				await getActiveActions()?.cancel();
 			},
+			getLastAssistantText: () =>
+				getActiveActions()?.getLastAssistantText?.() ?? null,
 		});
 
 		return () => {
@@ -330,6 +312,7 @@ type CancelCallback = () => Promise<void>;
 type AddContextReferenceCallback = (
 	reference: ChatViewContextReference,
 ) => boolean;
+type GetLastAssistantTextCallback = () => string | null;
 
 export class ChatView extends ItemView implements IChatViewContainer {
 	private root: Root | null = null;
@@ -347,7 +330,10 @@ export class ChatView extends ItemView implements IChatViewContainer {
 	private sendMessageCallback: SendMessageCallback | null = null;
 	private canSendCallback: CanSendCallback | null = null;
 	private cancelCallback: CancelCallback | null = null;
-	private addContextReferenceCallback: AddContextReferenceCallback | null = null;
+	private addContextReferenceCallback: AddContextReferenceCallback | null =
+		null;
+	private getLastAssistantTextCallback: GetLastAssistantTextCallback | null =
+		null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: AgentClientPlugin) {
 		super(leaf);
@@ -422,6 +408,7 @@ export class ChatView extends ItemView implements IChatViewContainer {
 		canSend: CanSendCallback;
 		cancel: CancelCallback;
 		addContextReference: AddContextReferenceCallback;
+		getLastAssistantText: GetLastAssistantTextCallback;
 	}): void {
 		this.getDisplayNameCallback = callbacks.getDisplayName;
 		this.getInputStateCallback = callbacks.getInputState;
@@ -430,6 +417,7 @@ export class ChatView extends ItemView implements IChatViewContainer {
 		this.canSendCallback = callbacks.canSend;
 		this.cancelCallback = callbacks.cancel;
 		this.addContextReferenceCallback = callbacks.addContextReference;
+		this.getLastAssistantTextCallback = callbacks.getLastAssistantText;
 	}
 
 	unregisterInputCallbacks(): void {
@@ -440,6 +428,7 @@ export class ChatView extends ItemView implements IChatViewContainer {
 		this.canSendCallback = null;
 		this.cancelCallback = null;
 		this.addContextReferenceCallback = null;
+		this.getLastAssistantTextCallback = null;
 	}
 
 	getDisplayName(): string {
@@ -464,6 +453,10 @@ export class ChatView extends ItemView implements IChatViewContainer {
 
 	async cancelOperation(): Promise<void> {
 		await this.cancelCallback?.();
+	}
+
+	getLastAssistantText(): string | null {
+		return this.getLastAssistantTextCallback?.() ?? null;
 	}
 
 	addContextReference(reference: ChatViewContextReference): boolean {
@@ -531,7 +524,7 @@ export class ChatView extends ItemView implements IChatViewContainer {
 
 		// Clean up all tab adapters
 		for (const tabId of this.tabAdapterIds) {
-			await this.plugin.removeAdapter(tabId);
+			await this.plugin.removeSessionAdapter(tabId);
 		}
 		this.tabAdapterIds.clear();
 	}

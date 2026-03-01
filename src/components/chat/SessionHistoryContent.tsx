@@ -301,9 +301,9 @@ function SessionItem({
 						</span>
 					) : (
 						session.updatedAt && (
-						<span className="obsius-session-history-item-timestamp">
-							{formatRelativeTime(new Date(session.updatedAt))}
-						</span>
+							<span className="obsius-session-history-item-timestamp">
+								{formatRelativeTime(new Date(session.updatedAt))}
+							</span>
 						)
 					)}
 				</div>
@@ -463,13 +463,13 @@ export function SessionHistoryContent({
 					{/* Session list */}
 					{!error && filteredSessions.length > 0 && (
 						<div className="obsius-session-history-list">
-								{filteredSessions.map((session) => (
-									<SessionItem
-										key={session.sessionId}
-										session={session}
-										isCurrent={session.sessionId === currentSessionId}
-										canRestore={canRestore}
-										canFork={canFork}
+							{filteredSessions.map((session) => (
+								<SessionItem
+									key={session.sessionId}
+									session={session}
+									isCurrent={session.sessionId === currentSessionId}
+									canRestore={canRestore}
+									canFork={canFork}
 									onRestoreSession={onRestoreSession}
 									onForkSession={onForkSession}
 									onDeleteSession={onDeleteSession}

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { FileSystemAdapter } from "obsidian";
 
 import type { AttachedImage } from "../components/chat/ImagePreviewStrip";
 import { pluginNotice } from "../shared/plugin-notice";
@@ -7,6 +6,9 @@ import { pluginNotice } from "../shared/plugin-notice";
 import { NoteMentionService } from "../adapters/obsidian/mention-service";
 import { getLogger } from "../shared/logger";
 import { ObsidianVaultAdapter } from "../adapters/obsidian/vault.adapter";
+import { resolveAgentDisplayName } from "../shared/agent-display-name";
+import { resolveVaultBasePath } from "../shared/vault-path";
+import { useModelFiltering } from "./useModelFiltering";
 
 import { useSettings } from "./useSettings";
 import { useMentions } from "./useMentions";
@@ -35,16 +37,10 @@ export function useChatController(
 
 	const logger = getLogger();
 
-	const vaultPath = useMemo(() => {
-		if (options.workingDirectory) {
-			return options.workingDirectory;
-		}
-		const adapter = plugin.app.vault.adapter;
-		if (adapter instanceof FileSystemAdapter) {
-			return adapter.getBasePath();
-		}
-		return process.cwd();
-	}, [plugin, options.workingDirectory]);
+	const vaultPath = useMemo(
+		() => options.workingDirectory || resolveVaultBasePath(plugin.app),
+		[plugin, options.workingDirectory],
+	);
 
 	const noteMentionService = useMemo(
 		() => new NoteMentionService(plugin),
@@ -57,9 +53,10 @@ export function useChatController(
 		};
 	}, [noteMentionService]);
 
+	const sessionKey = viewId;
 	const acpAdapter = useMemo(
-		() => plugin.getOrCreateAdapter(viewId),
-		[plugin, viewId],
+		() => plugin.getOrCreateSessionAdapter(sessionKey),
+		[plugin, sessionKey],
 	);
 
 	const vaultAccessAdapter = useMemo(() => {
@@ -153,33 +150,15 @@ export function useChatController(
 
 	const errorInfo = sessionErrorInfo || chat.errorInfo || permission.errorInfo;
 
-	const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
 	const [restoredMessage, setRestoredMessage] = useState<string | null>(null);
 
 	const [inputValue, setInputValue] = useState("");
 	const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
 
-	const activeAgentLabel = useMemo(() => {
-		const activeId = session.agentId;
-		if (activeId === plugin.settings.claude.id) {
-			return plugin.settings.claude.displayName || plugin.settings.claude.id;
-		}
-		if (activeId === plugin.settings.opencode.id) {
-			return (
-				plugin.settings.opencode.displayName || plugin.settings.opencode.id
-			);
-		}
-		if (activeId === plugin.settings.codex.id) {
-			return plugin.settings.codex.displayName || plugin.settings.codex.id;
-		}
-		if (activeId === plugin.settings.gemini.id) {
-			return plugin.settings.gemini.displayName || plugin.settings.gemini.id;
-		}
-		const custom = plugin.settings.customAgents.find(
-			(agent) => agent.id === activeId,
-		);
-		return custom?.displayName || custom?.id || activeId;
-	}, [session.agentId, plugin.settings]);
+	const activeAgentLabel = useMemo(
+		() => resolveAgentDisplayName(plugin.settings, session.agentId),
+		[session.agentId, plugin.settings],
+	);
 
 	const availableAgents = useMemo(() => {
 		return plugin.getAvailableAgents();
@@ -400,83 +379,14 @@ export function useChatController(
 		logger,
 	]);
 
-	const candidateModels = settings.candidateModels;
-	const filteredModels = useMemo(() => {
-		if (!session.models) return undefined;
-
-		const agentId = session.agentId;
-		const candidates = candidateModels?.[agentId];
-		if (!candidates || candidates.length === 0) {
-			return session.models;
-		}
-
-		const available = session.models.availableModels;
-		const validCandidates = candidates.filter((id) =>
-			available.some((m) => m.modelId === id),
-		);
-
-		if (validCandidates.length === 0) {
-			return session.models;
-		}
-
-		const filtered = available.filter((m) =>
-			validCandidates.includes(m.modelId),
-		);
-
-		const currentInFiltered = filtered.some(
-			(m) => m.modelId === session.models!.currentModelId,
-		);
-		const effectiveModelId = currentInFiltered
-			? session.models.currentModelId
-			: filtered[0].modelId;
-
-		return {
-			availableModels: filtered,
-			currentModelId: effectiveModelId,
-		};
-	}, [session.models, session.agentId, candidateModels]);
-
-	useEffect(() => {
-		if (!filteredModels || !session.models || !session.sessionId) return;
-
-		if (filteredModels.currentModelId !== session.models.currentModelId) {
-			logger.log(
-				`[useChatController] Current model not in candidates, switching to ${filteredModels.currentModelId}`,
-			);
-			void agentSession.setModel(filteredModels.currentModelId);
-		}
-	}, [filteredModels, session.models, session.sessionId, agentSession, logger]);
-
-	useEffect(() => {
-		if (!session.models || !session.agentId) return;
-
-		const agentId = session.agentId;
-		const candidates = candidateModels?.[agentId];
-		if (!candidates || candidates.length === 0) return;
-
-		const available = session.models.availableModels;
-		const validCandidates = candidates.filter((id) =>
-			available.some((m) => m.modelId === id),
-		);
-
-		if (validCandidates.length < candidates.length) {
-			logger.log(
-				`[useChatController] Pruning ${candidates.length - validCandidates.length} stale candidate model(s) for ${agentId}`,
-			);
-			void plugin.settingsStore.updateSettings({
-				candidateModels: {
-					...candidateModels,
-					[agentId]: validCandidates,
-				},
-			});
-		}
-	}, [
-		session.models,
-		session.agentId,
-		candidateModels,
-		plugin.settingsStore,
-		logger,
-	]);
+	const filteredModels = useModelFiltering({
+		sessionModels: session.models,
+		agentId: session.agentId,
+		sessionId: session.sessionId,
+		candidateModels: settings.candidateModels,
+		settingsAccess: plugin.settingsStore,
+		setModel: agentSession.setModel,
+	});
 
 	const closeSessionRef = useRef(agentSession.closeSession);
 	closeSessionRef.current = agentSession.closeSession;
@@ -528,15 +438,6 @@ export function useChatController(
 		acpAdapter.setUpdateMessageCallback(chat.updateMessage);
 	}, [acpAdapter, chat.updateMessage]);
 
-	useEffect(() => {
-		plugin
-			.checkForUpdates()
-			.then(setIsUpdateAvailable)
-			.catch((error) => {
-				logger.error("Failed to check for updates:", error);
-			});
-	}, [plugin, logger]);
-
 	const prevIsSendingRef = useRef<boolean>(false);
 
 	useEffect(() => {
@@ -583,7 +484,6 @@ export function useChatController(
 		isSessionReady,
 		messages,
 		isSending,
-		isUpdateAvailable,
 		isLoadingSessionHistory,
 
 		permission,
