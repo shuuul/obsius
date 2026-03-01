@@ -1,9 +1,9 @@
 {
 	"id": "obsius",
 	"name": "Obsius",
-	"version": "0.8.3",
+	"version": "0.1.0",
 	"minAppVersion": "1.5.0",
-	"description": "Chat with AI agents via the Agent Client Protocol directly from your vault.",
+	"description": "Use your favorite agents in Obsidian.",
 	"author": "shuuul",
 	"authorUrl": "https://github.com/shuuul",
 	"isDesktopOnly": true

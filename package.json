@@ -1,7 +1,7 @@
 {
 	"name": "obsius",
-	"version": "0.8.3",
-	"description": "Use AI coding agents via the Agent Client Protocol directly inside Obsidian",
+	"version": "0.1.0",
+	"description": "Use your favorite agents in Obsidian.",
 	"main": "main.js",
 	"engines": {
 		"node": ">=20.19.0"
