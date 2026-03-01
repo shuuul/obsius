@@ -139,8 +139,8 @@ export function ChatInput({
 	const sendButtonState: SendButtonState = isSending
 		? "sending"
 		: isSessionReady &&
-			  !isRestoringSession &&
-			  (inputValue.trim() !== "" || attachedImages.length > 0)
+				!isRestoringSession &&
+				(inputValue.trim() !== "" || attachedImages.length > 0)
 			? "ready"
 			: "disabled";
 
@@ -314,7 +314,11 @@ export function ChatInput({
 						ref={richTextareaRef}
 						onContentChange={handleRichInput}
 						onKeyDown={handleKeyDown}
-						onPaste={(e) => void handlePaste(e as unknown as React.ClipboardEvent<HTMLTextAreaElement>)}
+						onPaste={(e) =>
+							void handlePaste(
+								e as unknown as React.ClipboardEvent<HTMLTextAreaElement>,
+							)
+						}
 						placeholder={showAutoMention ? undefined : placeholder}
 						spellCheck={obsidianSpellcheck}
 					/>

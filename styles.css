@@ -815,7 +815,6 @@ If your plugin does not need CSS, delete this file.
 	background-color: var(--background-secondary);
 }
 
-
 /* Rich contenteditable textarea */
 .obsius-rich-textarea {
 	padding: 12px;
@@ -894,7 +893,11 @@ If your plugin does not need CSS, delete this file.
 	gap: 3px;
 	padding: 1px 6px;
 	border-radius: var(--radius-s);
-	background-color: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+	background-color: color-mix(
+		in srgb,
+		var(--interactive-accent) 15%,
+		transparent
+	);
 	color: var(--text-muted);
 	font-size: 0.88em;
 	line-height: var(--line-height-normal);
@@ -905,7 +908,11 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-auto-mention-fixed:hover {
-	background-color: color-mix(in srgb, var(--interactive-accent) 25%, transparent);
+	background-color: color-mix(
+		in srgb,
+		var(--interactive-accent) 25%,
+		transparent
+	);
 	color: var(--text-normal);
 }
 
@@ -988,7 +995,9 @@ If your plugin does not need CSS, delete this file.
 	padding: 2px 8px;
 	border-radius: var(--radius-s);
 	cursor: pointer;
-	transition: background-color 0.15s ease, color 0.15s ease;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
 	height: 24px;
 	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
@@ -1191,7 +1200,9 @@ If your plugin does not need CSS, delete this file.
 	cursor: pointer;
 	color: var(--text-faint);
 	opacity: 0.6;
-	transition: opacity 0.1s ease, color 0.1s ease;
+	transition:
+		opacity 0.1s ease,
+		color 0.1s ease;
 	padding: 1px;
 	border-radius: 2px;
 }
@@ -1223,7 +1234,10 @@ If your plugin does not need CSS, delete this file.
 	appearance: none;
 	box-shadow: none !important;
 	flex-shrink: 0;
-	transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease,
+		opacity 0.15s ease;
 }
 
 .obsius-chat-send-button svg {

@@ -36,8 +36,7 @@ export function MentionBadgeStrip({
 		}
 	}, [autoMention.activeNote, onAddContextMention]);
 
-	const showAddButton =
-		autoMentionEnabled && autoMention.activeNote !== null;
+	const showAddButton = autoMentionEnabled && autoMention.activeNote !== null;
 	const activeNoteAlreadyAdded =
 		autoMention.activeNote !== null &&
 		contextMentions.includes(autoMention.activeNote.name);

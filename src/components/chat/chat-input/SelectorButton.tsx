@@ -98,20 +98,20 @@ export function SelectorButton({
 					}
 				}}
 			>
-			{currentOption?.iconElement ? (
-				<span className="obsius-selector-icon">
-					{currentOption.iconElement}
+				{currentOption?.iconElement ? (
+					<span className="obsius-selector-icon">
+						{currentOption.iconElement}
+					</span>
+				) : currentOption?.icon ? (
+					<ObsidianIcon
+						name={currentOption.icon}
+						className="obsius-selector-icon"
+						size={14}
+					/>
+				) : null}
+				<span className="obsius-selector-label">
+					{currentOption?.label ?? "Select"}
 				</span>
-			) : currentOption?.icon ? (
-				<ObsidianIcon
-					name={currentOption.icon}
-					className="obsius-selector-icon"
-					size={14}
-				/>
-			) : null}
-			<span className="obsius-selector-label">
-				{currentOption?.label ?? "Select"}
-			</span>
 				<ObsidianIcon
 					name="chevron-down"
 					className="obsius-selector-chevron"
@@ -133,17 +133,17 @@ export function SelectorButton({
 								role="option"
 								aria-selected={option.id === currentValue}
 							>
-							{option.iconElement ? (
-								<span className="obsius-selector-option-icon">
-									{option.iconElement}
-								</span>
-							) : option.icon ? (
-								<ObsidianIcon
-									name={option.icon}
-									className="obsius-selector-option-icon"
-									size={16}
-								/>
-							) : null}
+								{option.iconElement ? (
+									<span className="obsius-selector-option-icon">
+										{option.iconElement}
+									</span>
+								) : option.icon ? (
+									<ObsidianIcon
+										name={option.icon}
+										className="obsius-selector-option-icon"
+										size={16}
+									/>
+								) : null}
 								<span className="obsius-selector-option-label">
 									{option.label}
 								</span>

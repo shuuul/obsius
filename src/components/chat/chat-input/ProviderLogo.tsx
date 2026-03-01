@@ -1,7 +1,6 @@
 import * as React from "react";
 
-const CDN_BASE =
-	"https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
+const CDN_BASE = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
 
 interface ProviderLogoProps {
 	slug: string;
@@ -14,7 +13,11 @@ interface ProviderLogoProps {
  * Uses CSS mask-image so the SVG inherits `currentColor` from the theme,
  * working correctly in both light and dark modes with zero bundle impact.
  */
-export function ProviderLogo({ slug, size = 14, className }: ProviderLogoProps) {
+export function ProviderLogo({
+	slug,
+	size = 14,
+	className,
+}: ProviderLogoProps) {
 	const url = `${CDN_BASE}/${slug}.svg`;
 	const maskStyle: React.CSSProperties = {
 		display: "inline-block",

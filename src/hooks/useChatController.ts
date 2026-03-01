@@ -205,10 +205,7 @@ export function useChatController(
 			});
 
 			if (isFirstMessage && session.sessionId) {
-				await sessionHistory.saveSessionLocally(
-					session.sessionId,
-					content,
-				);
+				await sessionHistory.saveSessionLocally(session.sessionId, content);
 				logger.log(
 					`[useChatController] Session saved locally: ${session.sessionId}`,
 				);

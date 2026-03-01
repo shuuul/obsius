@@ -33,13 +33,14 @@ export function InputActions({
 	buttonTitle,
 	onSendOrStop,
 }: InputActionsProps) {
-	const modeOptions: SelectorOption[] | undefined =
-		modes?.availableModes.map((mode, index) => ({
+	const modeOptions: SelectorOption[] | undefined = modes?.availableModes.map(
+		(mode, index) => ({
 			id: mode.id,
 			label: mode.name,
 			description: mode.description,
 			icon: getModeIcon(mode.id, index),
-		}));
+		}),
+	);
 
 	const modelOptions: SelectorOption[] | undefined =
 		models?.availableModels.map((model) => {
@@ -71,9 +72,8 @@ export function InputActions({
 							onChange={onModeChange}
 							className="obsius-mode-selector"
 							title={
-								modes.availableModes.find(
-									(m) => m.id === modes.currentModeId,
-								)?.description ?? "Select mode"
+								modes.availableModes.find((m) => m.id === modes.currentModeId)
+									?.description ?? "Select mode"
 							}
 						/>
 					)}
@@ -85,8 +85,7 @@ export function InputActions({
 							className="obsius-model-selector"
 							title={
 								models.availableModels.find(
-									(m) =>
-										m.modelId === models.currentModelId,
+									(m) => m.modelId === models.currentModelId,
 								)?.description ?? "Select model"
 							}
 						/>

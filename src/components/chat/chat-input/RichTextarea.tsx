@@ -70,10 +70,7 @@ function extractContent(editor: HTMLDivElement): {
 		} else if (node instanceof HTMLElement) {
 			if (node.dataset.mention) {
 				const mentionText = `@[[${node.dataset.mention}]]`;
-				if (
-					!foundCursor &&
-					(node === focusNode || node.contains(focusNode))
-				) {
+				if (!foundCursor && (node === focusNode || node.contains(focusNode))) {
 					cursorPos = text.length + mentionText.length;
 					foundCursor = true;
 				}
@@ -163,10 +160,7 @@ function findNodeAtPlainTextOffset(
 				return { node: child, offset: targetOffset - accumulated };
 			}
 			accumulated += len;
-		} else if (
-			child instanceof HTMLElement &&
-			child.dataset.mention
-		) {
+		} else if (child instanceof HTMLElement && child.dataset.mention) {
 			const mentionLen = `@[[${child.dataset.mention}]]`.length;
 			if (accumulated + mentionLen >= targetOffset) {
 				const next = child.nextSibling;
@@ -254,17 +248,14 @@ export const RichTextarea = forwardRef<RichTextareaHandle, RichTextareaProps>(
 				clear: () => {
 					if (editorRef.current) {
 						editorRef.current.innerHTML = "";
-						editorRef.current.appendChild(
-							document.createTextNode(""),
-						);
+						editorRef.current.appendChild(document.createTextNode(""));
 						isEmptyRef.current = true;
 						editorRef.current.classList.add("obsius-rich-textarea-empty");
 						fireContentChange();
 					}
 				},
 				getContentAndCursor: () => {
-					if (!editorRef.current)
-						return { text: "", cursorPos: 0 };
+					if (!editorRef.current) return { text: "", cursorPos: 0 };
 					return extractContent(editorRef.current);
 				},
 				getElement: () => editorRef.current,
@@ -304,9 +295,7 @@ export const RichTextarea = forwardRef<RichTextareaHandle, RichTextareaProps>(
 
 			function renderIcons(root: HTMLElement) {
 				const icons = Array.from(
-					root.querySelectorAll(
-						".obsius-inline-mention-icon[data-icon]",
-					),
+					root.querySelectorAll(".obsius-inline-mention-icon[data-icon]"),
 				);
 				for (const el of icons) {
 					if (el.children.length > 0) continue;
