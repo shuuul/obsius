@@ -6,6 +6,7 @@ import {
 } from "./sections/agent-sections";
 import { renderCustomAgents } from "./sections/custom-agent-sections";
 import { renderCoreSections } from "./sections/core-sections";
+import { renderSectionHeader } from "./settings-ui-helpers";
 
 export class AgentClientSettingTab extends PluginSettingTab {
 	plugin: AgentClientPlugin;
@@ -36,10 +37,10 @@ export class AgentClientSettingTab extends PluginSettingTab {
 
 		renderCoreSections(containerEl, this.plugin, () => this.display());
 
-		new Setting(containerEl).setName("Built-in agents").setHeading();
+		renderSectionHeader(containerEl, "bot", "Built-in agents", "Configure built-in AI agent connections");
 		renderBuiltInAgentSettings(containerEl, this.plugin);
 
-		new Setting(containerEl).setName("Custom agents").setHeading();
+		renderSectionHeader(containerEl, "puzzle", "Custom agents", "Add your own agent integrations");
 		renderCustomAgents(containerEl, this.plugin, {
 			onRefreshDropdown: () => this.refreshAgentDropdown(),
 			onRedisplay: () => this.display(),

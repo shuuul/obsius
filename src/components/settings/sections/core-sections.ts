@@ -7,6 +7,7 @@ import {
 	parseChatFontSize,
 } from "../../../shared/display-settings";
 import { resolveCommandFromShell } from "../../../shared/shell-utils";
+import { renderSectionHeader } from "../settings-ui-helpers";
 
 export const renderCoreSections = (
 	containerEl: HTMLElement,
@@ -14,6 +15,8 @@ export const renderCoreSections = (
 	redisplay: () => void,
 ): void => {
 	const store = plugin.settingsStore;
+
+	renderSectionHeader(containerEl, "settings", "General");
 
 	let nodeTextRef: { setValue: (v: string) => unknown } | null = null;
 	const nodeSetting = new Setting(containerEl)
@@ -68,6 +71,22 @@ export const renderCoreSections = (
 				}),
 		);
 
+	new Setting(containerEl)
+		.setName("Completion sound")
+		.setDesc("Play a short chime when an agent finishes responding.")
+		.addToggle((toggle) =>
+			toggle
+				.setValue(plugin.settings.displaySettings.completionSound)
+				.onChange(async (value) => {
+					await store.updateSettings({
+						displaySettings: {
+							...plugin.settings.displaySettings,
+							completionSound: value,
+						},
+					});
+				}),
+		);
+
 	renderMentionsSection(containerEl, plugin);
 	renderDisplaySection(containerEl, plugin, redisplay);
 	renderPermissionSection(containerEl, plugin);
@@ -81,7 +100,7 @@ function renderMentionsSection(
 ): void {
 	const store = plugin.settingsStore;
 
-	new Setting(containerEl).setName("Mentions").setHeading();
+	renderSectionHeader(containerEl, "at-sign", "Mentions");
 
 	new Setting(containerEl)
 		.setName("Max note length")
@@ -135,7 +154,7 @@ function renderDisplaySection(
 ): void {
 	const store = plugin.settingsStore;
 
-	new Setting(containerEl).setName("Display").setHeading();
+	renderSectionHeader(containerEl, "monitor", "Display");
 
 	new Setting(containerEl)
 		.setName("Chat view location")
@@ -226,22 +245,6 @@ function renderDisplaySection(
 		});
 
 	new Setting(containerEl)
-		.setName("Completion sound")
-		.setDesc("Play a short chime when an agent finishes responding.")
-		.addToggle((toggle) =>
-			toggle
-				.setValue(plugin.settings.displaySettings.completionSound)
-				.onChange(async (value) => {
-					await store.updateSettings({
-						displaySettings: {
-							...plugin.settings.displaySettings,
-							completionSound: value,
-						},
-					});
-				}),
-		);
-
-	new Setting(containerEl)
 		.setName("Auto-collapse long diffs")
 		.setDesc("Automatically collapse diffs that exceed the line threshold.")
 		.addToggle((toggle) =>
@@ -287,7 +290,7 @@ function renderPermissionSection(
 	containerEl: HTMLElement,
 	plugin: AgentClientPlugin,
 ): void {
-	new Setting(containerEl).setName("Permissions").setHeading();
+	renderSectionHeader(containerEl, "shield", "Permissions");
 	new Setting(containerEl)
 		.setName("Auto-allow permissions")
 		.setDesc(
@@ -315,8 +318,7 @@ function renderWindowsSection(
 
 	const store = plugin.settingsStore;
 
-	// eslint-disable-next-line obsidianmd/ui/sentence-case
-	new Setting(containerEl).setName("Windows Subsystem for Linux").setHeading();
+	renderSectionHeader(containerEl, "terminal", "Windows Subsystem for Linux");
 
 	new Setting(containerEl)
 		.setName("Enable WSL mode")
@@ -355,7 +357,7 @@ function renderDeveloperSection(
 	containerEl: HTMLElement,
 	plugin: AgentClientPlugin,
 ): void {
-	new Setting(containerEl).setName("Developer").setHeading();
+	renderSectionHeader(containerEl, "code", "Developer");
 	new Setting(containerEl)
 		.setName("Debug mode")
 		.setDesc(

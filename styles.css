@@ -7,6 +7,75 @@ If your plugin does not need CSS, delete this file.
 
 */
 
+/* ===== Settings Section Headers ===== */
+.obsius-settings-section-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 28px;
+	margin-bottom: 4px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.obsius-settings-section-header:first-child {
+	margin-top: 8px;
+}
+
+.obsius-settings-section-header-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	flex-shrink: 0;
+	color: var(--interactive-accent);
+}
+
+.obsius-settings-section-header-icon svg {
+	width: 22px;
+	height: 22px;
+}
+
+.obsius-settings-section-header-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.obsius-settings-section-header-title {
+	margin: 0 !important;
+	padding: 0 !important;
+	font-size: 1.4em;
+	font-weight: 600;
+	color: var(--text-normal);
+	line-height: 1;
+}
+
+.obsius-settings-section-header-desc {
+	margin: 0;
+	padding: 0;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	line-height: 1.4;
+}
+
+/* ===== Settings Agent Sub-Heading ===== */
+.obsius-settings-agent-subheading {
+	margin-top: 20px;
+	margin-bottom: 4px;
+	padding-bottom: 6px;
+	border-bottom: 1px solid var(--background-modifier-border-hover, var(--background-modifier-border));
+}
+
+.obsius-settings-agent-subheading-title {
+	margin: 0;
+	padding: 0;
+	font-size: 1.05em;
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
 /* ===== Settings Tab Custom Agent Block ===== */
 .obsius-custom-agent {
 	padding: 16px;

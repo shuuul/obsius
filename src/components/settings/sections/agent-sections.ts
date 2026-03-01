@@ -6,6 +6,7 @@ import {
 	BUILTIN_AGENT_DEFAULT_COMMANDS,
 	resolveCommandFromShell,
 } from "../../../shared/shell-utils";
+import { renderAgentSubHeading } from "../settings-ui-helpers";
 import { renderAgentModelSettings } from "./model-preferences";
 
 export const formatArgs = (args: string[]): string => args.join("\n");
@@ -105,9 +106,7 @@ function renderGeminiSettings(
 	const gemini = plugin.settings.gemini;
 	const store = plugin.settingsStore;
 
-	new Setting(sectionEl)
-		.setName(gemini.displayName || "Gemini CLI")
-		.setHeading();
+	renderAgentSubHeading(sectionEl, gemini.displayName || "Gemini CLI");
 
 	new Setting(sectionEl)
 		.setName("API key")
@@ -180,9 +179,7 @@ function renderClaudeSettings(
 	const claude = plugin.settings.claude;
 	const store = plugin.settingsStore;
 
-	new Setting(sectionEl)
-		.setName(claude.displayName || "Claude Code (ACP)")
-		.setHeading();
+	renderAgentSubHeading(sectionEl, claude.displayName || "Claude Code (ACP)");
 
 	new Setting(sectionEl)
 		.setName("API key")
@@ -255,9 +252,7 @@ function renderOpenCodeSettings(
 	const opencode = plugin.settings.opencode;
 	const store = plugin.settingsStore;
 
-	new Setting(sectionEl)
-		.setName(opencode.displayName || "OpenCode")
-		.setHeading();
+	renderAgentSubHeading(sectionEl, opencode.displayName || "OpenCode");
 
 	renderPathSettingWithDetect(sectionEl, plugin, {
 		agentId: opencode.id,
@@ -319,7 +314,7 @@ function renderCodexSettings(
 	const codex = plugin.settings.codex;
 	const store = plugin.settingsStore;
 
-	new Setting(sectionEl).setName(codex.displayName || "Codex").setHeading();
+	renderAgentSubHeading(sectionEl, codex.displayName || "Codex");
 
 	new Setting(sectionEl)
 		.setName("API key")
