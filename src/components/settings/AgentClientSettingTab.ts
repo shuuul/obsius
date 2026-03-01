@@ -28,16 +28,6 @@ export class AgentClientSettingTab extends PluginSettingTab {
 			this.unsubscribe = null;
 		}
 
-		const docContainer = containerEl.createDiv({
-			cls: "agent-client-doc-link",
-		});
-		docContainer.createSpan({ text: "Need help? Check out the " });
-		docContainer.createEl("a", {
-			text: "documentation", // eslint-disable-line obsidianmd/ui/sentence-case
-			href: "https://shuuul.github.io/obsius/",
-		});
-		docContainer.createSpan({ text: "." });
-
 		this.renderAgentSelector(containerEl);
 		this.unsubscribe = this.plugin.settingsStore.subscribe(() => {
 			this.updateAgentDropdown();
