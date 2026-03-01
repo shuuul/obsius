@@ -13,7 +13,6 @@ Commands operate on the **last focused chat view**. Click on a chat view to focu
 | **Open agent chat** | Open the chat panel |
 | **Open new chat view** | Open an additional chat view |
 | **New chat** | Start a fresh conversation |
-| **Export chat** | Export the current conversation to a note |
 | **Focus next chat view** | Move focus to the next chat view |
 | **Focus previous chat view** | Move focus to the previous chat view |
 
@@ -26,14 +25,6 @@ Control multiple chat views at once. See [Multi-Session Chat](/usage/multi-sessi
 | **Broadcast prompt** | Copy the active view's input to all other views |
 | **Broadcast send** | Send messages in all views simultaneously |
 | **Broadcast cancel** | Cancel operations in all views |
-
-## Floating Chat Commands
-
-| Command | Description |
-|---------|-------------|
-| **Open floating chat window** | Open an existing floating window, or create one if none exist |
-| **Open new floating chat window** | Always create a new floating window |
-| **Close floating chat window** | Hide the focused floating window (session is preserved) |
 
 ## Agent Commands
 

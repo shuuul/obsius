@@ -41,10 +41,7 @@ export function TerminalRenderer({
 					terminalId,
 					sessionId: "",
 				});
-				logger.log(
-					`[TerminalRenderer] Poll result for ${terminalId}:`,
-					result,
-				);
+				logger.log(`[TerminalRenderer] Poll result for ${terminalId}:`, result);
 				setOutput(result.output);
 				if (result.exitStatus) {
 					setExitStatus({

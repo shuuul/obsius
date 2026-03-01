@@ -193,7 +193,6 @@ export function ChatInput({
 		onAttachedImagesChange([]);
 	}, [agentId, onAttachedImagesChange]);
 
-
 	/**
 	 * Adjust textarea height based on content.
 	 */
@@ -277,13 +276,11 @@ export function ChatInput({
 
 		// Save input value and images before clearing
 		const messageToSend = inputValue.trim();
-		const imagesToSend: ImagePromptContent[] = attachedImages.map(
-			(img) => ({
-				type: "image",
-				data: img.data,
-				mimeType: img.mimeType,
-			}),
-		);
+		const imagesToSend: ImagePromptContent[] = attachedImages.map((img) => ({
+			type: "image",
+			data: img.data,
+			mimeType: img.mimeType,
+		}));
 
 		// Clear input, images, and hint state immediately
 		onInputChange("");
@@ -383,10 +380,8 @@ export function ChatInput({
 				window.setTimeout(() => {
 					if (textareaRef.current) {
 						textareaRef.current.focus();
-						textareaRef.current.selectionStart =
-							restoredMessage.length;
-						textareaRef.current.selectionEnd =
-							restoredMessage.length;
+						textareaRef.current.selectionStart = restoredMessage.length;
+						textareaRef.current.selectionEnd = restoredMessage.length;
 					}
 				}, 0);
 			}
@@ -462,26 +457,16 @@ export function ChatInput({
 						spellCheck={obsidianSpellcheck}
 					/>
 					{hintText && (
-						<div
-							className="agent-client-hint-overlay"
-							aria-hidden="true"
-						>
-							<span className="agent-client-invisible">
-								{commandText}
-							</span>
-							<span className="agent-client-hint-text">
-								{hintText}
-							</span>
+						<div className="agent-client-hint-overlay" aria-hidden="true">
+							<span className="agent-client-invisible">{commandText}</span>
+							<span className="agent-client-hint-text">{hintText}</span>
 						</div>
 					)}
 				</div>
 
 				{/* Image Preview Strip (only shown when agent supports images) */}
 				{supportsImages && (
-					<ImagePreviewStrip
-						images={attachedImages}
-						onRemove={removeImage}
-					/>
+					<ImagePreviewStrip images={attachedImages} onRemove={removeImage} />
 				)}
 
 				<InputActions

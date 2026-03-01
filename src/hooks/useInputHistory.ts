@@ -43,9 +43,7 @@ export function useInputHistory(
 				const textContent = m.content.find(
 					(c) => c.type === "text" || c.type === "text_with_context",
 				);
-				return textContent && "text" in textContent
-					? textContent.text
-					: "";
+				return textContent && "text" in textContent ? textContent.text : "";
 			})
 			.filter((text) => text.trim() !== "");
 	}, [messages]);
@@ -75,10 +73,7 @@ export function useInputHistory(
 
 			if (e.key === "ArrowUp") {
 				// Allow when input is empty OR already navigating history
-				if (
-					textareaEl.value.trim() !== "" &&
-					historyIndexRef.current === -1
-				)
+				if (textareaEl.value.trim() !== "" && historyIndexRef.current === -1)
 					return false;
 
 				e.preventDefault();
@@ -89,8 +84,7 @@ export function useInputHistory(
 				}
 
 				historyIndexRef.current = nextIndex;
-				const messageText =
-					userMessages[userMessages.length - 1 - nextIndex];
+				const messageText = userMessages[userMessages.length - 1 - nextIndex];
 				restoredTextRef.current = messageText;
 				onInputChange(messageText);
 
@@ -115,8 +109,7 @@ export function useInputHistory(
 					restoredTextRef.current = null;
 					onInputChange("");
 				} else {
-					const messageText =
-						userMessages[userMessages.length - 1 - nextIndex];
+					const messageText = userMessages[userMessages.length - 1 - nextIndex];
 					restoredTextRef.current = messageText;
 					onInputChange(messageText);
 

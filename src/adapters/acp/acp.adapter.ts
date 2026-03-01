@@ -78,10 +78,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 
 	private errorCallback: ((error: ProcessError) => void) | null = null;
 
-	private updateMessage: (
-		toolCallId: string,
-		content: MessageContent,
-	) => void;
+	private updateMessage: (toolCallId: string, content: MessageContent) => void;
 
 	private currentConfig: AgentConfig | null = null;
 	private isInitializedFlag = false;
@@ -114,13 +111,13 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		this.terminalManager = new TerminalManager(plugin);
 	}
 
-		setUpdateMessageCallback(
+	setUpdateMessageCallback(
 		updateMessage: (toolCallId: string, content: MessageContent) => void,
 	): void {
 		this.updateMessage = updateMessage;
 	}
 
-		async initialize(config: AgentConfig): Promise<InitializeResult> {
+	async initialize(config: AgentConfig): Promise<InitializeResult> {
 		this.logger.log(
 			"[AcpAdapter] Starting initialization with config:",
 			config,
@@ -152,8 +149,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 				logger: this.logger,
 				pluginVersion: this.plugin.manifest.version,
 				windowsWslMode: this.plugin.settings.windowsWslMode,
-				windowsWslDistribution:
-					this.plugin.settings.windowsWslDistribution,
+				windowsWslDistribution: this.plugin.settings.windowsWslDistribution,
 				nodePath: this.plugin.settings.nodePath,
 				onError: (error) => {
 					this.errorCallback?.(error);
@@ -186,7 +182,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		}
 	}
 
-		async newSession(workingDirectory: string): Promise<NewSessionResult> {
+	async newSession(workingDirectory: string): Promise<NewSessionResult> {
 		return await newSessionOperation({
 			connection: this.connection,
 			logger: this.logger,
@@ -195,7 +191,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		async authenticate(methodId: string): Promise<boolean> {
+	async authenticate(methodId: string): Promise<boolean> {
 		return await authenticateOperation({
 			connection: this.connection,
 			logger: this.logger,
@@ -203,10 +199,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		async sendPrompt(
-		sessionId: string,
-		content: PromptContent[],
-	): Promise<void> {
+	async sendPrompt(sessionId: string, content: PromptContent[]): Promise<void> {
 		await sendPromptOperation({
 			connection: this.connection,
 			logger: this.logger,
@@ -226,7 +219,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		async cancel(sessionId: string): Promise<void> {
+	async cancel(sessionId: string): Promise<void> {
 		await cancelOperation({
 			connection: this.connection,
 			logger: this.logger,
@@ -235,7 +228,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		disconnect(): Promise<void> {
+	disconnect(): Promise<void> {
 		disconnectOperation({
 			logger: this.logger,
 			agentProcessPid: this.agentProcess?.pid,
@@ -252,7 +245,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		return Promise.resolve();
 	}
 
-		isInitialized(): boolean {
+	isInitialized(): boolean {
 		return (
 			this.isInitializedFlag &&
 			this.connection !== null &&
@@ -260,11 +253,11 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		);
 	}
 
-		getCurrentAgentId(): string | null {
+	getCurrentAgentId(): string | null {
 		return this.currentAgentId;
 	}
 
-		async setSessionMode(sessionId: string, modeId: string): Promise<void> {
+	async setSessionMode(sessionId: string, modeId: string): Promise<void> {
 		await setSessionModeOperation({
 			connection: this.connection,
 			logger: this.logger,
@@ -273,7 +266,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		async setSessionModel(sessionId: string, modelId: string): Promise<void> {
+	async setSessionModel(sessionId: string, modelId: string): Promise<void> {
 		await setSessionModelOperation({
 			connection: this.connection,
 			logger: this.logger,
@@ -282,15 +275,15 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		onSessionUpdate(callback: (update: SessionUpdate) => void): void {
+	onSessionUpdate(callback: (update: SessionUpdate) => void): void {
 		this.sessionUpdateCallback = callback;
 	}
 
-		onError(callback: (error: ProcessError) => void): void {
+	onError(callback: (error: ProcessError) => void): void {
 		this.errorCallback = callback;
 	}
 
-		respondToPermission(requestId: string, optionId: string): Promise<void> {
+	respondToPermission(requestId: string, optionId: string): Promise<void> {
 		if (!this.connection) {
 			throw new Error(
 				"ACP connection not initialized. Call initialize() first.",
@@ -307,8 +300,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		return Promise.resolve();
 	}
 
-
-		private getErrorInfo(
+	private getErrorInfo(
 		error: Error,
 		command: string,
 		agentLabel: string,
@@ -316,16 +308,15 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		return getSpawnErrorInfo(error, command, agentLabel);
 	}
 
-		private getCommandNotFoundSuggestion(command: string): string {
+	private getCommandNotFoundSuggestion(command: string): string {
 		return getCommandNotFoundSuggestion(command);
 	}
 
-		private extractStderrErrorHint(): string | null {
+	private extractStderrErrorHint(): string | null {
 		return extractStderrErrorHint(this.recentStderr);
 	}
 
-
-		sessionUpdate(params: acp.SessionNotification): Promise<void> {
+	sessionUpdate(params: acp.SessionNotification): Promise<void> {
 		const update = params.update;
 		const sessionId = params.sessionId;
 		this.promptSessionUpdateCount++;
@@ -337,11 +328,11 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		return Promise.resolve();
 	}
 
-		resetCurrentMessage(): void {
+	resetCurrentMessage(): void {
 		this.currentMessageId = null;
 	}
 
-		handlePermissionResponse(requestId: string, optionId: string): void {
+	handlePermissionResponse(requestId: string, optionId: string): void {
 		handlePermissionResponseOperation({
 			state: {
 				pendingPermissionRequests: this.pendingPermissionRequests,
@@ -353,7 +344,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		cancelAllOperations(): void {
+	cancelAllOperations(): void {
 		this.cancelPendingPermissionRequests();
 
 		this.terminalManager.killAllTerminals();
@@ -369,7 +360,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		async requestPermission(
+	async requestPermission(
 		params: acp.RequestPermissionRequest,
 	): Promise<acp.RequestPermissionResponse> {
 		return await requestPermissionOperation({
@@ -385,7 +376,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		private cancelPendingPermissionRequests(): void {
+	private cancelPendingPermissionRequests(): void {
 		cancelPendingPermissionRequestsOperation({
 			state: {
 				pendingPermissionRequests: this.pendingPermissionRequests,
@@ -395,7 +386,6 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 			updateMessage: this.updateMessage,
 		});
 	}
-
 
 	readTextFile(params: acp.ReadTextFileRequest) {
 		return Promise.resolve({ content: "" });
@@ -461,8 +451,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		);
 	}
 
-
-		async listSessions(
+	async listSessions(
 		cwd?: string,
 		cursor?: string,
 	): Promise<ListSessionsResult> {
@@ -475,7 +464,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		async loadSession(
+	async loadSession(
 		sessionId: string,
 		cwd: string,
 	): Promise<LoadSessionResult> {
@@ -488,7 +477,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		async resumeSession(
+	async resumeSession(
 		sessionId: string,
 		cwd: string,
 	): Promise<ResumeSessionResult> {
@@ -501,7 +490,7 @@ export class AcpAdapter implements IAgentClient, IAcpClient {
 		});
 	}
 
-		async forkSession(
+	async forkSession(
 		sessionId: string,
 		cwd: string,
 	): Promise<ForkSessionResult> {

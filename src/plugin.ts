@@ -1,15 +1,5 @@
-import {
-	Plugin,
-	WorkspaceLeaf,
-	Notice,
-} from "obsidian";
-import type { Root } from "react-dom/client";
+import { Plugin, WorkspaceLeaf, Notice } from "obsidian";
 import { ChatView, VIEW_TYPE_CHAT } from "./components/chat/ChatView";
-import {
-	createFloatingChat,
-	FloatingViewContainer,
-} from "./components/chat/FloatingChatView";
-import { FloatingButtonContainer } from "./components/chat/FloatingButton";
 import { ChatViewRegistry } from "./shared/chat-view-registry";
 import {
 	createSettingsStore,
@@ -41,7 +31,6 @@ import {
 	openChatWithAgent,
 	registerAgentCommands,
 	registerBroadcastCommands,
-	registerFloatingCommands,
 	registerPermissionCommands,
 } from "./plugin/agent-ops";
 import { checkForUpdates } from "./plugin/update-check";
@@ -83,17 +72,6 @@ export interface AgentClientPluginSettings {
 	autoMentionActiveNote: boolean;
 	debugMode: boolean;
 	nodePath: string;
-	exportSettings: {
-		defaultFolder: string;
-		filenameTemplate: string;
-		autoExportOnNewChat: boolean;
-		autoExportOnCloseChat: boolean;
-		openFileAfterExport: boolean;
-		includeImages: boolean;
-		imageLocation: "obsidian" | "custom" | "base64";
-		imageCustomFolder: string;
-		frontmatterTag: string;
-	};
 	// WSL settings (Windows only)
 	windowsWslMode: boolean;
 	windowsWslDistribution?: string;
@@ -114,12 +92,22 @@ export interface AgentClientPluginSettings {
 	savedSessions: SavedSessionInfo[];
 	// Last used model per agent (agentId → modelId)
 	lastUsedModels: Record<string, string>;
-	// Floating chat button settings
-	showFloatingButton: boolean;
-	floatingButtonImage: string;
-	floatingWindowSize: { width: number; height: number };
-	floatingWindowPosition: { x: number; y: number } | null;
-	floatingButtonPosition: { x: number; y: number } | null;
+	// Candidate models per agent (agentId → modelId[]) — empty means "show all"
+	candidateModels?: Record<string, string[]>;
+	// Cached model lists from last session per agent (for settings UI when agent is offline)
+	cachedAgentModels?: Record<
+		string,
+		{ modelId: string; name: string; description?: string }[]
+	>;
+	// Cached mode lists from last session per agent
+	cachedAgentModes?: Record<
+		string,
+		{ id: string; name: string; description?: string }[]
+	>;
+	// User-configured default model per mode per agent (agentId → modeId → modelId)
+	modeModelDefaults?: Record<string, Record<string, string>>;
+	// Auto-remembered last model per mode per agent (agentId → modeId → modelId)
+	lastModeModels?: Record<string, Record<string, string>>;
 }
 
 const DEFAULT_SETTINGS: AgentClientPluginSettings = {
@@ -130,20 +118,11 @@ export default class AgentClientPlugin extends Plugin {
 	settings: AgentClientPluginSettings;
 	settingsStore!: SettingsStore;
 
-	/** Registry for all chat view containers (sidebar + floating) */
+	/** Registry for all chat view containers */
 	viewRegistry = new ChatViewRegistry();
 
 	/** Map of viewId to AcpAdapter for multi-session support */
 	private _adapters: Map<string, AcpAdapter> = new Map();
-	/** Floating button container (independent from chat view instances) */
-	private floatingButton: FloatingButtonContainer | null = null;
-	/** Map of viewId to floating chat roots and containers (legacy, being migrated to viewRegistry) */
-	private floatingChatInstances: Map<
-		string,
-		{ root: Root; container: HTMLElement }
-	> = new Map();
-	/** Counter for generating unique floating chat instance IDs */
-	private floatingChatCounter = 0;
 
 	async onload() {
 		await this.loadSettings();
@@ -192,9 +171,7 @@ export default class AgentClientPlugin extends Plugin {
 			id: "open-new-chat-view",
 			name: "Open new chat view",
 			callback: () => {
-				void this.openNewChatViewWithAgent(
-					this.settings.defaultAgentId,
-				);
+				void this.openNewChatViewWithAgent(this.settings.defaultAgentId);
 			},
 		});
 
@@ -202,29 +179,8 @@ export default class AgentClientPlugin extends Plugin {
 		this.registerAgentCommands();
 		this.registerPermissionCommands();
 		this.registerBroadcastCommands();
-		registerFloatingCommands(this);
-
-		this.addCommand({
-			id: "close-floating-chat",
-			name: "Close floating chat window",
-			callback: () => {
-				const focused = this.viewRegistry.getFocused();
-				if (focused && focused.viewType === "floating") {
-					focused.collapse();
-				}
-			},
-		});
 
 		this.addSettingTab(new AgentClientSettingTab(this.app, this));
-
-		// Mount floating button (always present; visibility controlled by settings inside component)
-		this.floatingButton = new FloatingButtonContainer(this);
-		this.floatingButton.mount();
-
-		// Mount initial floating chat instance only if enabled
-		if (this.settings.showFloatingButton) {
-			this.openNewFloatingChat();
-		}
 
 		// Clean up all ACP sessions when Obsidian quits
 		// Note: We don't wait for disconnect to complete to avoid blocking quit
@@ -245,22 +201,8 @@ export default class AgentClientPlugin extends Plugin {
 	}
 
 	onunload() {
-		// Unmount floating button
-		this.floatingButton?.unmount();
-		this.floatingButton = null;
-
-		// Unmount all floating chat instances via registry
-		for (const container of this.viewRegistry.getByType("floating")) {
-			if (container instanceof FloatingViewContainer) {
-				container.unmount();
-			}
-		}
-
 		// Clear registry (sidebar views are managed by Obsidian workspace)
 		this.viewRegistry.clear();
-
-		// Clear legacy storage
-		this.floatingChatInstances.clear();
 	}
 
 	/**
@@ -325,9 +267,8 @@ export default class AgentClientPlugin extends Plugin {
 			const focusedId = this.lastActiveChatViewId;
 			if (focusedId) {
 				leaf =
-					leaves.find(
-						(l) => (l.view as ChatView)?.viewId === focusedId,
-					) || leaves[0];
+					leaves.find((l) => (l.view as ChatView)?.viewId === focusedId) ||
+					leaves[0];
 			} else {
 				leaf = leaves[0];
 			}
@@ -354,7 +295,6 @@ export default class AgentClientPlugin extends Plugin {
 
 	/**
 	 * Focus the next or previous ChatView in the list.
-	 * Uses ChatViewRegistry which includes both sidebar and floating views.
 	 */
 	private focusChatView(direction: "next" | "previous"): void {
 		if (direction === "next") {
@@ -392,63 +332,6 @@ export default class AgentClientPlugin extends Plugin {
 
 		await this.app.workspace.revealLeaf(leaf);
 		focusChatTextarea(leaf, 0);
-	}
-
-	/**
-	 * Open a new floating chat window.
-	 * Each window is independent with its own session.
-	 */
-	openNewFloatingChat(
-		initialExpanded = false,
-		initialPosition?: { x: number; y: number },
-	): void {
-		// instanceId is just the counter (e.g., "0", "1", "2")
-		// FloatingViewContainer will create viewId as "floating-chat-{instanceId}"
-		const instanceId = String(this.floatingChatCounter++);
-		const container = createFloatingChat(
-			this,
-			instanceId,
-			initialExpanded,
-			initialPosition,
-		);
-		// Store by viewId for consistent lookup
-		this.floatingChatInstances.set(container.viewId, {
-			root: null as unknown as Root,
-			container: container.getContainerEl(),
-		});
-	}
-
-	/**
-	 * Close a specific floating chat window.
-	 * @param viewId - The viewId in "floating-chat-{id}" format (from getFloatingChatInstances())
-	 */
-	closeFloatingChat(viewId: string): void {
-		const container = this.viewRegistry.get(viewId);
-		if (container && container instanceof FloatingViewContainer) {
-			container.unmount();
-		}
-		// Also remove from legacy floatingChatInstances if present
-		this.floatingChatInstances.delete(viewId);
-	}
-
-	/**
-	 * Get all floating chat instance viewIds.
-	 * @returns Array of viewIds in "floating-chat-{id}" format
-	 */
-	getFloatingChatInstances(): string[] {
-		return this.viewRegistry.getByType("floating").map((v) => v.viewId);
-	}
-
-	/**
-	 * Expand a specific floating chat window by triggering a custom event.
-	 * @param viewId - The viewId in "floating-chat-{id}" format (from getFloatingChatInstances())
-	 */
-	expandFloatingChat(viewId: string): void {
-		window.dispatchEvent(
-			new CustomEvent("agent-client:expand-floating-chat", {
-				detail: { viewId },
-			}),
-		);
 	}
 
 	/**

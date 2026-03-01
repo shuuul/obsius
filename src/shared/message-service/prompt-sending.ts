@@ -7,10 +7,7 @@ import {
 } from "../acp-error-utils";
 import type { PromptContent } from "../../domain/models/prompt-content";
 import type { AuthenticationMethod } from "../../domain/models/chat-session";
-import type {
-	SendPreparedPromptInput,
-	SendPromptResult,
-} from "./types";
+import type { SendPreparedPromptInput, SendPromptResult } from "./types";
 
 export async function sendPreparedPrompt(
 	input: SendPreparedPromptInput,

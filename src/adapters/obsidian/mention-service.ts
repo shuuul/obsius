@@ -84,8 +84,7 @@ export class NoteMentionService {
 				const path = file.path;
 
 				// Get aliases from frontmatter
-				const fileCache =
-					this.plugin.app.metadataCache.getFileCache(file);
+				const fileCache = this.plugin.app.metadataCache.getFileCache(file);
 				const aliases = fileCache?.frontmatter?.aliases as
 					| string[]
 					| string

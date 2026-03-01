@@ -1,26 +1,21 @@
-import { ItemView, WorkspaceLeaf, Platform, Menu } from "obsidian";
-import type {
-	IChatViewContainer,
-	ChatViewType,
-} from "../../domain/ports/chat-view-container.port";
+import { ItemView, Platform, type WorkspaceLeaf } from "obsidian";
 import * as React from "react";
-const { useState, useRef, useEffect, useCallback } = React;
-import { createRoot, Root } from "react-dom/client";
 
-import type AgentClientPlugin from "../../plugin";
+import type {
+	ChatViewType,
+	IChatViewContainer,
+} from "../../domain/ports/chat-view-container.port";
+
+const { useState, useRef, useEffect, useCallback, useMemo } = React;
+
+import { createRoot, type Root } from "react-dom/client";
 import type { ChatInputState } from "../../domain/models/chat-input-state";
-
-import { ChatHeader } from "./ChatHeader";
-import { ChatMessages } from "./ChatMessages";
-import { ChatInput } from "./ChatInput";
-import { getLogger, Logger } from "../../shared/logger";
-
-import type { IAcpClient } from "../../adapters/acp/acp.adapter";
-
-import { useChatController } from "../../hooks/useChatController";
+import { useTabs } from "../../hooks/useTabs";
 import { useWorkspaceEvents } from "../../hooks/useWorkspaceEvents";
-
-import type { ImagePromptContent } from "../../domain/models/prompt-content";
+import type AgentClientPlugin from "../../plugin";
+import { getLogger, type Logger } from "../../shared/logger";
+import { ChatHeader } from "./ChatHeader";
+import { TabContent, type TabContentActions } from "./TabContent";
 
 interface AppWithSettings {
 	setting: {
@@ -30,6 +25,10 @@ interface AppWithSettings {
 }
 
 export const VIEW_TYPE_CHAT = "agent-client-chat-view";
+
+// ============================================================
+// ChatComponent - Manages header, tabs, and per-tab content
+// ============================================================
 
 function ChatComponent({
 	plugin,
@@ -44,66 +43,37 @@ function ChatComponent({
 		throw new Error("Obsius is only available on desktop");
 	}
 
+	const logger = getLogger();
+
 	const [restoredAgentId, setRestoredAgentId] = useState<string | undefined>(
 		view.getInitialAgentId() ?? undefined,
 	);
 
-	const controller = useChatController({
-		plugin,
-		viewId,
-		initialAgentId: restoredAgentId,
-	});
+	const availableAgents = useMemo(() => {
+		return plugin.getAvailableAgents();
+	}, [plugin]);
 
-	const {
-		logger,
-		acpAdapter,
-		settings,
-		session,
-		isSessionReady,
-		messages,
-		isSending,
-		isUpdateAvailable,
-		permission,
-		mentions,
-		autoMention,
-		slashCommands,
-		sessionHistory,
-		activeAgentLabel,
-		availableAgents,
-		errorInfo,
-		handleSendMessage,
-		handleStopGeneration,
-		handleNewChat,
-		handleExportChat,
-		handleRestartAgent,
-		handleClearError,
-		handleOpenHistory,
-		handleSetMode,
-		handleSetModel,
-		inputValue,
-		setInputValue,
-		attachedImages,
-		setAttachedImages,
-		restoredMessage,
-		handleRestoredMessageConsumed,
-	} = controller;
+	const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
 
-	// ============================================================
-	// Agent ID Restoration (ChatView-specific)
-	// ============================================================
+	useEffect(() => {
+		plugin
+			.checkForUpdates()
+			.then(setIsUpdateAvailable)
+			.catch((error) => {
+				logger.error("Failed to check for updates:", error);
+			});
+	}, [plugin, logger]);
+
+	// Agent ID restoration from workspace
 	useEffect(() => {
 		const unsubscribe = view.onAgentIdRestored((agentId) => {
-			logger.log(
-				`[ChatView] Agent ID restored from workspace: ${agentId}`,
-			);
+			logger.log(`[ChatView] Agent ID restored from workspace: ${agentId}`);
 			setRestoredAgentId(agentId);
 		});
 		return unsubscribe;
 	}, [view, logger]);
 
-	// ============================================================
-	// Focus Tracking (ChatView-specific)
-	// ============================================================
+	// Focus tracking
 	useEffect(() => {
 		const handleFocus = () => {
 			plugin.setLastActiveChatViewId(viewId);
@@ -120,21 +90,75 @@ function ChatComponent({
 		};
 	}, [plugin, viewId, view.containerEl]);
 
-	const acpClientRef = useRef<IAcpClient>(acpAdapter);
-	const hasRestoredAgentRef = useRef(false);
+	// Tab close handler: clean up adapter
+	const handleTabClose = useCallback(
+		(tabId: string) => {
+			void plugin.removeAdapter(tabId);
+			view.unregisterTabAdapter(tabId);
+		},
+		[plugin, view],
+	);
 
-	// ============================================================
-	// ChatView-specific Callbacks
-	// ============================================================
-	const handleNewChatWithPersist = useCallback(
-		async (requestedAgentId?: string) => {
-			await handleNewChat(requestedAgentId);
-			if (requestedAgentId) {
-				view.setAgentId(requestedAgentId);
+	const tabState = useTabs({
+		initialAgentId: restoredAgentId || plugin.settings.defaultAgentId,
+		defaultAgentId: plugin.settings.defaultAgentId,
+		availableAgents,
+		onTabClose: handleTabClose,
+	});
+
+	// Track tab actions for routing header actions to active tab
+	const tabActionsMapRef = useRef<Map<string, TabContentActions>>(new Map());
+	const [activeTabCanShowHistory, setActiveTabCanShowHistory] = useState(false);
+
+	const handleActionsReady = useCallback(
+		(tabId: string, actions: TabContentActions | null) => {
+			if (actions) {
+				tabActionsMapRef.current.set(tabId, actions);
+			} else {
+				tabActionsMapRef.current.delete(tabId);
+			}
+			if (tabId === tabState.activeTabId) {
+				setActiveTabCanShowHistory(actions?.canShowSessionHistory ?? false);
 			}
 		},
-		[handleNewChat, view],
+		[tabState.activeTabId],
 	);
+
+	// Update canShowHistory when active tab changes
+	useEffect(() => {
+		const actions = tabActionsMapRef.current.get(tabState.activeTabId);
+		setActiveTabCanShowHistory(actions?.canShowSessionHistory ?? false);
+	}, [tabState.activeTabId]);
+
+	// Register tab adapters with the view for cleanup on close
+	useEffect(() => {
+		for (const tab of tabState.tabs) {
+			view.registerTabAdapter(tab.id);
+		}
+	}, [tabState.tabs, view]);
+
+	// Compute agent label from active tab's agentId
+	const activeAgentLabel = useMemo(() => {
+		const activeId = tabState.activeTab.agentId;
+		if (activeId === plugin.settings.claude.id) {
+			return plugin.settings.claude.displayName || plugin.settings.claude.id;
+		}
+		if (activeId === plugin.settings.opencode.id) {
+			return (
+				plugin.settings.opencode.displayName || plugin.settings.opencode.id
+			);
+		}
+		if (activeId === plugin.settings.codex.id) {
+			return plugin.settings.codex.displayName || plugin.settings.codex.id;
+		}
+		if (activeId === plugin.settings.gemini.id) {
+			return plugin.settings.gemini.displayName || plugin.settings.gemini.id;
+		}
+		const custom = plugin.settings.customAgents.find(
+			(agent) => agent.id === activeId,
+		);
+		return custom?.displayName || custom?.id || activeId;
+	}, [tabState.activeTab.agentId, plugin.settings]);
 
 	const handleOpenSettings = useCallback(() => {
 		const appWithSettings = plugin.app as unknown as AppWithSettings;
@@ -142,238 +166,137 @@ function ChatComponent({
 		appWithSettings.setting.openTabById(plugin.manifest.id);
 	}, [plugin]);
 
-	const handleShowMenu = useCallback(
-		(e: React.MouseEvent<HTMLButtonElement>) => {
-			const menu = new Menu();
+	const handleNewSession = useCallback(() => {
+		const actions = tabActionsMapRef.current.get(tabState.activeTabId);
+		if (actions) {
+			void actions.handleNewChat();
+		}
+	}, [tabState.activeTabId]);
 
-			menu.addItem((item) => {
-				item.setTitle("Switch agent").setIsLabel(true);
-			});
+	const handleOpenHistory = useCallback(() => {
+		const actions = tabActionsMapRef.current.get(tabState.activeTabId);
+		if (actions) {
+			actions.handleOpenHistory();
+		}
+	}, [tabState.activeTabId]);
 
-			for (const agent of availableAgents) {
-				menu.addItem((item) => {
-					item.setTitle(agent.displayName)
-						.setChecked(agent.id === (session.agentId || ""))
-						.onClick(() => {
-							void handleNewChatWithPersist(agent.id);
-						});
-				});
-			}
-
-			menu.addSeparator();
-
-			menu.addItem((item) => {
-				item.setTitle("Open new view")
-					.setIcon("plus")
-					.onClick(() => {
-						void plugin.openNewChatViewWithAgent(
-							plugin.settings.defaultAgentId,
-						);
-					});
-			});
-
-			menu.addItem((item) => {
-				item.setTitle("Restart agent")
-					.setIcon("refresh-cw")
-					.onClick(() => {
-						void handleRestartAgent();
-					});
-			});
-
-			menu.addSeparator();
-
-			menu.addItem((item) => {
-				item.setTitle("Plugin settings")
-					.setIcon("settings")
-					.onClick(() => {
-						handleOpenSettings();
-					});
-			});
-
-			menu.showAtMouseEvent(e.nativeEvent);
+	const handleAgentChangeForTab = useCallback(
+		(agentId: string) => {
+			tabState.handleAgentChangeForTab(agentId);
+			view.setAgentId(agentId);
 		},
-		[
-			availableAgents,
-			session.agentId,
-			handleNewChatWithPersist,
-			plugin,
-			handleRestartAgent,
-			handleOpenSettings,
-		],
+		[tabState, view],
 	);
 
-	// ============================================================
-	// Agent ID Restoration Effect
-	// ============================================================
-	useEffect(() => {
-		if (hasRestoredAgentRef.current) return;
-		if (!restoredAgentId) return;
-		if (session.state === "initializing") return;
-
-		hasRestoredAgentRef.current = true;
-
-		if (session.agentId === restoredAgentId) return;
-
-		logger.log(
-			`[ChatView] Switching to restored agent: ${restoredAgentId} (current: ${session.agentId})`,
+	// Workspace events routed to active tab
+	const wsAutoMentionToggle = useCallback(
+		(force?: boolean) => {
+			tabActionsMapRef.current.get(tabState.activeTabId)?.autoMentionToggle(force);
+		},
+		[tabState.activeTabId],
+	);
+	const wsHandleNewChat = useCallback(
+		(agentId?: string) => {
+			const actions = tabActionsMapRef.current.get(tabState.activeTabId);
+			if (actions) void actions.handleNewChat(agentId);
+		},
+		[tabState.activeTabId],
+	);
+	const wsApprovePermission = useCallback(async () => {
+		return (
+			(await tabActionsMapRef.current
+				.get(tabState.activeTabId)
+				?.approveActivePermission()) ?? false
 		);
-		void handleNewChat(restoredAgentId);
-	}, [
-		restoredAgentId,
-		session.state,
-		session.agentId,
-		logger,
-		handleNewChat,
-	]);
+	}, [tabState.activeTabId]);
+	const wsRejectPermission = useCallback(async () => {
+		return (
+			(await tabActionsMapRef.current
+				.get(tabState.activeTabId)
+				?.rejectActivePermission()) ?? false
+		);
+	}, [tabState.activeTabId]);
+	const wsStopGeneration = useCallback(async () => {
+		await tabActionsMapRef.current
+			.get(tabState.activeTabId)
+			?.handleStopGeneration();
+	}, [tabState.activeTabId]);
 
-	// ============================================================
-	// Broadcast Command Callbacks
-	// ============================================================
-	const getInputState = useCallback((): ChatInputState | null => {
-		return {
-			text: inputValue,
-			images: attachedImages,
-		};
-	}, [inputValue, attachedImages]);
+	useWorkspaceEvents({
+		workspace: plugin.app.workspace,
+		viewId,
+		lastActiveChatViewId: plugin.lastActiveChatViewId,
+		autoMentionToggle: wsAutoMentionToggle,
+		handleNewChat: wsHandleNewChat,
+		approveActivePermission: wsApprovePermission,
+		rejectActivePermission: wsRejectPermission,
+		handleStopGeneration: wsStopGeneration,
+	});
 
-	const setInputState = useCallback(
-		(state: ChatInputState) => {
-			setInputValue(state.text);
-			setAttachedImages(state.images);
-		},
-		[setInputValue, setAttachedImages],
-	);
-
-	const sendMessageForBroadcast = useCallback(async (): Promise<boolean> => {
-		const hasContent = inputValue.trim() !== "" || attachedImages.length > 0;
-		if (!hasContent || !isSessionReady || sessionHistory.loading || isSending) return false;
-
-		const imagesToSend: ImagePromptContent[] = attachedImages.map((img) => ({
-			type: "image", data: img.data, mimeType: img.mimeType,
-		}));
-		const messageToSend = inputValue.trim();
-		setInputValue("");
-		setAttachedImages([]);
-		await handleSendMessage(messageToSend, imagesToSend.length > 0 ? imagesToSend : undefined);
-		return true;
-	}, [inputValue, attachedImages, isSessionReady, sessionHistory.loading, isSending, handleSendMessage, setInputValue, setAttachedImages]);
-
-	const canSendForBroadcast = useCallback((): boolean => {
-		const hasContent = inputValue.trim() !== "" || attachedImages.length > 0;
-		return hasContent && isSessionReady && !sessionHistory.loading && !isSending;
-	}, [inputValue, attachedImages, isSessionReady, sessionHistory.loading, isSending]);
-
-	const cancelForBroadcast = useCallback(async (): Promise<void> => {
-		if (isSending) await handleStopGeneration();
-	}, [isSending, handleStopGeneration]);
-
+	// Register broadcast callbacks from active tab
 	useEffect(() => {
+		const getActiveActions = () =>
+			tabActionsMapRef.current.get(tabState.activeTabId);
+
 		view.registerInputCallbacks({
-			getDisplayName: () => activeAgentLabel,
-			getInputState,
-			setInputState,
-			sendMessage: sendMessageForBroadcast,
-			canSend: canSendForBroadcast,
-			cancel: cancelForBroadcast,
+			getDisplayName: () =>
+				getActiveActions()?.getDisplayName() ?? activeAgentLabel,
+			getInputState: () => getActiveActions()?.getInputState() ?? null,
+			setInputState: (state) => getActiveActions()?.setInputState(state),
+			sendMessage: async () =>
+				(await getActiveActions()?.sendMessage()) ?? false,
+			canSend: () => getActiveActions()?.canSend() ?? false,
+			cancel: async () => {
+				await getActiveActions()?.cancel();
+			},
 		});
 
 		return () => {
 			view.unregisterInputCallbacks();
 		};
-	}, [
-		view,
-		activeAgentLabel,
-		getInputState,
-		setInputState,
-		sendMessageForBroadcast,
-		canSendForBroadcast,
-		cancelForBroadcast,
-	]);
-
-	// ============================================================
-	// Shared Workspace Events (hotkeys)
-	// ============================================================
-	useWorkspaceEvents({
-		workspace: plugin.app.workspace,
-		viewId,
-		lastActiveChatViewId: plugin.lastActiveChatViewId,
-		autoMentionToggle: autoMention.toggle,
-		handleNewChat: handleNewChatWithPersist,
-		approveActivePermission: permission.approveActivePermission,
-		rejectActivePermission: permission.rejectActivePermission,
-		handleStopGeneration,
-	});
-
-	// ============================================================
-	// Render
-	// ============================================================
-	const chatFontSizeStyle =
-		settings.displaySettings.fontSize !== null
-			? ({
-					"--ac-chat-font-size": `${settings.displaySettings.fontSize}px`,
-				} as React.CSSProperties)
-			: undefined;
+	}, [view, tabState.activeTabId, activeAgentLabel]);
 
 	return (
-		<div
-			className="agent-client-chat-view-container"
-			style={chatFontSizeStyle}
-		>
+		<div className="agent-client-chat-view-container">
 			<ChatHeader
 				agentLabel={activeAgentLabel}
+				availableAgents={availableAgents}
+				currentAgentId={tabState.activeTab.agentId}
 				isUpdateAvailable={isUpdateAvailable}
-				hasHistoryCapability={sessionHistory.canShowSessionHistory}
-				onNewChat={() => void handleNewChatWithPersist()}
-				onExportChat={() => void handleExportChat()}
-				onShowMenu={handleShowMenu}
-				onOpenHistory={handleOpenHistory}
+				onAgentChange={handleAgentChangeForTab}
+				onNewTab={tabState.handleNewTab}
+				onNewSession={handleNewSession}
+				onOpenSettings={handleOpenSettings}
+				onOpenHistory={
+					activeTabCanShowHistory ? handleOpenHistory : undefined
+				}
+				tabs={tabState.tabsWithLabels}
+				activeTabId={tabState.activeTabId}
+				canAddTab={tabState.canAddTab}
+				canCloseTab={tabState.canCloseTab}
+				onTabClick={tabState.handleTabClick}
+				onTabClose={tabState.handleTabClose}
 			/>
 
-			<ChatMessages
-				messages={messages}
-				isSending={isSending}
-				isSessionReady={isSessionReady}
-				isRestoringSession={sessionHistory.loading}
-				agentLabel={activeAgentLabel}
-				plugin={plugin}
-				view={view}
-				acpClient={acpClientRef.current}
-				onApprovePermission={permission.approvePermission}
-			/>
-
-			<ChatInput
-				isSending={isSending}
-				isSessionReady={isSessionReady}
-				isRestoringSession={sessionHistory.loading}
-				agentLabel={activeAgentLabel}
-				availableCommands={session.availableCommands || []}
-				autoMentionEnabled={settings.autoMentionActiveNote}
-				restoredMessage={restoredMessage}
-				mentions={mentions}
-				slashCommands={slashCommands}
-				autoMention={autoMention}
-				plugin={plugin}
-				view={view}
-				onSendMessage={handleSendMessage}
-				onStopGeneration={handleStopGeneration}
-				onRestoredMessageConsumed={handleRestoredMessageConsumed}
-				modes={session.modes}
-				onModeChange={(modeId) => void handleSetMode(modeId)}
-				models={session.models}
-				onModelChange={(modelId) => void handleSetModel(modelId)}
-				supportsImages={session.promptCapabilities?.image ?? false}
-				agentId={session.agentId}
-				inputValue={inputValue}
-				onInputChange={setInputValue}
-				attachedImages={attachedImages}
-				onAttachedImagesChange={setAttachedImages}
-				errorInfo={errorInfo}
-				onClearError={handleClearError}
-				messages={messages}
-			/>
+			{tabState.tabs.map((tab) => (
+				<TabContent
+					key={tab.id}
+					plugin={plugin}
+					view={view}
+					tabId={tab.id}
+					agentId={tab.agentId}
+					isActive={tab.id === tabState.activeTabId}
+					viewId={viewId}
+					onActionsReady={handleActionsReady}
+				/>
+			))}
 		</div>
 	);
 }
+
+// ============================================================
+// ChatView (Obsidian ItemView)
+// ============================================================
 
 /** State stored for view persistence */
 interface ChatViewState extends Record<string, unknown> {
@@ -394,8 +317,8 @@ export class ChatView extends ItemView implements IChatViewContainer {
 	readonly viewId: string;
 	readonly viewType: ChatViewType = "sidebar";
 	private initialAgentId: string | null = null;
-	private agentIdRestoredCallbacks: Set<(agentId: string) => void> =
-		new Set();
+	private agentIdRestoredCallbacks: Set<(agentId: string) => void> = new Set();
+	private tabAdapterIds: Set<string> = new Set();
 
 	private getDisplayNameCallback: GetDisplayNameCallback | null = null;
 	private getInputStateCallback: GetInputStateCallback | null = null;
@@ -437,10 +360,11 @@ export class ChatView extends ItemView implements IChatViewContainer {
 		this.initialAgentId = state.initialAgentId ?? null;
 		await super.setState(state, result);
 
-		if (this.initialAgentId && this.initialAgentId !== previousAgentId) {
-			this.agentIdRestoredCallbacks.forEach((cb) =>
-				cb(this.initialAgentId!),
-			);
+		const restoredId = this.initialAgentId;
+		if (restoredId && restoredId !== previousAgentId) {
+			for (const cb of this.agentIdRestoredCallbacks) {
+				cb(restoredId);
+			}
 		}
 	}
 
@@ -458,6 +382,14 @@ export class ChatView extends ItemView implements IChatViewContainer {
 		return () => {
 			this.agentIdRestoredCallbacks.delete(callback);
 		};
+	}
+
+	registerTabAdapter(tabId: string): void {
+		this.tabAdapterIds.add(tabId);
+	}
+
+	unregisterTabAdapter(tabId: string): void {
+		this.tabAdapterIds.delete(tabId);
 	}
 
 	registerInputCallbacks(callbacks: {
@@ -550,11 +482,7 @@ export class ChatView extends ItemView implements IChatViewContainer {
 
 		this.root = createRoot(container);
 		this.root.render(
-			<ChatComponent
-				plugin={this.plugin}
-				view={this}
-				viewId={this.viewId}
-			/>,
+			<ChatComponent plugin={this.plugin} view={this} viewId={this.viewId} />,
 		);
 
 		this.plugin.viewRegistry.register(this);
@@ -571,6 +499,11 @@ export class ChatView extends ItemView implements IChatViewContainer {
 			this.root.unmount();
 			this.root = null;
 		}
-		await this.plugin.removeAdapter(this.viewId);
+
+		// Clean up all tab adapters
+		for (const tabId of this.tabAdapterIds) {
+			await this.plugin.removeAdapter(tabId);
+		}
+		this.tabAdapterIds.clear();
 	}
 }

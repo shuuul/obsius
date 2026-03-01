@@ -21,9 +21,6 @@ export interface AgentOpsHost {
 	}) => void;
 	activateView: () => Promise<void>;
 	openNewChatViewWithAgent: (agentId: string) => Promise<void>;
-	openNewFloatingChat: (initialExpanded?: boolean) => void;
-	expandFloatingChat: (viewId: string) => void;
-	getFloatingChatInstances: () => string[];
 	lastActiveChatViewId: string | null;
 	app: {
 		workspace: {
@@ -94,7 +91,10 @@ export const openChatWithAgent = async (
 	agentId: string,
 ): Promise<void> => {
 	await host.activateView();
-	host.app.workspace.trigger("agent-client:new-chat-requested" as "quit", agentId);
+	host.app.workspace.trigger(
+		"agent-client:new-chat-requested" as "quit",
+		agentId,
+	);
 };
 
 export const registerAgentCommands = (host: AgentOpsHost): void => {
@@ -115,11 +115,7 @@ export const registerPermissionCommands = (host: AgentOpsHost): void => {
 		id: "approve-active-permission",
 		name: "Approve active permission",
 		callback: async () => {
-			const focusedId = host.lastActiveChatViewId;
-			const isFloatingFocused = focusedId?.startsWith("floating-chat-");
-			if (!isFloatingFocused) {
-				await host.activateView();
-			}
+			await host.activateView();
 			host.app.workspace.trigger(
 				"agent-client:approve-active-permission" as "quit",
 				host.lastActiveChatViewId,
@@ -131,11 +127,7 @@ export const registerPermissionCommands = (host: AgentOpsHost): void => {
 		id: "reject-active-permission",
 		name: "Reject active permission",
 		callback: async () => {
-			const focusedId = host.lastActiveChatViewId;
-			const isFloatingFocused = focusedId?.startsWith("floating-chat-");
-			if (!isFloatingFocused) {
-				await host.activateView();
-			}
+			await host.activateView();
 			host.app.workspace.trigger(
 				"agent-client:reject-active-permission" as "quit",
 				host.lastActiveChatViewId,
@@ -147,11 +139,7 @@ export const registerPermissionCommands = (host: AgentOpsHost): void => {
 		id: "toggle-auto-mention",
 		name: "Toggle auto-mention",
 		callback: async () => {
-			const focusedId = host.lastActiveChatViewId;
-			const isFloatingFocused = focusedId?.startsWith("floating-chat-");
-			if (!isFloatingFocused) {
-				await host.activateView();
-			}
+			await host.activateView();
 			host.app.workspace.trigger(
 				"agent-client:toggle-auto-mention" as "quit",
 				host.lastActiveChatViewId,
@@ -179,7 +167,10 @@ export const broadcastPrompt = (host: AgentOpsHost): void => {
 	}
 
 	const inputState = host.viewRegistry.toFocused((v) => v.getInputState());
-	if (!inputState || (inputState.text.trim() === "" && inputState.images.length === 0)) {
+	if (
+		!inputState ||
+		(inputState.text.trim() === "" && inputState.images.length === 0)
+	) {
 		pluginNotice("No prompt to broadcast");
 		return;
 	}
@@ -249,35 +240,3 @@ export const registerBroadcastCommands = (host: AgentOpsHost): void => {
 	});
 };
 
-export const registerFloatingCommands = (host: AgentOpsHost): void => {
-	host.addCommand({
-		id: "open-floating-chat",
-		name: "Open floating chat window",
-		callback: () => {
-			if (!host.settings.showFloatingButton) {
-				return;
-			}
-			const instances = host.getFloatingChatInstances();
-			if (instances.length === 0) {
-				host.openNewFloatingChat(true);
-				return;
-			}
-			if (instances.length === 1) {
-				host.expandFloatingChat(instances[0]);
-				return;
-			}
-			host.expandFloatingChat(instances[instances.length - 1]);
-		},
-	});
-
-	host.addCommand({
-		id: "open-new-floating-chat",
-		name: "Open new floating chat window",
-		callback: () => {
-			if (!host.settings.showFloatingButton) {
-				return;
-			}
-			host.openNewFloatingChat(true);
-		},
-	});
-};

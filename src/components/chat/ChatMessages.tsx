@@ -29,10 +29,7 @@ export interface ChatMessagesProps {
 	/** ACP client for terminal operations */
 	acpClient?: IAcpClient;
 	/** Callback to approve a permission request */
-	onApprovePermission?: (
-		requestId: string,
-		optionId: string,
-	) => Promise<void>;
+	onApprovePermission?: (requestId: string, optionId: string) => Promise<void>;
 }
 
 /**
@@ -150,7 +147,10 @@ export function ChatMessages({
 							onClick={() => {
 								const container = containerRef.current;
 								if (container) {
-									container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+									container.scrollTo({
+										top: container.scrollHeight,
+										behavior: "smooth",
+									});
 								}
 							}}
 							ref={(el) => {

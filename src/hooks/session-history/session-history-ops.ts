@@ -7,13 +7,18 @@ import type {
 } from "../../domain/models/chat-session";
 import type { SessionInfo } from "../../domain/models/session-info";
 import type { ChatMessage } from "../../domain/models/chat-message";
-import type { ListSessionsResult, SavedSessionInfo } from "../../domain/models/session-info";
+import type {
+	ListSessionsResult,
+	SavedSessionInfo,
+} from "../../domain/models/session-info";
 
 function mergeWithLocalTitles(
 	agentSessions: SessionInfo[],
 	localSessions: SavedSessionInfo[],
 ): SessionInfo[] {
-	const localMap = new Map(localSessions.map((session) => [session.sessionId, session]));
+	const localMap = new Map(
+		localSessions.map((session) => [session.sessionId, session]),
+	);
 	return agentSessions.map((session) => ({
 		...session,
 		title: localMap.get(session.sessionId)?.title ?? session.title,
@@ -68,7 +73,10 @@ export async function loadMoreSessionsOperation({
 	localSessionIds: Set<string>;
 	nextCursor?: string;
 }> {
-	const result: ListSessionsResult = await agentClient.listSessions(cwd, cursor);
+	const result: ListSessionsResult = await agentClient.listSessions(
+		cwd,
+		cursor,
+	);
 	const localSessions = settingsAccess.getSavedSessions(
 		sessionAgentId ?? undefined,
 		cwd,
@@ -112,7 +120,8 @@ export async function restoreSessionOperation({
 	if (capabilities.canLoad) {
 		onLoadStart?.();
 		try {
-			const localMessagesPromise = settingsAccess.loadSessionMessages(sessionId);
+			const localMessagesPromise =
+				settingsAccess.loadSessionMessages(sessionId);
 			const result = await agentClient.loadSession(sessionId, cwd);
 			onSessionLoad(result.sessionId, result.modes, result.models);
 

@@ -1,4 +1,4 @@
-import { Platform, Setting } from "obsidian";
+import { Notice, Platform, Setting } from "obsidian";
 import type AgentClientPlugin from "../../../plugin";
 import type { ChatViewLocation } from "../../../plugin";
 import {
@@ -6,25 +6,50 @@ import {
 	CHAT_FONT_SIZE_MIN,
 	parseChatFontSize,
 } from "../../../shared/display-settings";
+import { resolveCommandFromShell } from "../../../shared/shell-utils";
 
 export const renderCoreSections = (
 	containerEl: HTMLElement,
 	plugin: AgentClientPlugin,
 	redisplay: () => void,
 ): void => {
-	new Setting(containerEl)
+	let nodeTextRef: { setValue: (v: string) => unknown } | null = null;
+	const nodeSetting = new Setting(containerEl)
 		.setName("Node.js path")
 		.setDesc(
 			'Absolute path to Node.js executable. On macOS/Linux, use "which node", and on Windows, use "where node" to find it.',
 		)
 		.addText((text) => {
-			text.setPlaceholder("Absolute path to node")
+			nodeTextRef = text;
+			text
+				.setPlaceholder("Absolute path to node")
 				.setValue(plugin.settings.nodePath)
 				.onChange(async (value) => {
 					plugin.settings.nodePath = value.trim();
 					await plugin.saveSettings();
 				});
 		});
+	nodeSetting.addExtraButton((button) => {
+		button
+			.setIcon("search")
+			.setTooltip("Detect from shell PATH") // eslint-disable-line obsidianmd/ui/sentence-case
+			.onClick(async () => {
+				button.setDisabled(true);
+				try {
+					const resolved = await resolveCommandFromShell("node");
+					if (resolved) {
+						nodeTextRef?.setValue(resolved);
+						plugin.settings.nodePath = resolved;
+						await plugin.saveSettings();
+						new Notice(`Found: ${resolved}`);
+					} else {
+						new Notice('"node" not found in shell PATH.'); // eslint-disable-line obsidianmd/ui/sentence-case
+					}
+				} finally {
+					button.setDisabled(false);
+				}
+			});
+	});
 
 	new Setting(containerEl)
 		.setName("Send message shortcut")
@@ -34,25 +59,18 @@ export const renderCoreSections = (
 		.addDropdown((dropdown) =>
 			dropdown
 				.addOption("enter", "Enter to send, Shift+Enter for newline")
-				.addOption(
-					"cmd-enter",
-					"Cmd/Ctrl+Enter to send, Enter for newline",
-				)
+				.addOption("cmd-enter", "Cmd/Ctrl+Enter to send, Enter for newline")
 				.setValue(plugin.settings.sendMessageShortcut)
 				.onChange(async (value) => {
-					plugin.settings.sendMessageShortcut = value as
-						| "enter"
-						| "cmd-enter";
+					plugin.settings.sendMessageShortcut = value as "enter" | "cmd-enter";
 					await plugin.saveSettings();
 				}),
 		);
 
 	renderMentionsSection(containerEl, plugin);
 	renderDisplaySection(containerEl, plugin, redisplay);
-	renderFloatingSection(containerEl, plugin);
 	renderPermissionSection(containerEl, plugin);
 	renderWindowsSection(containerEl, plugin, redisplay);
-	renderExportSection(containerEl, plugin, redisplay);
 	renderDeveloperSection(containerEl, plugin);
 };
 
@@ -102,9 +120,7 @@ function renderMentionsSection(
 		.addText((text) =>
 			text
 				.setPlaceholder("10000")
-				.setValue(
-					String(plugin.settings.displaySettings.maxSelectionLength),
-				)
+				.setValue(String(plugin.settings.displaySettings.maxSelectionLength))
 				.onChange(async (value) => {
 					const num = parseInt(value, 10);
 					if (!isNaN(num) && num >= 1) {
@@ -149,7 +165,9 @@ function renderDisplaySection(
 				return currentFontSize === null ? "" : String(currentFontSize);
 			};
 
-			const persistChatFontSize = async (fontSize: number | null): Promise<void> => {
+			const persistChatFontSize = async (
+				fontSize: number | null,
+			): Promise<void> => {
 				if (plugin.settings.displaySettings.fontSize === fontSize) {
 					return;
 				}
@@ -257,47 +275,6 @@ function renderDisplaySection(
 	}
 }
 
-function renderFloatingSection(
-	containerEl: HTMLElement,
-	plugin: AgentClientPlugin,
-): void {
-	new Setting(containerEl).setName("Floating chat").setHeading();
-
-	new Setting(containerEl)
-		.setName("Show floating button")
-		.setDesc("Display a floating chat button that opens a draggable chat window.")
-		.addToggle((toggle) =>
-			toggle.setValue(plugin.settings.showFloatingButton).onChange(async (value) => {
-				const wasEnabled = plugin.settings.showFloatingButton;
-				plugin.settings.showFloatingButton = value;
-				await plugin.saveSettings();
-				if (value && !wasEnabled) {
-					plugin.openNewFloatingChat();
-				} else if (!value && wasEnabled) {
-					const instances = plugin.getFloatingChatInstances();
-					for (const instanceId of instances) {
-						plugin.closeFloatingChat(instanceId);
-					}
-				}
-			}),
-		);
-
-	new Setting(containerEl)
-		.setName("Floating button image")
-		.setDesc(
-			"URL or path to an image for the floating button. Leave empty for default icon.",
-		)
-		.addText((text) =>
-			text
-				.setPlaceholder("https://example.com/avatar.png")
-				.setValue(plugin.settings.floatingButtonImage)
-				.onChange(async (value) => {
-					plugin.settings.floatingButtonImage = value.trim();
-					await plugin.saveSettings();
-				}),
-		);
-}
-
 function renderPermissionSection(
 	containerEl: HTMLElement,
 	plugin: AgentClientPlugin,
@@ -361,142 +338,6 @@ function renderWindowsSection(
 					}),
 			);
 	}
-}
-
-function renderExportSection(
-	containerEl: HTMLElement,
-	plugin: AgentClientPlugin,
-	redisplay: () => void,
-): void {
-	new Setting(containerEl).setName("Export").setHeading();
-
-	new Setting(containerEl)
-		.setName("Export folder")
-		.setDesc("Folder where chat exports will be saved")
-		.addText((text) =>
-			text
-				.setPlaceholder("Obsius")
-				.setValue(plugin.settings.exportSettings.defaultFolder)
-				.onChange(async (value) => {
-					plugin.settings.exportSettings.defaultFolder = value;
-					await plugin.saveSettings();
-				}),
-		);
-
-	new Setting(containerEl)
-		.setName("Filename")
-		.setDesc(
-			"Template for exported filenames. Use {date} for date and {time} for time",
-		)
-		.addText((text) =>
-			text
-				.setPlaceholder("obsius_{date}_{time}")
-				.setValue(plugin.settings.exportSettings.filenameTemplate)
-				.onChange(async (value) => {
-					plugin.settings.exportSettings.filenameTemplate = value;
-					await plugin.saveSettings();
-				}),
-		);
-
-	new Setting(containerEl)
-		.setName("Frontmatter tag")
-		.setDesc(
-			"Tag to add to exported notes. Supports nested tags (e.g., projects/obsius). Leave empty to disable.",
-		)
-		.addText((text) =>
-			text
-				.setPlaceholder("obsius") // eslint-disable-line obsidianmd/ui/sentence-case
-				.setValue(plugin.settings.exportSettings.frontmatterTag)
-				.onChange(async (value) => {
-					plugin.settings.exportSettings.frontmatterTag = value;
-					await plugin.saveSettings();
-				}),
-		);
-
-	new Setting(containerEl)
-		.setName("Include images")
-		.setDesc("Include images in exported markdown files")
-		.addToggle((toggle) =>
-			toggle
-				.setValue(plugin.settings.exportSettings.includeImages)
-				.onChange(async (value) => {
-					plugin.settings.exportSettings.includeImages = value;
-					await plugin.saveSettings();
-					redisplay();
-				}),
-		);
-
-	if (plugin.settings.exportSettings.includeImages) {
-		new Setting(containerEl)
-			.setName("Image location")
-			.setDesc("Where to save exported images")
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOption("obsidian", "Use Obsidian's attachment setting")
-					.addOption("custom", "Save to custom folder")
-					.addOption("base64", "Embed as Base64 (not recommended)")
-					.setValue(plugin.settings.exportSettings.imageLocation)
-					.onChange(async (value) => {
-						plugin.settings.exportSettings.imageLocation = value as
-							| "obsidian"
-							| "custom"
-							| "base64";
-						await plugin.saveSettings();
-						redisplay();
-					}),
-			);
-
-		if (plugin.settings.exportSettings.imageLocation === "custom") {
-			new Setting(containerEl)
-				.setName("Custom image folder")
-				.setDesc("Folder path for exported images (relative to vault root)")
-				.addText((text) =>
-					text
-						.setPlaceholder("Obsius")
-						.setValue(plugin.settings.exportSettings.imageCustomFolder)
-						.onChange(async (value) => {
-							plugin.settings.exportSettings.imageCustomFolder = value;
-							await plugin.saveSettings();
-						}),
-				);
-		}
-	}
-
-	new Setting(containerEl)
-		.setName("Auto-export on new chat")
-		.setDesc("Automatically export the current chat when starting a new chat")
-		.addToggle((toggle) =>
-			toggle
-				.setValue(plugin.settings.exportSettings.autoExportOnNewChat)
-				.onChange(async (value) => {
-					plugin.settings.exportSettings.autoExportOnNewChat = value;
-					await plugin.saveSettings();
-				}),
-		);
-
-	new Setting(containerEl)
-		.setName("Auto-export on close chat")
-		.setDesc("Automatically export the current chat when closing the chat view")
-		.addToggle((toggle) =>
-			toggle
-				.setValue(plugin.settings.exportSettings.autoExportOnCloseChat)
-				.onChange(async (value) => {
-					plugin.settings.exportSettings.autoExportOnCloseChat = value;
-					await plugin.saveSettings();
-				}),
-		);
-
-	new Setting(containerEl)
-		.setName("Open note after export")
-		.setDesc("Automatically open the exported note after exporting")
-		.addToggle((toggle) =>
-			toggle
-				.setValue(plugin.settings.exportSettings.openFileAfterExport)
-				.onChange(async (value) => {
-					plugin.settings.exportSettings.openFileAfterExport = value;
-					await plugin.saveSettings();
-				}),
-		);
 }
 
 function renderDeveloperSection(

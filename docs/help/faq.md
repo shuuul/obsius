@@ -101,24 +101,6 @@ Yes. Enable **Settings → Obsius → Permissions → Auto-allow permissions**. 
 
 Correct. Permission behavior is agent-specific. Some agents may edit files directly without requesting permission.
 
-## Exporting
-
-### How do I export a conversation?
-
-Click the **export button** in the chat header. The conversation is saved as a Markdown file in your vault.
-
-### Where are exports saved?
-
-By default, exports are saved to the `Obsius` folder in your vault. You can change this in **Settings → Obsius → Export → Export folder**.
-
-### Can I auto-export conversations?
-
-Yes. Enable **Auto-export on new chat** or **Auto-export on close chat** in export settings.
-
-### Can I customize the frontmatter tag?
-
-Yes. In **Settings → Obsius → Export → Frontmatter tag**, you can set a custom tag. Nested tags like `projects/agent-client` are supported.
-
 ## Session History
 
 ### How do I resume a previous conversation?

@@ -114,18 +114,6 @@ The message was sent but the agent returned an error.
 2. Verify your API key or login status
 3. Try a simpler message to test the connection
 
-## Export Issues
-
-### "Failed to export chat" notification
-
-The conversation couldn't be saved.
-
-**Solutions:**
-
-1. Check that the export folder exists (**Settings → Obsius → Export → Export folder**)
-2. Verify the folder name is valid (no special characters that aren't allowed in folder names)
-3. Check the filename template for invalid characters (**Settings → Obsius → Export → Filename**)
-
 ## Windows-Specific Issues
 
 ### WSL mode not working

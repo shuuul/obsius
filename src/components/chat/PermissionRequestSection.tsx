@@ -13,10 +13,7 @@ interface PermissionRequestSectionProps {
 	toolCallId: string;
 	plugin: AgentClientPlugin;
 	/** Callback to approve a permission request */
-	onApprovePermission?: (
-		requestId: string,
-		optionId: string,
-	) => Promise<void>;
+	onApprovePermission?: (requestId: string, optionId: string) => Promise<void>;
 	onOptionSelected?: (optionId: string) => void;
 }
 
@@ -76,8 +73,7 @@ export function PermissionRequestSection({
 			)}
 			{isCancelled && (
 				<div className="agent-client-message-permission-request-result agent-client-cancelled">
-					{showEmojis && "⚠ "}Cancelled: Permission request was
-					cancelled
+					{showEmojis && "⚠ "}Cancelled: Permission request was cancelled
 				</div>
 			)}
 		</div>

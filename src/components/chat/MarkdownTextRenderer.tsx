@@ -48,9 +48,6 @@ export function MarkdownTextRenderer({
 	}, [text, plugin]);
 
 	return (
-		<div
-			ref={containerRef}
-			className="agent-client-markdown-text-renderer"
-		/>
+		<div ref={containerRef} className="agent-client-markdown-text-renderer" />
 	);
 }

@@ -94,9 +94,7 @@ export function useSessionHistoryHandlers(
 				sessionTitle,
 				async () => {
 					try {
-						logger.log(
-							`[useChatController] Deleting session: ${sessionId}`,
-						);
+						logger.log(`[useChatController] Deleting session: ${sessionId}`);
 						await sessionHistory.deleteSession(sessionId);
 						pluginNotice("Session deleted");
 					} catch (error) {
@@ -165,10 +163,7 @@ export function useSessionHistoryHandlers(
 
 	const handleOpenHistory = useCallback(() => {
 		if (!historyModalRef.current) {
-			historyModalRef.current = new SessionHistoryModal(
-				app,
-				historyModalProps,
-			);
+			historyModalRef.current = new SessionHistoryModal(app, historyModalProps);
 		}
 		historyModalRef.current.open();
 		void sessionHistory.fetchSessions(vaultPath);

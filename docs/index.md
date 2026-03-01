@@ -58,7 +58,6 @@ Obsius is an Obsidian plugin that brings AI coding agents directly into your vau
 
 - **Note Mentions**: Reference your Obsidian notes in conversations with `@notename`
 - **File Editing**: Let agents read and modify files with permission controls
-- **Chat Export**: Save conversations for future reference
 - **Terminal Integration**: Agents can execute shell commands and show results inline
 
 Ready to get started? Check out the [Installation Guide](/getting-started/).

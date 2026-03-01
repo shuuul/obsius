@@ -117,15 +117,15 @@ async function preparePromptWithEmbeddedContext(
 	const autoMentionContext =
 		input.activeNote && !input.isAutoMentionDisabled
 			? {
-				noteName: input.activeNote.name,
-				notePath: input.activeNote.path,
-				selection: input.activeNote.selection
-					? {
-							fromLine: input.activeNote.selection.from.line + 1,
-							toLine: input.activeNote.selection.to.line + 1,
-						}
-					: undefined,
-			}
+					noteName: input.activeNote.name,
+					notePath: input.activeNote.path,
+					selection: input.activeNote.selection
+						? {
+								fromLine: input.activeNote.selection.from.line + 1,
+								toLine: input.activeNote.selection.to.line + 1,
+							}
+						: undefined,
+				}
 			: undefined;
 
 	return {
@@ -204,22 +204,24 @@ async function preparePromptWithTextContext(
 		...(input.images || []),
 	];
 	const agentContent: PromptContent[] = [
-		...(agentMessageText ? [{ type: "text" as const, text: agentMessageText }] : []),
+		...(agentMessageText
+			? [{ type: "text" as const, text: agentMessageText }]
+			: []),
 		...(input.images || []),
 	];
 
 	const autoMentionContext =
 		input.activeNote && !input.isAutoMentionDisabled
 			? {
-				noteName: input.activeNote.name,
-				notePath: input.activeNote.path,
-				selection: input.activeNote.selection
-					? {
-							fromLine: input.activeNote.selection.from.line + 1,
-							toLine: input.activeNote.selection.to.line + 1,
-						}
-					: undefined,
-			}
+					noteName: input.activeNote.name,
+					notePath: input.activeNote.path,
+					selection: input.activeNote.selection
+						? {
+								fromLine: input.activeNote.selection.from.line + 1,
+								toLine: input.activeNote.selection.to.line + 1,
+							}
+						: undefined,
+				}
 			: undefined;
 
 	return {
@@ -236,7 +238,9 @@ async function buildAutoMentionResource(
 	convertToWsl: boolean,
 	maxSelectionLength: number,
 ): Promise<PromptContent[]> {
-	let absolutePath = vaultPath ? `${vaultPath}/${activeNote.path}` : activeNote.path;
+	let absolutePath = vaultPath
+		? `${vaultPath}/${activeNote.path}`
+		: activeNote.path;
 	if (convertToWsl) {
 		absolutePath = convertWindowsPathToWsl(absolutePath);
 	}
@@ -318,7 +322,10 @@ async function buildAutoMentionTextContext(
 		try {
 			const content = await vaultAccess.readNote(notePath);
 			const lines = content.split("\n");
-			const selectedLines = lines.slice(selection.from.line, selection.to.line + 1);
+			const selectedLines = lines.slice(
+				selection.from.line,
+				selection.to.line + 1,
+			);
 			let selectedText = selectedLines.join("\n");
 
 			let truncationNote = "";

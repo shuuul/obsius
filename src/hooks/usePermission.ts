@@ -163,7 +163,7 @@ export function usePermission(
 					type: "set_error",
 					error: {
 						title: "Permission error",
-					message: `Failed to respond to permission request: ${error instanceof Error ? error.message : String(error)}`,
+						message: `Failed to respond to permission request: ${error instanceof Error ? error.message : String(error)}`,
 					},
 				});
 			}

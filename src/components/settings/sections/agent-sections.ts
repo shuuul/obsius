@@ -1,14 +1,12 @@
 import { Notice, Setting, type TextComponent } from "obsidian";
 import type AgentClientPlugin from "../../../plugin";
-import type {
-	AgentEnvVar,
-	CustomAgentSettings,
-} from "../../../plugin";
+import type { AgentEnvVar, CustomAgentSettings } from "../../../plugin";
 import { normalizeEnvVars } from "../../../shared/settings-utils";
 import {
 	BUILTIN_AGENT_DEFAULT_COMMANDS,
 	resolveCommandFromShell,
 } from "../../../shared/shell-utils";
+import { renderAgentModelSettings } from "./model-preferences";
 
 const formatArgs = (args: string[]): string => args.join("\n");
 
@@ -45,18 +43,12 @@ const parseEnv = (value: string): AgentEnvVar[] => {
 const generateCustomAgentDisplayName = (plugin: AgentClientPlugin): string => {
 	const base = "Custom agent";
 	const existing = new Set<string>();
-	existing.add(
-		plugin.settings.claude.displayName || plugin.settings.claude.id,
-	);
+	existing.add(plugin.settings.claude.displayName || plugin.settings.claude.id);
 	existing.add(
 		plugin.settings.opencode.displayName || plugin.settings.opencode.id,
 	);
-	existing.add(
-		plugin.settings.codex.displayName || plugin.settings.codex.id,
-	);
-	existing.add(
-		plugin.settings.gemini.displayName || plugin.settings.gemini.id,
-	);
+	existing.add(plugin.settings.codex.displayName || plugin.settings.codex.id);
+	existing.add(plugin.settings.gemini.displayName || plugin.settings.gemini.id);
 	for (const item of plugin.settings.customAgents) {
 		existing.add(item.displayName || item.id);
 	}
@@ -151,7 +143,9 @@ function renderGeminiSettings(
 ): void {
 	const gemini = plugin.settings.gemini;
 
-	new Setting(sectionEl).setName(gemini.displayName || "Gemini CLI").setHeading();
+	new Setting(sectionEl)
+		.setName(gemini.displayName || "Gemini CLI")
+		.setHeading();
 
 	new Setting(sectionEl)
 		.setName("API key")
@@ -159,7 +153,8 @@ function renderGeminiSettings(
 			"Gemini API key. Required if not logging in with a Google account. (stored as plain text)",
 		)
 		.addText((text) => {
-			text.setPlaceholder("Enter your Gemini API key")
+			text
+				.setPlaceholder("Enter your Gemini API key")
 				.setValue(gemini.apiKey)
 				.onChange(async (value) => {
 					plugin.settings.gemini.apiKey = value.trim();
@@ -183,7 +178,8 @@ function renderGeminiSettings(
 			'Enter one argument per line. Leave empty to run without arguments. (Currently, the Gemini CLI requires the "--experimental-acp" option.)', // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addTextArea((text) => {
-			text.setPlaceholder("")
+			text
+				.setPlaceholder("")
 				.setValue(formatArgs(gemini.args))
 				.onChange(async (value) => {
 					plugin.settings.gemini.args = parseArgs(value);
@@ -198,7 +194,8 @@ function renderGeminiSettings(
 			"Enter KEY=VALUE pairs, one per line. Required to authenticate with Vertex AI. GEMINI_API_KEY is derived from the field above. (stored as plain text)", // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addTextArea((text) => {
-			text.setPlaceholder("GOOGLE_CLOUD_PROJECT=...") // eslint-disable-line obsidianmd/ui/sentence-case
+			text
+				.setPlaceholder("GOOGLE_CLOUD_PROJECT=...") // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(formatEnv(gemini.env))
 				.onChange(async (value) => {
 					plugin.settings.gemini.env = parseEnv(value);
@@ -206,6 +203,8 @@ function renderGeminiSettings(
 				});
 			text.inputEl.rows = 3;
 		});
+
+	renderAgentModelSettings(sectionEl, plugin, gemini.id);
 }
 
 function renderClaudeSettings(
@@ -224,7 +223,8 @@ function renderClaudeSettings(
 			"Anthropic API key. Required if not logging in with an Anthropic account. (stored as plain text)",
 		)
 		.addText((text) => {
-			text.setPlaceholder("Enter your Anthropic API key")
+			text
+				.setPlaceholder("Enter your Anthropic API key")
 				.setValue(claude.apiKey)
 				.onChange(async (value) => {
 					plugin.settings.claude.apiKey = value.trim();
@@ -244,9 +244,12 @@ function renderClaudeSettings(
 
 	new Setting(sectionEl)
 		.setName("Arguments")
-		.setDesc("Enter one argument per line. Leave empty to run without arguments.")
+		.setDesc(
+			"Enter one argument per line. Leave empty to run without arguments.",
+		)
 		.addTextArea((text) => {
-			text.setPlaceholder("")
+			text
+				.setPlaceholder("")
 				.setValue(formatArgs(claude.args))
 				.onChange(async (value) => {
 					plugin.settings.claude.args = parseArgs(value);
@@ -261,7 +264,8 @@ function renderClaudeSettings(
 			"Enter KEY=VALUE pairs, one per line. ANTHROPIC_API_KEY is derived from the field above.", // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addTextArea((text) => {
-			text.setPlaceholder("")
+			text
+				.setPlaceholder("")
 				.setValue(formatEnv(claude.env))
 				.onChange(async (value) => {
 					plugin.settings.claude.env = parseEnv(value);
@@ -269,6 +273,8 @@ function renderClaudeSettings(
 				});
 			text.inputEl.rows = 3;
 		});
+
+	renderAgentModelSettings(sectionEl, plugin, claude.id);
 }
 
 function renderOpenCodeSettings(
@@ -296,7 +302,8 @@ function renderOpenCodeSettings(
 			'Enter one argument per line. Leave empty to run without arguments. (The "acp" argument is required for ACP mode.)', // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addTextArea((text) => {
-			text.setPlaceholder("")
+			text
+				.setPlaceholder("")
 				.setValue(formatArgs(opencode.args))
 				.onChange(async (value) => {
 					plugin.settings.opencode.args = parseArgs(value);
@@ -311,7 +318,8 @@ function renderOpenCodeSettings(
 			"Enter KEY=VALUE pairs, one per line. (stored as plain text)", // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addTextArea((text) => {
-			text.setPlaceholder("")
+			text
+				.setPlaceholder("")
 				.setValue(formatEnv(opencode.env))
 				.onChange(async (value) => {
 					plugin.settings.opencode.env = parseEnv(value);
@@ -319,6 +327,8 @@ function renderOpenCodeSettings(
 				});
 			text.inputEl.rows = 3;
 		});
+
+	renderAgentModelSettings(sectionEl, plugin, opencode.id);
 }
 
 function renderCodexSettings(
@@ -335,7 +345,8 @@ function renderCodexSettings(
 			"OpenAI API key. Required if not logging in with an OpenAI account. (stored as plain text)",
 		)
 		.addText((text) => {
-			text.setPlaceholder("Enter your OpenAI API key")
+			text
+				.setPlaceholder("Enter your OpenAI API key")
 				.setValue(codex.apiKey)
 				.onChange(async (value) => {
 					plugin.settings.codex.apiKey = value.trim();
@@ -355,9 +366,12 @@ function renderCodexSettings(
 
 	new Setting(sectionEl)
 		.setName("Arguments")
-		.setDesc("Enter one argument per line. Leave empty to run without arguments.")
+		.setDesc(
+			"Enter one argument per line. Leave empty to run without arguments.",
+		)
 		.addTextArea((text) => {
-			text.setPlaceholder("")
+			text
+				.setPlaceholder("")
 				.setValue(formatArgs(codex.args))
 				.onChange(async (value) => {
 					plugin.settings.codex.args = parseArgs(value);
@@ -372,7 +386,8 @@ function renderCodexSettings(
 			"Enter KEY=VALUE pairs, one per line. OPENAI_API_KEY is derived from the field above.", // eslint-disable-line obsidianmd/ui/sentence-case
 		)
 		.addTextArea((text) => {
-			text.setPlaceholder("")
+			text
+				.setPlaceholder("")
 				.setValue(formatEnv(codex.env))
 				.onChange(async (value) => {
 					plugin.settings.codex.env = parseEnv(value);
@@ -380,6 +395,8 @@ function renderCodexSettings(
 				});
 			text.inputEl.rows = 3;
 		});
+
+	renderAgentModelSettings(sectionEl, plugin, codex.id);
 }
 
 export const renderCustomAgents = (
@@ -442,7 +459,8 @@ function renderPathSettingWithDetect(
 		)
 		.addText((text) => {
 			textRef = text;
-			text.setPlaceholder(defaultCommand || "Command name or path")
+			text
+				.setPlaceholder(defaultCommand || "Command name or path")
 				.setValue(opts.getValue())
 				.onChange(async (value) => {
 					await opts.setValue(value.trim());
@@ -457,16 +475,13 @@ function renderPathSettingWithDetect(
 				.onClick(async () => {
 					button.setDisabled(true);
 					try {
-						const resolved =
-							await resolveCommandFromShell(defaultCommand);
+						const resolved = await resolveCommandFromShell(defaultCommand);
 						if (resolved) {
 							textRef?.setValue(resolved);
 							await opts.setValue(resolved);
 							new Notice(`Found: ${resolved}`);
 						} else {
-							new Notice(
-								`"${defaultCommand}" not found in shell PATH.`,
-							);
+							new Notice(`"${defaultCommand}" not found in shell PATH.`);
 						}
 					} finally {
 						button.setDisabled(false);
@@ -491,7 +506,8 @@ function renderCustomAgent(
 		.setName("Agent ID")
 		.setDesc("Unique identifier used to reference this agent.")
 		.addText((text) => {
-			text.setPlaceholder("custom-agent") // eslint-disable-line obsidianmd/ui/sentence-case
+			text
+				.setPlaceholder("custom-agent") // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(agent.id)
 				.onChange(async (value) => {
 					const previousId = plugin.settings.customAgents[index].id;
@@ -512,24 +528,30 @@ function renderCustomAgent(
 		});
 
 	idSetting.addExtraButton((button) => {
-		button.setIcon("trash").setTooltip("Delete this agent").onClick(async () => {
-			plugin.settings.customAgents.splice(index, 1);
-			plugin.ensureDefaultAgentId();
-			await plugin.saveSettings();
-			options.onRedisplay();
-		});
+		button
+			.setIcon("trash")
+			.setTooltip("Delete this agent")
+			.onClick(async () => {
+				plugin.settings.customAgents.splice(index, 1);
+				plugin.ensureDefaultAgentId();
+				await plugin.saveSettings();
+				options.onRedisplay();
+			});
 	});
 
 	new Setting(blockEl)
 		.setName("Display name")
 		.setDesc("Shown in menus and headers.")
 		.addText((text) => {
-			text.setPlaceholder("Custom agent")
+			text
+				.setPlaceholder("Custom agent")
 				.setValue(agent.displayName || agent.id)
 				.onChange(async (value) => {
 					const trimmed = value.trim();
 					plugin.settings.customAgents[index].displayName =
-						trimmed.length > 0 ? trimmed : plugin.settings.customAgents[index].id;
+						trimmed.length > 0
+							? trimmed
+							: plugin.settings.customAgents[index].id;
 					await plugin.saveSettings();
 					options.onRefreshDropdown();
 				});
@@ -539,7 +561,8 @@ function renderCustomAgent(
 		.setName("Command")
 		.setDesc("Command name or absolute path to the agent binary.")
 		.addText((text) => {
-			text.setPlaceholder("Command name or path")
+			text
+				.setPlaceholder("Command name or path")
 				.setValue(agent.command)
 				.onChange(async (value) => {
 					plugin.settings.customAgents[index].command = value.trim();
@@ -549,9 +572,12 @@ function renderCustomAgent(
 
 	new Setting(blockEl)
 		.setName("Arguments")
-		.setDesc("Enter one argument per line. Leave empty to run without arguments.")
+		.setDesc(
+			"Enter one argument per line. Leave empty to run without arguments.",
+		)
 		.addTextArea((text) => {
-			text.setPlaceholder("--flag\n--another=value")
+			text
+				.setPlaceholder("--flag\n--another=value")
 				.setValue(formatArgs(agent.args))
 				.onChange(async (value) => {
 					plugin.settings.customAgents[index].args = parseArgs(value);
@@ -564,7 +590,8 @@ function renderCustomAgent(
 		.setName("Environment variables")
 		.setDesc("Enter KEY=VALUE pairs, one per line. (stored as plain text)") // eslint-disable-line obsidianmd/ui/sentence-case
 		.addTextArea((text) => {
-			text.setPlaceholder("TOKEN=...") // eslint-disable-line obsidianmd/ui/sentence-case
+			text
+				.setPlaceholder("TOKEN=...") // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(formatEnv(agent.env))
 				.onChange(async (value) => {
 					plugin.settings.customAgents[index].env = parseEnv(value);
@@ -572,4 +599,6 @@ function renderCustomAgent(
 				});
 			text.inputEl.rows = 3;
 		});
+
+	renderAgentModelSettings(blockEl, plugin, agent.id);
 }

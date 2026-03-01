@@ -61,9 +61,7 @@ export function ErrorOverlay({
 	return (
 		<div ref={overlayRef} className="agent-client-error-overlay">
 			<div className="agent-client-error-overlay-header">
-				<h4 className="agent-client-error-overlay-title">
-					{errorInfo.title}
-				</h4>
+				<h4 className="agent-client-error-overlay-title">{errorInfo.title}</h4>
 				<button
 					className="agent-client-error-overlay-close"
 					onClick={onClose}
@@ -76,9 +74,7 @@ export function ErrorOverlay({
 					}}
 				/>
 			</div>
-			<p className="agent-client-error-overlay-message">
-				{errorInfo.message}
-			</p>
+			<p className="agent-client-error-overlay-message">{errorInfo.message}</p>
 			{errorInfo.suggestion && (
 				<p className="agent-client-error-overlay-suggestion">
 					{showEmojis && "💡 "}

@@ -5,7 +5,7 @@ import type {
 	SendMessageShortcut,
 } from "../plugin";
 
-export const SETTINGS_SCHEMA_VERSION = 3;
+export const SETTINGS_SCHEMA_VERSION = 4;
 
 const sendMessageShortcutSchema = z.union([
 	z.literal("enter"),
@@ -34,22 +34,6 @@ const commonAgentSettingsSchema = z.object({
 
 const apiKeyAgentSettingsSchema = commonAgentSettingsSchema.extend({
 	apiKey: z.string(),
-});
-
-const exportSettingsSchema = z.object({
-	defaultFolder: z.string(),
-	filenameTemplate: z.string(),
-	autoExportOnNewChat: z.boolean(),
-	autoExportOnCloseChat: z.boolean(),
-	openFileAfterExport: z.boolean(),
-	includeImages: z.boolean(),
-	imageLocation: z.union([
-		z.literal("obsidian"),
-		z.literal("custom"),
-		z.literal("base64"),
-	]),
-	imageCustomFolder: z.string(),
-	frontmatterTag: z.string(),
 });
 
 const displaySettingsSchema = z.object({
@@ -82,7 +66,6 @@ const settingsSchema = z.object({
 	autoMentionActiveNote: z.boolean(),
 	debugMode: z.boolean(),
 	nodePath: z.string(),
-	exportSettings: exportSettingsSchema,
 	windowsWslMode: z.boolean(),
 	windowsWslDistribution: z.string().optional(),
 	sendMessageShortcut: sendMessageShortcutSchema,
@@ -90,24 +73,37 @@ const settingsSchema = z.object({
 	displaySettings: displaySettingsSchema,
 	savedSessions: z.array(savedSessionSchema),
 	lastUsedModels: z.record(z.string(), z.string()),
-	showFloatingButton: z.boolean(),
-	floatingButtonImage: z.string(),
-	floatingWindowSize: z.object({
-		width: z.number().int().positive(),
-		height: z.number().int().positive(),
-	}),
-	floatingWindowPosition: z
-		.object({
-			x: z.number(),
-			y: z.number(),
-		})
-		.nullable(),
-	floatingButtonPosition: z
-		.object({
-			x: z.number(),
-			y: z.number(),
-		})
-		.nullable(),
+	candidateModels: z.record(z.string(), z.array(z.string())).optional(),
+	cachedAgentModels: z
+		.record(
+			z.string(),
+			z.array(
+				z.object({
+					modelId: z.string(),
+					name: z.string(),
+					description: z.string().optional(),
+				}),
+			),
+		)
+		.optional(),
+	cachedAgentModes: z
+		.record(
+			z.string(),
+			z.array(
+				z.object({
+					id: z.string(),
+					name: z.string(),
+					description: z.string().optional(),
+				}),
+			),
+		)
+		.optional(),
+	modeModelDefaults: z
+		.record(z.string(), z.record(z.string(), z.string()))
+		.optional(),
+	lastModeModels: z
+		.record(z.string(), z.record(z.string(), z.string()))
+		.optional(),
 }) satisfies z.ZodType<AgentClientPluginSettings>;
 
 export const createDefaultSettings = (): AgentClientPluginSettings => ({
@@ -149,17 +145,6 @@ export const createDefaultSettings = (): AgentClientPluginSettings => ({
 	autoMentionActiveNote: true,
 	debugMode: false,
 	nodePath: "",
-	exportSettings: {
-		defaultFolder: "Obsius",
-		filenameTemplate: "obsius_{date}_{time}",
-		autoExportOnNewChat: false,
-		autoExportOnCloseChat: false,
-		openFileAfterExport: true,
-		includeImages: true,
-		imageLocation: "obsidian",
-		imageCustomFolder: "Obsius",
-		frontmatterTag: "obsius",
-	},
 	windowsWslMode: false,
 	windowsWslDistribution: undefined,
 	sendMessageShortcut: "enter",
@@ -174,11 +159,11 @@ export const createDefaultSettings = (): AgentClientPluginSettings => ({
 	},
 	savedSessions: [],
 	lastUsedModels: {},
-	showFloatingButton: false,
-	floatingButtonImage: "",
-	floatingWindowSize: { width: 400, height: 500 },
-	floatingWindowPosition: null,
-	floatingButtonPosition: null,
+	candidateModels: {},
+	cachedAgentModels: {},
+	cachedAgentModes: {},
+	modeModelDefaults: {},
+	lastModeModels: {},
 });
 
 function migrateV2ToV3(candidate: Record<string, unknown>): void {
@@ -187,6 +172,17 @@ function migrateV2ToV3(candidate: Record<string, unknown>): void {
 	if (!candidate.opencode) {
 		candidate.opencode = { ...defaults.opencode };
 	}
+	candidate.schemaVersion = 3;
+}
+
+function migrateV3ToV4(candidate: Record<string, unknown>): void {
+	if (candidate.schemaVersion !== 3) return;
+	delete candidate.exportSettings;
+	delete candidate.showFloatingButton;
+	delete candidate.floatingButtonImage;
+	delete candidate.floatingWindowSize;
+	delete candidate.floatingWindowPosition;
+	delete candidate.floatingButtonPosition;
 	candidate.schemaVersion = SETTINGS_SCHEMA_VERSION;
 }
 
@@ -205,6 +201,7 @@ export function parseStoredSettings(raw: unknown): {
 
 	// Run migrations before version check
 	migrateV2ToV3(candidate);
+	migrateV3ToV4(candidate);
 
 	if (candidate.schemaVersion !== SETTINGS_SCHEMA_VERSION) {
 		return {

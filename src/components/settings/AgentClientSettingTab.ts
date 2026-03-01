@@ -1,9 +1,4 @@
-import {
-	App,
-	PluginSettingTab,
-	Setting,
-	DropdownComponent,
-} from "obsidian";
+import { App, PluginSettingTab, Setting, DropdownComponent } from "obsidian";
 import type AgentClientPlugin from "../../plugin";
 import {
 	getAgentOptions,

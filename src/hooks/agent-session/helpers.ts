@@ -6,7 +6,10 @@ import type {
 	CodexAgentSettings,
 } from "../../domain/models/agent-config";
 import { toAgentConfig } from "../../shared/settings-utils";
-import type { SessionState, ChatSession } from "../../domain/models/chat-session";
+import type {
+	SessionState,
+	ChatSession,
+} from "../../domain/models/chat-session";
 import type { AgentInfo } from "./types";
 
 export function getDefaultAgentId(settings: AgentClientPluginSettings): string {
@@ -70,7 +73,9 @@ export function findAgentSettings(
 	if (agentId === settings.gemini.id) {
 		return settings.gemini;
 	}
-	const customAgent = settings.customAgents.find((agent) => agent.id === agentId);
+	const customAgent = settings.customAgents.find(
+		(agent) => agent.id === agentId,
+	);
 	return customAgent || null;
 }
 

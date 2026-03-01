@@ -3,6 +3,7 @@ import type AgentClientPlugin from "../../plugin";
 import type { AttachedImage } from "../../components/chat/ImagePreviewStrip";
 import type { SessionHistoryModal } from "../../components/chat/SessionHistoryModal";
 import type { ImagePromptContent } from "../../domain/models/prompt-content";
+import type { SessionModelState } from "../../domain/models/chat-session";
 import { useSettings } from "../useSettings";
 import { useMentions } from "../useMentions";
 import { useSlashCommands } from "../useSlashCommands";
@@ -10,7 +11,6 @@ import { useAutoMention } from "../useAutoMention";
 import { useAgentSession } from "../useAgentSession";
 import { useChat } from "../useChat";
 import { usePermission } from "../usePermission";
-import { useAutoExport } from "../useAutoExport";
 import { useSessionHistory } from "../useSessionHistory";
 import type { Logger } from "../../shared/logger";
 import type { IAcpClient } from "../../adapters/acp/acp.adapter";
@@ -51,7 +51,6 @@ export interface UseChatControllerReturn {
 	autoMention: ReturnType<typeof useAutoMention>;
 	slashCommands: ReturnType<typeof useSlashCommands>;
 	sessionHistory: ReturnType<typeof useSessionHistory>;
-	autoExport: ReturnType<typeof useAutoExport>;
 	activeAgentLabel: string;
 	availableAgents: AgentInfo[];
 	errorInfo:
@@ -63,7 +62,6 @@ export interface UseChatControllerReturn {
 	) => Promise<void>;
 	handleStopGeneration: () => Promise<void>;
 	handleNewChat: (requestedAgentId?: string) => Promise<void>;
-	handleExportChat: () => Promise<void>;
 	handleSwitchAgent: (agentId: string) => Promise<void>;
 	handleRestartAgent: () => Promise<void>;
 	handleClearError: () => void;
@@ -71,6 +69,7 @@ export interface UseChatControllerReturn {
 	handleForkSession: (sessionId: string, cwd: string) => Promise<void>;
 	handleDeleteSession: (sessionId: string) => void;
 	handleOpenHistory: () => void;
+	filteredModels?: SessionModelState;
 	handleSetMode: (modeId: string) => Promise<void>;
 	handleSetModel: (modelId: string) => Promise<void>;
 	inputValue: string;

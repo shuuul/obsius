@@ -39,7 +39,7 @@ domain/
 | `IAgentClient` | `adapters/acp/acp.adapter.ts` → `AcpAdapter` |
 | `IVaultAccess` | `adapters/obsidian/vault.adapter.ts` → `ObsidianVaultAdapter` |
 | `ISettingsAccess` | `adapters/obsidian/settings-store.ts` → `SettingsStore` |
-| `IChatViewContainer` | `components/chat/ChatView.tsx`, `FloatingChatView.tsx` |
+| `IChatViewContainer` | `components/chat/ChatView.tsx` |
 
 ## Zero-Dep Rule Enforcement
 

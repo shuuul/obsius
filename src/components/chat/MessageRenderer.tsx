@@ -12,10 +12,7 @@ interface MessageRendererProps {
 	plugin: AgentClientPlugin;
 	acpClient?: IAcpClient;
 	/** Callback to approve a permission request */
-	onApprovePermission?: (
-		requestId: string,
-		optionId: string,
-	) => Promise<void>;
+	onApprovePermission?: (requestId: string, optionId: string) => Promise<void>;
 }
 
 /**
@@ -72,10 +69,7 @@ export function MessageRenderer({
 				if (group.type === "images") {
 					// Render images in horizontal scroll container
 					return (
-						<div
-							key={idx}
-							className="agent-client-message-images-strip"
-						>
+						<div key={idx} className="agent-client-message-images-strip">
 							{group.items.map((content, imgIdx) => (
 								<MessageContentRenderer
 									key={imgIdx}

@@ -13,10 +13,7 @@ interface ToolCallRendererProps {
 	content: Extract<MessageContent, { type: "tool_call" }>;
 	plugin: AgentClientPlugin;
 	acpClient?: IAcpClient;
-	onApprovePermission?: (
-		requestId: string,
-		optionId: string,
-	) => Promise<void>;
+	onApprovePermission?: (requestId: string, optionId: string) => Promise<void>;
 }
 
 export function ToolCallRenderer({
@@ -36,9 +33,9 @@ export function ToolCallRenderer({
 		content: toolContent,
 	} = content;
 
-	const [selectedOptionId, setSelectedOptionId] = useState<
-		string | undefined
-	>(permissionRequest?.selectedOptionId);
+	const [selectedOptionId, setSelectedOptionId] = useState<string | undefined>(
+		permissionRequest?.selectedOptionId,
+	);
 
 	React.useEffect(() => {
 		if (permissionRequest?.selectedOptionId !== selectedOptionId) {
@@ -142,13 +139,9 @@ export function ToolCallRenderer({
 								key={index}
 								diff={item}
 								plugin={plugin}
-								autoCollapse={
-									plugin.settings.displaySettings
-										.autoCollapseDiffs
-								}
+								autoCollapse={plugin.settings.displaySettings.autoCollapseDiffs}
 								collapseThreshold={
-									plugin.settings.displaySettings
-										.diffCollapseThreshold
+									plugin.settings.displaySettings.diffCollapseThreshold
 								}
 							/>
 						);

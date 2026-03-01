@@ -33,9 +33,7 @@ interface DiffLine {
 
 function isNewFile(diff: DiffRendererProps["diff"]): boolean {
 	return (
-		diff.oldText === null ||
-		diff.oldText === undefined ||
-		diff.oldText === ""
+		diff.oldText === null || diff.oldText === undefined || diff.oldText === ""
 	);
 }
 
@@ -67,19 +65,13 @@ function renderWordDiff(
 			{filteredParts.map((part, partIdx) => {
 				if (part.type === "added") {
 					return (
-						<span
-							key={partIdx}
-							className="agent-client-diff-word-added"
-						>
+						<span key={partIdx} className="agent-client-diff-word-added">
 							{part.value}
 						</span>
 					);
 				} else if (part.type === "removed") {
 					return (
-						<span
-							key={partIdx}
-							className="agent-client-diff-word-removed"
-						>
+						<span key={partIdx} className="agent-client-diff-word-removed">
 							{part.value}
 						</span>
 					);
@@ -213,8 +205,7 @@ export function DiffRenderer({
 				</span>
 				<span className="agent-client-diff-line-marker">{marker}</span>
 				<span className="agent-client-diff-line-content">
-					{line.wordDiff &&
-					(line.type === "added" || line.type === "removed")
+					{line.wordDiff && (line.type === "added" || line.type === "removed")
 						? renderWordDiff(line.wordDiff, line.type)
 						: line.content}
 				</span>
@@ -243,9 +234,7 @@ export function DiffRenderer({
 					onClick={() => setIsCollapsed(!isCollapsed)}
 				>
 					<span className="agent-client-diff-expand-text">
-						{isCollapsed
-							? `${remainingLines} more lines`
-							: "Collapse"}
+						{isCollapsed ? `${remainingLines} more lines` : "Collapse"}
 					</span>
 					<span className="agent-client-diff-expand-icon">
 						{isCollapsed ? "▶" : "▲"}

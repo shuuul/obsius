@@ -76,9 +76,7 @@ export class ObsidianVaultAdapter implements IVaultAccess {
 	searchNotes(query: string): Promise<NoteMetadata[]> {
 		// Use existing NoteMentionService for fuzzy search
 		const files = this.mentionService.searchNotes(query);
-		return Promise.resolve(
-			files.map((file) => this.convertToMetadata(file)),
-		);
+		return Promise.resolve(files.map((file) => this.convertToMetadata(file)));
 	}
 
 	/**
@@ -139,9 +137,7 @@ export class ObsidianVaultAdapter implements IVaultAccess {
 				const nextView =
 					leaf?.view instanceof MarkdownView
 						? leaf.view
-						: this.plugin.app.workspace.getActiveViewOfType(
-								MarkdownView,
-							);
+						: this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
 				this.attachToView(nextView ?? null);
 			},
 		);
@@ -301,10 +297,7 @@ export class ObsidianVaultAdapter implements IVaultAccess {
 			try {
 				listener();
 			} catch (error) {
-				console.error(
-					"[ObsidianVaultAdapter] Selection listener error",
-					error,
-				);
+				console.error("[ObsidianVaultAdapter] Selection listener error", error);
 			}
 		}
 	}
@@ -317,9 +310,7 @@ export class ObsidianVaultAdapter implements IVaultAccess {
 	listNotes(): Promise<NoteMetadata[]> {
 		// Use existing NoteMentionService to get all files
 		const files = this.mentionService.getAllFiles();
-		return Promise.resolve(
-			files.map((file) => this.convertToMetadata(file)),
-		);
+		return Promise.resolve(files.map((file) => this.convertToMetadata(file)));
 	}
 
 	/**

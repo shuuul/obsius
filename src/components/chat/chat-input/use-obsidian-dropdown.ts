@@ -6,6 +6,13 @@ export interface ObsidianDropdownOption {
 	label: string;
 }
 
+function serializeOptions(
+	options: ObsidianDropdownOption[] | undefined,
+): string {
+	if (!options) return "";
+	return options.map((o) => `${o.id}\0${o.label}`).join("\n");
+}
+
 export function useObsidianDropdown(
 	options: ObsidianDropdownOption[] | undefined,
 	currentValue: string | undefined,
@@ -16,31 +23,32 @@ export function useObsidianDropdown(
 	const onChangeRef = useRef(onChange);
 	onChangeRef.current = onChange;
 
+	const optionsKey = serializeOptions(options);
+
 	useEffect(() => {
 		const containerEl = containerRef.current;
 		if (!containerEl) return;
 
+		if (dropdownRef.current) {
+			containerEl.empty();
+			dropdownRef.current = null;
+		}
+
 		if (!options || options.length <= 1) {
-			if (dropdownRef.current) {
-				containerEl.empty();
-				dropdownRef.current = null;
-			}
 			return;
 		}
 
-		if (!dropdownRef.current) {
-			const dropdown = new DropdownComponent(containerEl);
-			dropdownRef.current = dropdown;
-			for (const option of options) {
-				dropdown.addOption(option.id, option.label);
-			}
-			if (currentValue) {
-				dropdown.setValue(currentValue);
-			}
-			dropdown.onChange((value) => {
-				onChangeRef.current?.(value);
-			});
+		const dropdown = new DropdownComponent(containerEl);
+		dropdownRef.current = dropdown;
+		for (const option of options) {
+			dropdown.addOption(option.id, option.label);
 		}
+		if (currentValue) {
+			dropdown.setValue(currentValue);
+		}
+		dropdown.onChange((value) => {
+			onChangeRef.current?.(value);
+		});
 
 		return () => {
 			if (dropdownRef.current) {
@@ -48,7 +56,7 @@ export function useObsidianDropdown(
 				dropdownRef.current = null;
 			}
 		};
-	}, [options, currentValue]);
+	}, [optionsKey, currentValue]);
 
 	useEffect(() => {
 		if (dropdownRef.current && currentValue) {

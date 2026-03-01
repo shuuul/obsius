@@ -35,9 +35,8 @@ interface UseWorkspaceEventsParams {
 }
 
 /**
- * Subscribes to workspace-level hotkey events shared by both sidebar and
- * floating chat views: toggle-auto-mention, new-chat-requested,
- * approve/reject permission, and cancel-message.
+ * Subscribes to workspace-level hotkey events: toggle-auto-mention,
+ * new-chat-requested, approve/reject permission, and cancel-message.
  */
 export function useWorkspaceEvents({
 	workspace,

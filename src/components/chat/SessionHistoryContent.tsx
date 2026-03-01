@@ -64,7 +64,7 @@ function IconButton({
 	iconName: string;
 	label: string;
 	className: string;
-	onClick: () => void;
+	onClick: (e: React.MouseEvent) => void;
 }) {
 	const iconRef = React.useRef<HTMLDivElement>(null);
 
@@ -206,6 +206,9 @@ function DebugForm({
 
 /**
  * Session list item component.
+ *
+ * Clicking the item loads (restores) the session.
+ * The branch button creates a new branch from the session.
  */
 function SessionItem({
 	session,
@@ -224,27 +227,45 @@ function SessionItem({
 	onDeleteSession: (sessionId: string) => void;
 	onClose: () => void;
 }) {
-	const handleRestore = useCallback(() => {
+	const handleClick = useCallback(() => {
+		if (!canRestore) return;
 		onClose();
 		void onRestoreSession(session.sessionId, session.cwd);
-	}, [session, onRestoreSession, onClose]);
+	}, [session, canRestore, onRestoreSession, onClose]);
 
-	const handleFork = useCallback(() => {
-		onClose();
-		void onForkSession(session.sessionId, session.cwd);
-	}, [session, onForkSession, onClose]);
+	const handleFork = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+			onClose();
+			void onForkSession(session.sessionId, session.cwd);
+		},
+		[session, onForkSession, onClose],
+	);
 
-	const handleDelete = useCallback(() => {
-		onDeleteSession(session.sessionId);
-	}, [session.sessionId, onDeleteSession]);
+	const handleDelete = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+			onDeleteSession(session.sessionId);
+		},
+		[session.sessionId, onDeleteSession],
+	);
 
 	return (
-		<div className="agent-client-session-history-item">
+		<div
+			className={`agent-client-session-history-item${canRestore ? " agent-client-session-history-item--clickable" : ""}`}
+			onClick={handleClick}
+			role={canRestore ? "button" : undefined}
+			tabIndex={canRestore ? 0 : undefined}
+			onKeyDown={(e) => {
+				if (canRestore && (e.key === "Enter" || e.key === " ")) {
+					e.preventDefault();
+					handleClick();
+				}
+			}}
+		>
 			<div className="agent-client-session-history-item-content">
 				<div className="agent-client-session-history-item-title">
-					<span>
-						{truncateTitle(session.title ?? "Untitled Session")}
-					</span>
+					<span>{truncateTitle(session.title ?? "Untitled Session")}</span>
 				</div>
 				<div className="agent-client-session-history-item-metadata">
 					{session.updatedAt && (
@@ -256,18 +277,10 @@ function SessionItem({
 			</div>
 
 			<div className="agent-client-session-history-item-actions">
-				{canRestore && (
-					<IconButton
-						iconName="play"
-						label="Restore session"
-						className="agent-client-session-history-action-icon agent-client-session-history-restore-icon"
-						onClick={handleRestore}
-					/>
-				)}
 				{canFork && (
 					<IconButton
 						iconName="git-branch"
-						label="Fork session (create new branch)"
+						label="Branch from this session"
 						className="agent-client-session-history-action-icon agent-client-session-history-fork-icon"
 						onClick={handleFork}
 					/>
@@ -391,8 +404,7 @@ export function SessionHistoryContent({
 						Session list is not available for this agent.
 					</p>
 					<p className="agent-client-session-history-empty-text">
-						Enable Debug Mode in settings to manually enter session
-						IDs.
+						Enable Debug Mode in settings to manually enter session IDs.
 					</p>
 				</div>
 			)}
@@ -414,11 +426,7 @@ export function SessionHistoryContent({
 								<input
 									type="checkbox"
 									checked={hideNonLocalSessions}
-									onChange={(e) =>
-										setHideNonLocalSessions(
-											e.target.checked,
-										)
-									}
+									onChange={(e) => setHideNonLocalSessions(e.target.checked)}
 								/>
 								<span>Hide sessions without local data</span>
 							</label>
@@ -428,9 +436,7 @@ export function SessionHistoryContent({
 					{/* Error state */}
 					{error && (
 						<div className="agent-client-session-history-error">
-							<p className="agent-client-session-history-error-text">
-								{error}
-							</p>
+							<p className="agent-client-session-history-error-text">{error}</p>
 							<button
 								className="agent-client-session-history-retry-button"
 								onClick={handleRetry}

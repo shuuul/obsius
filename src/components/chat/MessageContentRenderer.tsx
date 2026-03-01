@@ -15,10 +15,7 @@ interface MessageContentRendererProps {
 	messageRole?: "user" | "assistant";
 	acpClient?: IAcpClient;
 	/** Callback to approve a permission request */
-	onApprovePermission?: (
-		requestId: string,
-		optionId: string,
-	) => Promise<void>;
+	onApprovePermission?: (requestId: string, optionId: string) => Promise<void>;
 }
 
 export function MessageContentRenderer({

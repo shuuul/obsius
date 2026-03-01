@@ -22,18 +22,14 @@ type ModelLike = {
 };
 
 function mapSessionModesAndModels(response: {
-	modes?:
-		| {
-				availableModes: ModeLike[];
-				currentModeId: string;
-		  }
-		| null;
-	models?:
-		| {
-				availableModels: ModelLike[];
-				currentModelId: string;
-		  }
-		| null;
+	modes?: {
+		availableModes: ModeLike[];
+		currentModeId: string;
+	} | null;
+	models?: {
+		availableModels: ModelLike[];
+		currentModelId: string;
+	} | null;
 }): {
 	modes: SessionModeState | undefined;
 	models: SessionModelState | undefined;

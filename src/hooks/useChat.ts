@@ -13,38 +13,29 @@ import type { ImagePromptContent } from "../domain/models/prompt-content";
 import type { IMentionService } from "../shared/mention-utils";
 import { preparePrompt, sendPreparedPrompt } from "../shared/message-service";
 import { Platform } from "obsidian";
-import {
-	chatReducer,
-} from "./state/chat.reducer";
-import {
-	createInitialChatState,
-	type ChatAction,
-} from "./state/chat.actions";
-
+import { chatReducer } from "./state/chat.reducer";
+import { createInitialChatState, type ChatAction } from "./state/chat.actions";
 
 type ToolCallMessageContent = Extract<MessageContent, { type: "tool_call" }>;
 
 export interface SendMessageOptions {
-		activeNote: NoteMetadata | null;
-		vaultBasePath: string;
-		isAutoMentionDisabled?: boolean;
-		images?: ImagePromptContent[];
+	activeNote: NoteMetadata | null;
+	vaultBasePath: string;
+	isAutoMentionDisabled?: boolean;
+	images?: ImagePromptContent[];
 }
 
 export interface UseChatReturn {
-		messages: ChatMessage[];
-		isSending: boolean;
-		lastUserMessage: string | null;
-		errorInfo: ErrorInfo | null;
+	messages: ChatMessage[];
+	isSending: boolean;
+	lastUserMessage: string | null;
+	errorInfo: ErrorInfo | null;
 
-		sendMessage: (
-		content: string,
-		options: SendMessageOptions,
-	) => Promise<void>;
+	sendMessage: (content: string, options: SendMessageOptions) => Promise<void>;
 
-		clearMessages: () => void;
+	clearMessages: () => void;
 
-		setInitialMessages: (
+	setInitialMessages: (
 		history: Array<{
 			role: string;
 			content: Array<{ type: string; text: string }>;
@@ -52,25 +43,25 @@ export interface UseChatReturn {
 		}>,
 	) => void;
 
-		setMessagesFromLocal: (localMessages: ChatMessage[]) => void;
+	setMessagesFromLocal: (localMessages: ChatMessage[]) => void;
 
-		clearError: () => void;
+	clearError: () => void;
 
-		addMessage: (message: ChatMessage) => void;
+	addMessage: (message: ChatMessage) => void;
 
-		updateLastMessage: (content: MessageContent) => void;
+	updateLastMessage: (content: MessageContent) => void;
 
-		updateMessage: (toolCallId: string, content: MessageContent) => void;
+	updateMessage: (toolCallId: string, content: MessageContent) => void;
 
-		upsertToolCall: (toolCallId: string, content: MessageContent) => void;
+	upsertToolCall: (toolCallId: string, content: MessageContent) => void;
 
-		handleSessionUpdate: (update: SessionUpdate) => void;
+	handleSessionUpdate: (update: SessionUpdate) => void;
 }
 
 export interface SessionContext {
 	sessionId: string | null;
 	authMethods: AuthenticationMethod[];
-		promptCapabilities?: {
+	promptCapabilities?: {
 		image?: boolean;
 		audio?: boolean;
 		embeddedContext?: boolean;
@@ -83,7 +74,6 @@ export interface SettingsContext {
 	maxSelectionLength: number;
 }
 
-
 function mergeToolCallContent(
 	existing: ToolCallMessageContent,
 	update: ToolCallMessageContent,
@@ -94,9 +84,7 @@ function mergeToolCallContent(
 
 		const hasDiff = newContent.some((item) => item.type === "diff");
 		if (hasDiff) {
-			mergedContent = mergedContent.filter(
-				(item) => item.type !== "diff",
-			);
+			mergedContent = mergedContent.filter((item) => item.type !== "diff");
 		}
 
 		mergedContent = [...mergedContent, ...newContent];
@@ -110,12 +98,9 @@ function mergeToolCallContent(
 		status: update.status !== undefined ? update.status : existing.status,
 		content: mergedContent,
 		locations:
-			update.locations !== undefined
-				? update.locations
-				: existing.locations,
+			update.locations !== undefined ? update.locations : existing.locations,
 		rawInput:
-			update.rawInput !== undefined &&
-			Object.keys(update.rawInput).length > 0
+			update.rawInput !== undefined && Object.keys(update.rawInput).length > 0
 				? update.rawInput
 				: existing.rawInput,
 		permissionRequest:
@@ -124,7 +109,6 @@ function mergeToolCallContent(
 				: existing.permissionRequest,
 	};
 }
-
 
 export function useChat(
 	agentClient: IAgentClient,
@@ -149,110 +133,116 @@ export function useChat(
 		[],
 	);
 
-		const addMessage = useCallback((message: ChatMessage): void => {
-		applyMessageUpdater((prev) => [...prev, message]);
-	}, [applyMessageUpdater]);
+	const addMessage = useCallback(
+		(message: ChatMessage): void => {
+			applyMessageUpdater((prev) => [...prev, message]);
+		},
+		[applyMessageUpdater],
+	);
 
-		const updateLastMessage = useCallback((content: MessageContent): void => {
-		applyMessageUpdater((prev) => {
-			if (
-				prev.length === 0 ||
-				prev[prev.length - 1].role !== "assistant"
-			) {
-				const newMessage: ChatMessage = {
-					id: crypto.randomUUID(),
-					role: "assistant",
-					content: [content],
-					timestamp: new Date(),
-				};
-				return [...prev, newMessage];
-			}
+	const updateLastMessage = useCallback(
+		(content: MessageContent): void => {
+			applyMessageUpdater((prev) => {
+				if (prev.length === 0 || prev[prev.length - 1].role !== "assistant") {
+					const newMessage: ChatMessage = {
+						id: crypto.randomUUID(),
+						role: "assistant",
+						content: [content],
+						timestamp: new Date(),
+					};
+					return [...prev, newMessage];
+				}
 
-			const lastMessage = prev[prev.length - 1];
-			const updatedMessage = { ...lastMessage };
+				const lastMessage = prev[prev.length - 1];
+				const updatedMessage = { ...lastMessage };
 
-			if (content.type === "text" || content.type === "agent_thought") {
-				const existingContentIndex = updatedMessage.content.findIndex(
-					(c) => c.type === content.type,
-				);
-				if (existingContentIndex >= 0) {
-					const existingContent =
-						updatedMessage.content[existingContentIndex];
-					if (
-						existingContent.type === "text" ||
-						existingContent.type === "agent_thought"
-					) {
-						updatedMessage.content[existingContentIndex] = {
-							type: content.type,
-							text: existingContent.text + content.text,
-						};
+				if (content.type === "text" || content.type === "agent_thought") {
+					const existingContentIndex = updatedMessage.content.findIndex(
+						(c) => c.type === content.type,
+					);
+					if (existingContentIndex >= 0) {
+						const existingContent =
+							updatedMessage.content[existingContentIndex];
+						if (
+							existingContent.type === "text" ||
+							existingContent.type === "agent_thought"
+						) {
+							updatedMessage.content[existingContentIndex] = {
+								type: content.type,
+								text: existingContent.text + content.text,
+							};
+						}
+					} else {
+						updatedMessage.content.push(content);
 					}
 				} else {
-					updatedMessage.content.push(content);
+					const existingIndex = updatedMessage.content.findIndex(
+						(c) => c.type === content.type,
+					);
+
+					if (existingIndex >= 0) {
+						updatedMessage.content[existingIndex] = content;
+					} else {
+						updatedMessage.content.push(content);
+					}
 				}
-			} else {
-				const existingIndex = updatedMessage.content.findIndex(
-					(c) => c.type === content.type,
-				);
 
-				if (existingIndex >= 0) {
-					updatedMessage.content[existingIndex] = content;
-				} else {
-					updatedMessage.content.push(content);
+				return [...prev.slice(0, -1), updatedMessage];
+			});
+		},
+		[applyMessageUpdater],
+	);
+
+	const updateUserMessage = useCallback(
+		(content: MessageContent): void => {
+			applyMessageUpdater((prev) => {
+				if (prev.length === 0 || prev[prev.length - 1].role !== "user") {
+					const newMessage: ChatMessage = {
+						id: crypto.randomUUID(),
+						role: "user",
+						content: [content],
+						timestamp: new Date(),
+					};
+					return [...prev, newMessage];
 				}
-			}
 
-			return [...prev.slice(0, -1), updatedMessage];
-		});
-	}, [applyMessageUpdater]);
+				const lastMessage = prev[prev.length - 1];
+				const updatedMessage = { ...lastMessage };
 
-		const updateUserMessage = useCallback((content: MessageContent): void => {
-		applyMessageUpdater((prev) => {
-			if (prev.length === 0 || prev[prev.length - 1].role !== "user") {
-				const newMessage: ChatMessage = {
-					id: crypto.randomUUID(),
-					role: "user",
-					content: [content],
-					timestamp: new Date(),
-				};
-				return [...prev, newMessage];
-			}
-
-			const lastMessage = prev[prev.length - 1];
-			const updatedMessage = { ...lastMessage };
-
-			if (content.type === "text") {
-				const existingContentIndex = updatedMessage.content.findIndex(
-					(c) => c.type === "text",
-				);
-				if (existingContentIndex >= 0) {
-					const existingContent =
-						updatedMessage.content[existingContentIndex];
-					if (existingContent.type === "text") {
-						updatedMessage.content[existingContentIndex] = {
-							type: "text",
-							text: existingContent.text + content.text,
-						};
+				if (content.type === "text") {
+					const existingContentIndex = updatedMessage.content.findIndex(
+						(c) => c.type === "text",
+					);
+					if (existingContentIndex >= 0) {
+						const existingContent =
+							updatedMessage.content[existingContentIndex];
+						if (existingContent.type === "text") {
+							updatedMessage.content[existingContentIndex] = {
+								type: "text",
+								text: existingContent.text + content.text,
+							};
+						}
+					} else {
+						updatedMessage.content.push(content);
 					}
 				} else {
-					updatedMessage.content.push(content);
+					const existingIndex = updatedMessage.content.findIndex(
+						(c) => c.type === content.type,
+					);
+					if (existingIndex >= 0) {
+						updatedMessage.content[existingIndex] = content;
+					} else {
+						updatedMessage.content.push(content);
+					}
 				}
-			} else {
-				const existingIndex = updatedMessage.content.findIndex(
-					(c) => c.type === content.type,
-				);
-				if (existingIndex >= 0) {
-					updatedMessage.content[existingIndex] = content;
-				} else {
-					updatedMessage.content.push(content);
-				}
-			}
 
-			return [...prev.slice(0, -1), updatedMessage];
-		});
-	}, [applyMessageUpdater]);
+				return [...prev.slice(0, -1), updatedMessage];
+			});
+		},
+		[applyMessageUpdater],
+	);
 
-		const updateMessage = useCallback(
+	const updateMessage = useCallback(
 		(toolCallId: string, content: MessageContent): void => {
 			if (content.type !== "tool_call") return;
 
@@ -260,10 +250,7 @@ export function useChat(
 				prev.map((message) => ({
 					...message,
 					content: message.content.map((c) => {
-						if (
-							c.type === "tool_call" &&
-							c.toolCallId === toolCallId
-						) {
+						if (c.type === "tool_call" && c.toolCallId === toolCallId) {
 							return mergeToolCallContent(c, content);
 						}
 						return c;
@@ -274,7 +261,7 @@ export function useChat(
 		[applyMessageUpdater],
 	);
 
-		const upsertToolCall = useCallback(
+	const upsertToolCall = useCallback(
 		(toolCallId: string, content: MessageContent): void => {
 			if (content.type !== "tool_call") return;
 
@@ -283,10 +270,7 @@ export function useChat(
 				const updated = prev.map((message) => ({
 					...message,
 					content: message.content.map((c) => {
-						if (
-							c.type === "tool_call" &&
-							c.toolCallId === toolCallId
-						) {
+						if (c.type === "tool_call" && c.toolCallId === toolCallId) {
 							found = true;
 							return mergeToolCallContent(c, content);
 						}
@@ -312,7 +296,7 @@ export function useChat(
 		[applyMessageUpdater],
 	);
 
-		const handleSessionUpdate = useCallback(
+	const handleSessionUpdate = useCallback(
 		(update: SessionUpdate): void => {
 			switch (update.type) {
 				case "agent_message_chunk":
@@ -371,7 +355,7 @@ export function useChat(
 		[updateLastMessage, upsertToolCall],
 	);
 
-		const clearMessages = useCallback((): void => {
+	const clearMessages = useCallback((): void => {
 		const actions: ChatAction[] = [
 			{ type: "clear_messages" },
 			{ type: "set_last_user_message", message: null },
@@ -383,7 +367,7 @@ export function useChat(
 		}
 	}, []);
 
-		const setInitialMessages = useCallback(
+	const setInitialMessages = useCallback(
 		(
 			history: Array<{
 				role: string;
@@ -408,7 +392,7 @@ export function useChat(
 		[],
 	);
 
-		const setMessagesFromLocal = useCallback(
+	const setMessagesFromLocal = useCallback(
 		(localMessages: ChatMessage[]): void => {
 			dispatch({ type: "set_messages", messages: localMessages });
 			dispatch({ type: "send_complete" });
@@ -417,22 +401,22 @@ export function useChat(
 		[],
 	);
 
-		const clearError = useCallback((): void => {
+	const clearError = useCallback((): void => {
 		dispatch({ type: "clear_error" });
 	}, []);
 
-		const shouldConvertToWsl = useMemo(() => {
+	const shouldConvertToWsl = useMemo(() => {
 		return Platform.isWin && settingsContext.windowsWslMode;
 	}, [settingsContext.windowsWslMode]);
 
-		const sendMessage = useCallback(
+	const sendMessage = useCallback(
 		async (content: string, options: SendMessageOptions): Promise<void> => {
 			if (!sessionContext.sessionId) {
 				dispatch({
 					type: "set_error",
 					error: {
 						title: "Cannot send message",
-					message: "No active session. Please wait for connection.",
+						message: "No active session. Please wait for connection.",
 					},
 				});
 				return;
@@ -447,8 +431,7 @@ export function useChat(
 					isAutoMentionDisabled: options.isAutoMentionDisabled,
 					convertToWsl: shouldConvertToWsl,
 					supportsEmbeddedContext:
-						sessionContext.promptCapabilities?.embeddedContext ??
-						false,
+						sessionContext.promptCapabilities?.embeddedContext ?? false,
 					maxNoteLength: settingsContext.maxNoteLength,
 					maxSelectionLength: settingsContext.maxSelectionLength,
 				},

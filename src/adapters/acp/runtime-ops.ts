@@ -1,9 +1,7 @@
 import * as acp from "@agentclientprotocol/sdk";
 import { Platform } from "obsidian";
 
-import type {
-	NewSessionResult,
-} from "../../domain/ports/agent-client.port";
+import type { NewSessionResult } from "../../domain/ports/agent-client.port";
 import type { PromptContent } from "../../domain/models/prompt-content";
 import type {
 	SessionModeState,
@@ -23,7 +21,9 @@ function assertConnection(
 	return connection;
 }
 
-function toSessionResult(sessionResult: acp.NewSessionResponse): NewSessionResult {
+function toSessionResult(
+	sessionResult: acp.NewSessionResponse,
+): NewSessionResult {
 	let modes: SessionModeState | undefined;
 	if (sessionResult.modes) {
 		modes = {
@@ -197,9 +197,7 @@ export async function sendPromptOperation(args: {
 				logger.warn(
 					"[AcpAdapter] Agent returned end_turn with no session updates — detected error in stderr",
 				);
-				throw new Error(
-					`The agent returned an empty response. ${stderrHint}`,
-				);
+				throw new Error(`The agent returned an empty response. ${stderrHint}`);
 			}
 			logger.log(
 				"[AcpAdapter] Agent returned end_turn with no session updates (may be expected for some commands)",
@@ -257,7 +255,8 @@ export function disconnectOperation(args: {
 	killAgentProcess: () => void;
 	cancelAllOperations: () => void;
 }): void {
-	const { logger, agentProcessPid, killAgentProcess, cancelAllOperations } = args;
+	const { logger, agentProcessPid, killAgentProcess, cancelAllOperations } =
+		args;
 	logger.log("[AcpAdapter] Disconnecting...");
 	cancelAllOperations();
 	if (agentProcessPid) {

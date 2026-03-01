@@ -1,26 +1,24 @@
 # Hooks Layer Guide
 
-Central coordinator pattern: `useChatController` composes 9 specialized hooks + creates adapters via `useMemo`. View-level concerns extracted to `useWorkspaceEvents` and `useFloatingWindow`.
+Central coordinator pattern: `useChatController` composes 8 specialized hooks + creates adapters via `useMemo`. View-level concerns extracted to `useWorkspaceEvents`.
 
 State transitions are now reducer-backed in `src/hooks/state/` for deterministic updates and easier test coverage.
 
 ## Hook Inventory
 
-| Hook | Lines | State Owned | Key Deps |
-|------|-------|-------------|----------|
-| `useChatController` | 570 | Combines all below | All hooks + adapters |
-| `useAgentSession` | 566 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
-| `useChat` | 567 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
-| `useSessionHistory` | 590 | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` |
-| `usePermission` | 224 | `activePermission`, approval queue | `IAgentClient` |
-| `useAutoExport` | 162 | None (stateless callbacks) | `ChatExporter` |
-| `useMentions` | 130 | Suggestions dropdown state | `IVaultAccess`, `mention-utils` |
-| `useSlashCommands` | 140 | Suggestions dropdown state | `SlashCommand[]` |
-| `useAutoMention` | 62 | `activeNote`, `isDisabled` | `IVaultAccess` |
-| `useInputHistory` | 143 | History index (ref-based) | `ChatMessage[]` |
-| `useSettings` | 19 | None — delegates to `useSyncExternalStore` | `plugin.settingsStore` |
-| `useWorkspaceEvents` | 130 | None (effect-only) | `Workspace` events |
-| `useFloatingWindow` | 171 | Position, size, drag state | `FloatingChatView` |
+| Hook | State Owned | Key Deps |
+|------|-------------|----------|
+| `useChatController` | Combines all below | All hooks + adapters |
+| `useAgentSession` | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
+| `useChat` | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
+| `useSessionHistory` | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` |
+| `usePermission` | `activePermission`, approval queue | `IAgentClient` |
+| `useMentions` | Suggestions dropdown state | `IVaultAccess`, `mention-utils` |
+| `useSlashCommands` | Suggestions dropdown state | `SlashCommand[]` |
+| `useAutoMention` | `activeNote`, `isDisabled` | `IVaultAccess` |
+| `useInputHistory` | History index (ref-based) | `ChatMessage[]` |
+| `useSettings` | None — delegates to `useSyncExternalStore` | `plugin.settingsStore` |
+| `useWorkspaceEvents` | None (effect-only) | `Workspace` events |
 
 ## Composition Flow
 
@@ -36,7 +34,6 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
   ├── useMentions(vaultAccess, plugin)
   ├── useSlashCommands(session.availableCommands, autoMention.toggle)
   ├── useAutoMention(vaultAccess)
-  ├── useAutoExport(plugin)
   └── useSessionHistory(acpAdapter, session, settingsAccess, cwd, callbacks)
 ```
 
@@ -48,12 +45,13 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
 - `agent-session/helpers.ts` + `agent-session/types.ts`: normalization and shared type contracts
 - `session-history/session-history-ops.ts`: pure history list/load/restore/fork helpers
 
-## View-Level Hooks (used directly by ChatView / FloatingChatView, not via useChatController)
+## View-Level Hooks (used directly by ChatView, not via useChatController)
 
-- `useWorkspaceEvents`: Subscribes to shared workspace hotkey events (toggle-auto-mention, new-chat-requested, approve/reject permission, cancel-message). Eliminates ~140 lines of duplicated event wiring from both view files.
-- `useFloatingWindow`: Manages floating window drag, resize, and position/size persistence. Extracted from FloatingChatView to keep it under 600 LOC.
+- `useWorkspaceEvents`: Subscribes to workspace hotkey events (toggle-auto-mention, new-chat-requested, approve/reject permission, cancel-message).
 
 ## Race Condition Patterns
+
+**Agent switch staleness**: `useAgentSession.createSession` uses a `creationCounterRef` to discard stale async results when the user switches agents before the previous session is ready.
 
 **Streaming tool_call_update**: Multiple rapid updates arrive for the same tool call. `useChat` uses reducer actions with updater payloads (`apply_messages`) and `upsertToolCall()` merge logic. Non-functional replacement would lose concurrent updates.
 
@@ -65,7 +63,7 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
 
 - `handleSessionUpdate`: Routes `SessionUpdate` union to `useChat.handleSessionUpdate()` (messages) and `useAgentSession` (commands, modes)
 - `handleSendMessage`: Orchestrates `useChat.sendMessage()` with autoMention state, images, vault path
-- `handleNewSession`: Auto-exports previous chat, then calls `useAgentSession.createSession()`
+- `handleNewSession`: Calls `useAgentSession.createSession()`
 - `handleLoadSession`: Coordinates `useSessionHistory` + `useChat.setInitialMessages()`
 
 ## Adding a New Hook

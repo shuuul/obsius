@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import type {
 	ChatSession,
 	SessionModeState,
@@ -8,7 +8,10 @@ import type {
 } from "../domain/models/chat-session";
 import type { IAgentClient } from "../domain/ports/agent-client.port";
 import type { ISettingsAccess } from "../domain/ports/settings-access.port";
-import type { SessionErrorInfo, UseAgentSessionReturn } from "./agent-session/types";
+import type {
+	SessionErrorInfo,
+	UseAgentSessionReturn,
+} from "./agent-session/types";
 import {
 	buildAgentConfigWithApiKey,
 	createInitialSession,
@@ -65,8 +68,14 @@ export function useAgentSession(
 
 	const isReady = session.state === "ready";
 
-		const createSession = useCallback(
+	// Guards against stale createSession completions when switching agents rapidly.
+	// Each call increments the counter; on completion, if the counter has moved on,
+	// the result is discarded so the UI never shows a previous agent's models.
+	const creationCounterRef = useRef(0);
+
+	const createSession = useCallback(
 		async (overrideAgentId?: string) => {
+			const creationId = ++creationCounterRef.current;
 			const settings = settingsAccess.getSnapshot();
 			const agentId = overrideAgentId || getDefaultAgentId(settings);
 			const currentAgent = getCurrentAgent(settings, agentId);
@@ -93,12 +102,12 @@ export function useAgentSession(
 				const agentSettings = findAgentSettings(settings, agentId);
 
 				if (!agentSettings) {
+					if (creationCounterRef.current !== creationId) return;
 					setSession((prev) => ({ ...prev, state: "error" }));
 					setErrorInfo({
 						title: "Agent Not Found",
 						message: `Agent with ID "${agentId}" not found in settings`,
-						suggestion:
-							"Please check your agent configuration in settings.",
+						suggestion: "Please check your agent configuration in settings.",
 					});
 					return;
 				}
@@ -145,16 +154,16 @@ export function useAgentSession(
 					| undefined;
 
 				if (needsInitialize) {
-					const initResult =
-						await agentClient.initialize(agentConfig);
+					const initResult = await agentClient.initialize(agentConfig);
+					if (creationCounterRef.current !== creationId) return;
 					authMethods = initResult.authMethods;
 					promptCapabilities = initResult.promptCapabilities;
 					agentCapabilities = initResult.agentCapabilities;
 					agentInfo = initResult.agentInfo;
 				}
 
-				const sessionResult =
-					await agentClient.newSession(workingDirectory);
+				const sessionResult = await agentClient.newSession(workingDirectory);
+				if (creationCounterRef.current !== creationId) return;
 
 				setSession((prev) => ({
 					...prev,
@@ -173,6 +182,32 @@ export function useAgentSession(
 					lastActivityAt: new Date(),
 				}));
 
+				{
+					const snap = settingsAccess.getSnapshot();
+					void settingsAccess.updateSettings({
+						cachedAgentModels: {
+							...snap.cachedAgentModels,
+							[agentId]: sessionResult.models
+								? sessionResult.models.availableModels.map((m) => ({
+										modelId: m.modelId,
+										name: m.name,
+										description: m.description,
+									}))
+								: [],
+						},
+						cachedAgentModes: {
+							...snap.cachedAgentModes,
+							[agentId]: sessionResult.modes
+								? sessionResult.modes.availableModes.map((m) => ({
+										id: m.id,
+										name: m.name,
+										description: m.description,
+									}))
+								: [],
+						},
+					});
+				}
+
 				if (sessionResult.models && sessionResult.sessionId) {
 					const savedModelId = settings.lastUsedModels[agentId];
 					if (
@@ -187,6 +222,7 @@ export function useAgentSession(
 								sessionResult.sessionId,
 								savedModelId,
 							);
+							if (creationCounterRef.current !== creationId) return;
 							setSession((prev) => {
 								if (!prev.models) return prev;
 								return {
@@ -203,20 +239,21 @@ export function useAgentSession(
 					}
 				}
 			} catch (error) {
+				if (creationCounterRef.current !== creationId) return;
 				setSession((prev) => ({ ...prev, state: "error" }));
 				setErrorInfo({
 					title: "Session Creation Failed",
 					message: `Failed to create new session: ${error instanceof Error ? error.message : String(error)}`,
-					suggestion:
-						"Please check the agent configuration and try again.",
+					suggestion: "Please check the agent configuration and try again.",
 				});
 			}
 		},
 		[agentClient, settingsAccess, workingDirectory],
 	);
 
-		const loadSession = useCallback(
+	const loadSession = useCallback(
 		async (sessionId: string) => {
+			const creationId = ++creationCounterRef.current;
 			const settings = settingsAccess.getSnapshot();
 			const defaultAgentId = getDefaultAgentId(settings);
 			const currentAgent = getCurrentAgent(settings);
@@ -238,18 +275,15 @@ export function useAgentSession(
 			setErrorInfo(null);
 
 			try {
-				const agentSettings = findAgentSettings(
-					settings,
-					defaultAgentId,
-				);
+				const agentSettings = findAgentSettings(settings, defaultAgentId);
 
 				if (!agentSettings) {
+					if (creationCounterRef.current !== creationId) return;
 					setSession((prev) => ({ ...prev, state: "error" }));
 					setErrorInfo({
 						title: "Agent Not Found",
 						message: `Agent with ID "${defaultAgentId}" not found in settings`,
-						suggestion:
-							"Please check your agent configuration in settings.",
+						suggestion: "Please check your agent configuration in settings.",
 					});
 					return;
 				}
@@ -294,8 +328,8 @@ export function useAgentSession(
 					| undefined;
 
 				if (needsInitialize) {
-					const initResult =
-						await agentClient.initialize(agentConfig);
+					const initResult = await agentClient.initialize(agentConfig);
+					if (creationCounterRef.current !== creationId) return;
 					authMethods = initResult.authMethods;
 					promptCapabilities = initResult.promptCapabilities;
 					agentCapabilities = initResult.agentCapabilities;
@@ -305,6 +339,33 @@ export function useAgentSession(
 					sessionId,
 					workingDirectory,
 				);
+				if (creationCounterRef.current !== creationId) return;
+
+				{
+					const snap = settingsAccess.getSnapshot();
+					void settingsAccess.updateSettings({
+						cachedAgentModels: {
+							...snap.cachedAgentModels,
+							[defaultAgentId]: loadResult.models
+								? loadResult.models.availableModels.map((m) => ({
+										modelId: m.modelId,
+										name: m.name,
+										description: m.description,
+									}))
+								: [],
+						},
+						cachedAgentModes: {
+							...snap.cachedAgentModes,
+							[defaultAgentId]: loadResult.modes
+								? loadResult.modes.availableModes.map((m) => ({
+										id: m.id,
+										name: m.name,
+										description: m.description,
+									}))
+								: [],
+						},
+					});
+				}
 
 				setSession((prev) => ({
 					...prev,
@@ -322,6 +383,7 @@ export function useAgentSession(
 					lastActivityAt: new Date(),
 				}));
 			} catch (error) {
+				if (creationCounterRef.current !== creationId) return;
 				setSession((prev) => ({ ...prev, state: "error" }));
 				setErrorInfo({
 					title: "Session Loading Failed",
@@ -333,14 +395,14 @@ export function useAgentSession(
 		[agentClient, settingsAccess, workingDirectory],
 	);
 
-		const restartSession = useCallback(
+	const restartSession = useCallback(
 		async (newAgentId?: string) => {
 			await createSession(newAgentId);
 		},
 		[createSession],
 	);
 
-		const closeSession = useCallback(async () => {
+	const closeSession = useCallback(async () => {
 		if (session.sessionId) {
 			try {
 				await agentClient.cancel(session.sessionId);
@@ -362,7 +424,7 @@ export function useAgentSession(
 		}));
 	}, [agentClient, session.sessionId]);
 
-		const forceRestartAgent = useCallback(async () => {
+	const forceRestartAgent = useCallback(async () => {
 		const currentAgentId = session.agentId;
 
 		await agentClient.disconnect();
@@ -370,7 +432,7 @@ export function useAgentSession(
 		await createSession(currentAgentId);
 	}, [agentClient, session.agentId, createSession]);
 
-		const cancelOperation = useCallback(async () => {
+	const cancelOperation = useCallback(async () => {
 		if (!session.sessionId) {
 			return;
 		}
@@ -392,19 +454,19 @@ export function useAgentSession(
 		}
 	}, [agentClient, session.sessionId]);
 
-		const getAvailableAgents = useCallback(() => {
+	const getAvailableAgents = useCallback(() => {
 		const settings = settingsAccess.getSnapshot();
 		return getAvailableAgentsFromSettings(settings);
 	}, [settingsAccess]);
 
-		const updateAvailableCommands = useCallback((commands: SlashCommand[]) => {
+	const updateAvailableCommands = useCallback((commands: SlashCommand[]) => {
 		setSession((prev) => ({
 			...prev,
 			availableCommands: commands,
 		}));
 	}, []);
 
-		const updateCurrentMode = useCallback((modeId: string) => {
+	const updateCurrentMode = useCallback((modeId: string) => {
 		setSession((prev) => {
 			if (!prev.modes) {
 				return prev;
@@ -419,7 +481,7 @@ export function useAgentSession(
 		});
 	}, []);
 
-		const setMode = useCallback(
+	const setMode = useCallback(
 		async (modeId: string) => {
 			if (!session.sessionId) {
 				console.warn("Cannot set mode: no active session");
@@ -460,7 +522,7 @@ export function useAgentSession(
 		[agentClient, session.sessionId, session.modes?.currentModeId],
 	);
 
-		const setModel = useCallback(
+	const setModel = useCallback(
 		async (modelId: string) => {
 			if (!session.sessionId) {
 				console.warn("Cannot set model: no active session");
@@ -528,7 +590,7 @@ export function useAgentSession(
 		});
 	}, [agentClient]);
 
-		const updateSessionFromLoad = useCallback(
+	const updateSessionFromLoad = useCallback(
 		(
 			sessionId: string,
 			modes?: SessionModeState,

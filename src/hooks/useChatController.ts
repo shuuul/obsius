@@ -7,8 +7,6 @@ import { SessionHistoryModal } from "../components/chat/SessionHistoryModal";
 
 import { NoteMentionService } from "../adapters/obsidian/mention-service";
 import { getLogger } from "../shared/logger";
-import { ChatExporter } from "../shared/chat-exporter";
-
 import { ObsidianVaultAdapter } from "../adapters/obsidian/vault.adapter";
 
 import { useSettings } from "./useSettings";
@@ -18,7 +16,6 @@ import { useAutoMention } from "./useAutoMention";
 import { useAgentSession } from "./useAgentSession";
 import { useChat } from "./useChat";
 import { usePermission } from "./usePermission";
-import { useAutoExport } from "./useAutoExport";
 import { useSessionHistory } from "./useSessionHistory";
 import {
 	type UseChatControllerOptions,
@@ -112,8 +109,6 @@ export function useChatController(
 		autoMention.toggle,
 	);
 
-	const autoExport = useAutoExport(plugin);
-
 	const handleSessionLoad = useCallback(
 		(
 			sessionId: string,
@@ -132,8 +127,7 @@ export function useChatController(
 		[logger, agentSession],
 	);
 
-	const [isLoadingSessionHistory, setIsLoadingSessionHistory] =
-		useState(false);
+	const [isLoadingSessionHistory, setIsLoadingSessionHistory] = useState(false);
 
 	const handleLoadStart = useCallback(() => {
 		logger.log(
@@ -161,8 +155,7 @@ export function useChatController(
 		onLoadEnd: handleLoadEnd,
 	});
 
-	const errorInfo =
-		sessionErrorInfo || chat.errorInfo || permission.errorInfo;
+	const errorInfo = sessionErrorInfo || chat.errorInfo || permission.errorInfo;
 
 	const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
 	const [restoredMessage, setRestoredMessage] = useState<string | null>(null);
@@ -175,9 +168,7 @@ export function useChatController(
 	const activeAgentLabel = useMemo(() => {
 		const activeId = session.agentId;
 		if (activeId === plugin.settings.claude.id) {
-			return (
-				plugin.settings.claude.displayName || plugin.settings.claude.id
-			);
+			return plugin.settings.claude.displayName || plugin.settings.claude.id;
 		}
 		if (activeId === plugin.settings.opencode.id) {
 			return (
@@ -185,14 +176,10 @@ export function useChatController(
 			);
 		}
 		if (activeId === plugin.settings.codex.id) {
-			return (
-				plugin.settings.codex.displayName || plugin.settings.codex.id
-			);
+			return plugin.settings.codex.displayName || plugin.settings.codex.id;
 		}
 		if (activeId === plugin.settings.gemini.id) {
-			return (
-				plugin.settings.gemini.displayName || plugin.settings.gemini.id
-			);
+			return plugin.settings.gemini.displayName || plugin.settings.gemini.id;
 		}
 		const custom = plugin.settings.customAgents.find(
 			(agent) => agent.id === activeId,
@@ -218,10 +205,7 @@ export function useChatController(
 			});
 
 			if (isFirstMessage && session.sessionId) {
-				await sessionHistory.saveSessionLocally(
-					session.sessionId,
-					content,
-				);
+				await sessionHistory.saveSessionLocally(session.sessionId, content);
 				logger.log(
 					`[useChatController] Session saved locally: ${session.sessionId}`,
 				);
@@ -266,20 +250,10 @@ export function useChatController(
 				`[Debug] Creating new session${isAgentSwitch ? ` with agent: ${requestedAgentId}` : ""}...`,
 			);
 
-			if (messages.length > 0) {
-				await autoExport.autoExportIfEnabled(
-					"newChat",
-					messages,
-					session,
-				);
-			}
-
 			autoMention.toggle(false);
 			chat.clearMessages();
 
-			const newAgentId = isAgentSwitch
-				? requestedAgentId
-				: session.agentId;
+			const newAgentId = isAgentSwitch ? requestedAgentId : session.agentId;
 			await agentSession.restartSession(newAgentId);
 
 			sessionHistory.invalidateCache();
@@ -288,37 +262,12 @@ export function useChatController(
 			messages,
 			session,
 			logger,
-			autoExport,
 			autoMention,
 			chat,
 			agentSession,
 			sessionHistory,
 		],
 	);
-
-	const handleExportChat = useCallback(async () => {
-		if (messages.length === 0) {
-			pluginNotice("No messages to export");
-			return;
-		}
-
-		try {
-			const exporter = new ChatExporter(plugin);
-			const openFile = plugin.settings.exportSettings.openFileAfterExport;
-			const filePath = await exporter.exportToMarkdown(
-				messages,
-				session.agentDisplayName,
-				session.agentId,
-				session.sessionId || "unknown",
-				session.createdAt,
-				openFile,
-			);
-			pluginNotice(`Chat exported to ${filePath}`);
-		} catch (error) {
-			pluginNotice("Failed to export chat");
-			logger.error("Export error:", error);
-		}
-	}, [messages, session, plugin, logger]);
 
 	const handleSwitchAgent = useCallback(
 		async (agentId: string) => {
@@ -332,10 +281,6 @@ export function useChatController(
 	const handleRestartAgent = useCallback(async () => {
 		logger.log("[useChatController] Restarting agent process...");
 
-		if (messages.length > 0) {
-			await autoExport.autoExportIfEnabled("newChat", messages, session);
-		}
-
 		chat.clearMessages();
 
 		try {
@@ -345,7 +290,7 @@ export function useChatController(
 			pluginNotice("Failed to restart agent");
 			logger.error("Restart error:", error);
 		}
-	}, [logger, messages, session, autoExport, chat, agentSession]);
+	}, [logger, chat, agentSession]);
 
 	const handleClearError = useCallback(() => {
 		chat.clearError();
@@ -374,15 +319,61 @@ export function useChatController(
 	const handleSetMode = useCallback(
 		async (modeId: string) => {
 			await agentSession.setMode(modeId);
+
+			if (!session.models || !session.agentId) return;
+
+			const agentId = session.agentId;
+			const modeDefaults = settings.modeModelDefaults?.[agentId];
+			const lastModeModels = settings.lastModeModels?.[agentId];
+
+			const targetModelId = modeDefaults?.[modeId] ?? lastModeModels?.[modeId];
+
+			if (
+				targetModelId &&
+				targetModelId !== session.models.currentModelId &&
+				session.models.availableModels.some((m) => m.modelId === targetModelId)
+			) {
+				logger.log(
+					`[useChatController] Mode → model: switching to ${targetModelId} for mode ${modeId}`,
+				);
+				await agentSession.setModel(targetModelId);
+			}
 		},
-		[agentSession],
+		[
+			agentSession,
+			session.models,
+			session.agentId,
+			settings.modeModelDefaults,
+			settings.lastModeModels,
+			logger,
+		],
 	);
 
 	const handleSetModel = useCallback(
 		async (modelId: string) => {
 			await agentSession.setModel(modelId);
+
+			const agentId = session.agentId;
+			const currentModeId = session.modes?.currentModeId;
+			if (agentId && currentModeId) {
+				void plugin.settingsStore.updateSettings({
+					lastModeModels: {
+						...settings.lastModeModels,
+						[agentId]: {
+							...settings.lastModeModels?.[agentId],
+							[currentModeId]: modelId,
+						},
+					},
+				});
+			}
 		},
-		[agentSession],
+		[
+			agentSession,
+			session.agentId,
+			session.modes?.currentModeId,
+			settings.lastModeModels,
+			plugin.settingsStore,
+		],
 	);
 
 	useEffect(() => {
@@ -411,28 +402,91 @@ export function useChatController(
 		logger,
 	]);
 
-	const messagesRef = useRef(messages);
-	const sessionRef = useRef(session);
-	const autoExportRef = useRef(autoExport);
+	const candidateModels = settings.candidateModels;
+	const filteredModels = useMemo(() => {
+		if (!session.models) return undefined;
+
+		const agentId = session.agentId;
+		const candidates = candidateModels?.[agentId];
+		if (!candidates || candidates.length === 0) {
+			return session.models;
+		}
+
+		const available = session.models.availableModels;
+		const validCandidates = candidates.filter((id) =>
+			available.some((m) => m.modelId === id),
+		);
+
+		if (validCandidates.length === 0) {
+			return session.models;
+		}
+
+		const filtered = available.filter((m) =>
+			validCandidates.includes(m.modelId),
+		);
+
+		const currentInFiltered = filtered.some(
+			(m) => m.modelId === session.models!.currentModelId,
+		);
+		const effectiveModelId = currentInFiltered
+			? session.models.currentModelId
+			: filtered[0].modelId;
+
+		return {
+			availableModels: filtered,
+			currentModelId: effectiveModelId,
+		};
+	}, [session.models, session.agentId, candidateModels]);
+
+	useEffect(() => {
+		if (!filteredModels || !session.models || !session.sessionId) return;
+
+		if (filteredModels.currentModelId !== session.models.currentModelId) {
+			logger.log(
+				`[useChatController] Current model not in candidates, switching to ${filteredModels.currentModelId}`,
+			);
+			void agentSession.setModel(filteredModels.currentModelId);
+		}
+	}, [filteredModels, session.models, session.sessionId, agentSession, logger]);
+
+	useEffect(() => {
+		if (!session.models || !session.agentId) return;
+
+		const agentId = session.agentId;
+		const candidates = candidateModels?.[agentId];
+		if (!candidates || candidates.length === 0) return;
+
+		const available = session.models.availableModels;
+		const validCandidates = candidates.filter((id) =>
+			available.some((m) => m.modelId === id),
+		);
+
+		if (validCandidates.length < candidates.length) {
+			logger.log(
+				`[useChatController] Pruning ${candidates.length - validCandidates.length} stale candidate model(s) for ${agentId}`,
+			);
+			void plugin.settingsStore.updateSettings({
+				candidateModels: {
+					...candidateModels,
+					[agentId]: validCandidates,
+				},
+			});
+		}
+	}, [
+		session.models,
+		session.agentId,
+		candidateModels,
+		plugin.settingsStore,
+		logger,
+	]);
+
 	const closeSessionRef = useRef(agentSession.closeSession);
-	messagesRef.current = messages;
-	sessionRef.current = session;
-	autoExportRef.current = autoExport;
 	closeSessionRef.current = agentSession.closeSession;
 
 	useEffect(() => {
 		return () => {
-			logger.log(
-				"[useChatController] Cleanup: auto-export and close session",
-			);
-			void (async () => {
-				await autoExportRef.current.autoExportIfEnabled(
-					"closeChat",
-					messagesRef.current,
-					sessionRef.current,
-				);
-				await closeSessionRef.current();
-			})();
+			logger.log("[useChatController] Cleanup: close session");
+			void closeSessionRef.current();
 		};
 	}, [logger]);
 
@@ -491,12 +545,7 @@ export function useChatController(
 		const wasSending = prevIsSendingRef.current;
 		prevIsSendingRef.current = isSending;
 
-		if (
-			wasSending &&
-			!isSending &&
-			session.sessionId &&
-			messages.length > 0
-		) {
+		if (wasSending && !isSending && session.sessionId && messages.length > 0) {
 			sessionHistory.saveSessionMessages(session.sessionId, messages);
 			logger.log(
 				`[useChatController] Session messages saved: ${session.sessionId}`,
@@ -544,7 +593,6 @@ export function useChatController(
 		autoMention,
 		slashCommands,
 		sessionHistory,
-		autoExport,
 
 		activeAgentLabel,
 		availableAgents,
@@ -553,7 +601,6 @@ export function useChatController(
 		handleSendMessage,
 		handleStopGeneration,
 		handleNewChat,
-		handleExportChat,
 		handleSwitchAgent,
 		handleRestartAgent,
 		handleClearError,
@@ -561,6 +608,7 @@ export function useChatController(
 		handleForkSession,
 		handleDeleteSession,
 		handleOpenHistory,
+		filteredModels,
 		handleSetMode,
 		handleSetModel,
 

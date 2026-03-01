@@ -140,13 +140,8 @@ export async function requestPermissionOperation(args: {
 	updateMessage: (toolCallId: string, content: MessageContent) => void;
 	sessionUpdateCallback: ((update: SessionUpdate) => void) | null;
 }): Promise<acp.RequestPermissionResponse> {
-	const {
-		params,
-		logger,
-		autoAllowPermissions,
-		state,
-		sessionUpdateCallback,
-	} = args;
+	const { params, logger, autoAllowPermissions, state, sessionUpdateCallback } =
+		args;
 
 	logger.log("[AcpAdapter] Permission request received:", params);
 	if (autoAllowPermissions) {

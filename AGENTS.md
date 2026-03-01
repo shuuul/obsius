@@ -39,13 +39,13 @@ src/
 ## Architecture: Hook Composition Pattern
 
 ```
-ChatView.tsx / FloatingChatView.tsx
-    └── useChatController()  ← Central coordinator (~570 lines)
+ChatView.tsx
+    └── useChatController()  ← Central coordinator
             ├── Creates adapters via useMemo:
             │   ├── AcpAdapter (from plugin registry)
             │   ├── ObsidianVaultAdapter
             │   └── NoteMentionService
-            └── Composes 9 hooks:
+            └── Composes 8 hooks:
                 ├── useSettings()          → useSyncExternalStore subscription
                 ├── useAgentSession()      → session lifecycle, agent switching
                 ├── useChat()              → messages, streaming, tool calls
@@ -53,7 +53,6 @@ ChatView.tsx / FloatingChatView.tsx
                 ├── useMentions()          → @[[note]] suggestions
                 ├── useSlashCommands()     → /command suggestions
                 ├── useAutoMention()       → active note tracking
-                ├── useAutoExport()        → markdown export
                 └── useSessionHistory()    → session list, load, resume, fork
 ```
 
@@ -83,7 +82,7 @@ Agent response → AcpAdapter.sessionUpdate() → onSessionUpdate callback
 ### Obsidian Plugin Rules (CRITICAL)
 1. **No innerHTML/outerHTML** — use `createEl`/`createDiv`/`createSpan`
 2. **NO detach leaves in onunload** — this is an antipattern
-3. **Styles in CSS only** — no JS style manipulation (except floating window position, font size CSS var)
+3. **Styles in CSS only** — no JS style manipulation (except font size CSS var)
 4. **Use `Platform.isWin/isMacOS/isLinux`** — never `process.platform`
 5. **Minimize `any`** — use proper types
 6. **Desktop only** — `ChatView` throws if `!Platform.isDesktopApp`
@@ -128,12 +127,12 @@ npm run docs:build       # VitePress build
 ## Notes
 - **Tests exist**: Vitest is configured with coverage gates for new reducer/routing/schema modules
 - **CI**: PR workflow enforces typecheck, lint, tests with coverage, plugin build, and docs build
-- **Multi-session**: `ChatViewRegistry` manages sidebar + floating views with independent ACP sessions
+- **Multi-session**: `ChatViewRegistry` manages sidebar views with independent ACP sessions
 - **Session history**: Agent-side (`listSessions`) + local persistence (`sessions/{id}.json`)
 - **Current decomposition state**:
   - `src/plugin.ts` is now a thin orchestrator; command/update/view helpers moved to `src/plugin/`
   - `src/adapters/acp/acp.adapter.ts` is now a composition root; core logic moved to concern modules under `src/adapters/acp/`
-  - `ChatView.tsx` (~576 LOC), `FloatingChatView.tsx` (~523 LOC), `ToolCallRenderer.tsx` (~173 LOC) — decomposed via extracted hooks (`useWorkspaceEvents`, `useFloatingWindow`) and `DiffRenderer.tsx`
+  - `ChatView.tsx` (~547 LOC), `ToolCallRenderer.tsx` (~173 LOC) — decomposed via extracted hooks (`useWorkspaceEvents`) and `DiffRenderer.tsx`
 - **TODOs in code**: `TODO(code-block)` markers for future code block chat view feature
 - **Undocumented API**: `vault.adapter.ts:211` uses `editor.cm` (CodeMirror 6 internal) for selection tracking
 - **ACP SDK**: `@agentclientprotocol/sdk ^0.14.1` — protocol may evolve

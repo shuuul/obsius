@@ -63,9 +63,8 @@ export class TerminalManager {
 		if (Platform.isWin && this.plugin.settings.windowsWslMode) {
 			// Extract node directory from settings for PATH (if available)
 			const nodeDir = this.plugin.settings.nodePath
-				? resolveCommandDirectory(
-						this.plugin.settings.nodePath.trim(),
-					) || undefined
+				? resolveCommandDirectory(this.plugin.settings.nodePath.trim()) ||
+					undefined
 				: undefined;
 
 			const wslWrapped = wrapCommandForWsl(
@@ -116,8 +115,7 @@ export class TerminalManager {
 		});
 
 		// Use shell on Windows (non-WSL) for proper command handling
-		const needsShell =
-			Platform.isWin && !this.plugin.settings.windowsWslMode;
+		const needsShell = Platform.isWin && !this.plugin.settings.windowsWslMode;
 
 		// Spawn the process
 		const spawnOptions: SpawnOptions = {
@@ -142,10 +140,7 @@ export class TerminalManager {
 
 		// Handle spawn errors
 		childProcess.on("error", (error) => {
-			this.logger.log(
-				`[Terminal ${terminalId}] Process error:`,
-				error.message,
-			);
+			this.logger.log(`[Terminal ${terminalId}] Process error:`, error.message);
 			// Set exit status to indicate failure
 			const exitStatus = { exitCode: 127, signal: null }; // 127 = command not found
 			terminal.exitStatus = exitStatus;
@@ -189,8 +184,7 @@ export class TerminalManager {
 		// Apply output byte limit if specified
 		if (
 			terminal.outputByteLimit &&
-			Buffer.byteLength(terminal.output, "utf8") >
-				terminal.outputByteLimit
+			Buffer.byteLength(terminal.output, "utf8") > terminal.outputByteLimit
 		) {
 			// Truncate from the beginning, ensuring we stay at character boundaries
 			const bytes = Buffer.from(terminal.output, "utf8");
@@ -212,8 +206,7 @@ export class TerminalManager {
 		return {
 			output: terminal.output,
 			truncated: terminal.outputByteLimit
-				? Buffer.byteLength(terminal.output, "utf8") >=
-					terminal.outputByteLimit
+				? Buffer.byteLength(terminal.output, "utf8") >= terminal.outputByteLimit
 				: false,
 			exitStatus: terminal.exitStatus,
 		};
@@ -224,9 +217,7 @@ export class TerminalManager {
 	): Promise<{ exitCode: number | null; signal: string | null }> {
 		const terminal = this.terminals.get(terminalId);
 		if (!terminal) {
-			return Promise.reject(
-				new Error(`Terminal ${terminalId} not found`),
-			);
+			return Promise.reject(new Error(`Terminal ${terminalId} not found`));
 		}
 
 		if (terminal.exitStatus) {

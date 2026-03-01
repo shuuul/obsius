@@ -174,10 +174,7 @@ export class ChatViewRegistry {
 	/**
 	 * Execute action on views of a specific type.
 	 */
-	toType(
-		type: ChatViewType,
-		action: (view: IChatViewContainer) => void,
-	): void {
+	toType(type: ChatViewType, action: (view: IChatViewContainer) => void): void {
 		this.views.forEach((view) => {
 			if (view.viewType === type) action(view);
 		});
@@ -198,9 +195,7 @@ export class ChatViewRegistry {
 	 * Get views of a specific type.
 	 */
 	getByType(type: ChatViewType): IChatViewContainer[] {
-		return Array.from(this.views.values()).filter(
-			(v) => v.viewType === type,
-		);
+		return Array.from(this.views.values()).filter((v) => v.viewType === type);
 	}
 
 	/**

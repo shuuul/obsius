@@ -1,60 +1,164 @@
 import * as React from "react";
-import { HeaderButton } from "./HeaderButton";
 
-/**
- * Props for ChatHeader component
- */
-export interface ChatHeaderProps {
-	/** Display name of the active agent */
-	agentLabel: string;
-	/** Whether a plugin update is available */
-	isUpdateAvailable: boolean;
-	/** Whether session history is supported (show History button) */
-	hasHistoryCapability?: boolean;
-	/** Callback to create a new chat session */
-	onNewChat: () => void;
-	/** Callback to export the chat */
-	onExportChat: () => void;
-	/** Callback to show the header menu at the click position */
-	onShowMenu: (e: React.MouseEvent<HTMLButtonElement>) => void;
-	/** Callback to open session history */
-	onOpenHistory?: () => void;
+const { useState, useRef, useEffect, useCallback } = React;
+
+import { setIcon } from "obsidian";
+import { HeaderButton } from "./HeaderButton";
+import { TabBar, type TabItem } from "./TabBar";
+
+interface AgentInfo {
+	id: string;
+	displayName: string;
 }
 
-/**
- * Header component for the chat view.
- *
- * Displays:
- * - Agent name
- * - Update notification (if available)
- * - Action buttons (new chat, history, export, settings)
- */
+export interface ChatHeaderProps {
+	agentLabel: string;
+	availableAgents: AgentInfo[];
+	currentAgentId: string;
+	isUpdateAvailable: boolean;
+	onAgentChange: (agentId: string) => void;
+	onNewTab: () => void;
+	onNewSession: () => void;
+	onOpenSettings: () => void;
+	onOpenHistory?: () => void;
+	tabs: TabItem[];
+	activeTabId: string;
+	canAddTab: boolean;
+	canCloseTab: boolean;
+	onTabClick: (tabId: string) => void;
+	onTabClose: (tabId: string) => void;
+}
+
 export function ChatHeader({
 	agentLabel,
+	availableAgents,
+	currentAgentId,
 	isUpdateAvailable,
-	hasHistoryCapability = false,
-	onNewChat,
-	onExportChat,
-	onShowMenu,
+	onAgentChange,
+	onNewTab,
+	onNewSession,
+	onOpenSettings,
 	onOpenHistory,
+	tabs,
+	activeTabId,
+	canAddTab,
+	canCloseTab,
+	onTabClick,
+	onTabClose,
 }: ChatHeaderProps) {
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+	const chevronRef = useRef<HTMLSpanElement>(null);
+
+	const hasMultipleAgents = availableAgents.length > 1;
+
+	useEffect(() => {
+		if (chevronRef.current) {
+			setIcon(chevronRef.current, "chevron-down");
+		}
+	}, []);
+
+	const handleTitleClick = useCallback(() => {
+		if (hasMultipleAgents) {
+			setIsDropdownOpen((prev) => !prev);
+		}
+	}, [hasMultipleAgents]);
+
+	const handleAgentSelect = useCallback(
+		(agentId: string) => {
+			if (agentId !== currentAgentId) {
+				onAgentChange(agentId);
+			}
+			setIsDropdownOpen(false);
+		},
+		[currentAgentId, onAgentChange],
+	);
+
+	useEffect(() => {
+		if (!isDropdownOpen) return;
+
+		const handleClickOutside = (e: MouseEvent) => {
+			if (
+				dropdownRef.current &&
+				!dropdownRef.current.contains(e.target as Node)
+			) {
+				setIsDropdownOpen(false);
+			}
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, [isDropdownOpen]);
+
 	return (
 		<div className="agent-client-chat-view-header">
-			<div className="agent-client-chat-view-header-main">
-				<h3 className="agent-client-chat-view-header-title">
+			<div className="agent-client-chat-view-header-main" ref={dropdownRef}>
+				<h3
+					className={`agent-client-chat-view-header-title${hasMultipleAgents ? " agent-client-chat-view-header-title--clickable" : ""}`}
+					onClick={handleTitleClick}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault();
+							handleTitleClick();
+						}
+					}}
+				>
 					{agentLabel}
+					{hasMultipleAgents && (
+						<span
+							className={`agent-client-chat-view-header-chevron${isDropdownOpen ? " agent-client-chat-view-header-chevron--open" : ""}`}
+							ref={chevronRef}
+						/>
+					)}
 				</h3>
+				{isDropdownOpen && (
+					<div className="agent-client-header-agent-dropdown">
+						{availableAgents.map((agent) => (
+							<div
+								key={agent.id}
+								role="option"
+								tabIndex={0}
+								aria-selected={agent.id === currentAgentId}
+								className={`agent-client-header-agent-dropdown-item${agent.id === currentAgentId ? " agent-client-header-agent-dropdown-item--active" : ""}`}
+								onClick={() => handleAgentSelect(agent.id)}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										handleAgentSelect(agent.id);
+									}
+								}}
+							>
+								{agent.displayName}
+							</div>
+						))}
+					</div>
+				)}
 			</div>
+
+			<TabBar
+				tabs={tabs}
+				activeTabId={activeTabId}
+				onTabClick={onTabClick}
+				onTabClose={onTabClose}
+				canCloseTab={canCloseTab}
+			/>
+
 			{isUpdateAvailable && (
-				<p className="agent-client-chat-view-header-update">
-					Plugin update available!
-				</p>
+				<span className="agent-client-chat-view-header-update">Update</span>
 			)}
+
 			<div className="agent-client-chat-view-header-actions">
+				{canAddTab && (
+					<HeaderButton
+						iconName="square-plus"
+						tooltip="New tab"
+						onClick={onNewTab}
+					/>
+				)}
 				<HeaderButton
-					iconName="plus"
-					tooltip="New chat"
-					onClick={onNewChat}
+					iconName="square-pen"
+					tooltip="New session"
+					onClick={onNewSession}
 				/>
 				{onOpenHistory && (
 					<HeaderButton
@@ -64,14 +168,9 @@ export function ChatHeader({
 					/>
 				)}
 				<HeaderButton
-					iconName="save"
-					tooltip="Export chat to Markdown"
-					onClick={onExportChat}
-				/>
-				<HeaderButton
-					iconName="more-vertical"
-					tooltip="More"
-					onClick={onShowMenu}
+					iconName="settings"
+					tooltip="Plugin settings"
+					onClick={onOpenSettings}
 				/>
 			</div>
 		</div>

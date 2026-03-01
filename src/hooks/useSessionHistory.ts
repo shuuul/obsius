@@ -1,9 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import type { IAgentClient } from "../domain/ports/agent-client.port";
 import type { ISettingsAccess } from "../domain/ports/settings-access.port";
-import type {
-	SessionInfo,
-} from "../domain/models/session-info";
+import type { SessionInfo } from "../domain/models/session-info";
 import type {
 	ChatSession,
 	SessionModeState,
@@ -280,9 +278,7 @@ export function useSessionHistory(
 				}));
 
 				setSessions(sessionInfos);
-				setLocalSessionIds(
-					new Set(localSessions.map((s) => s.sessionId)),
-				);
+				setLocalSessionIds(new Set(localSessions.map((s) => s.sessionId)));
 				setNextCursor(undefined); // No pagination for local sessions
 				setError(null);
 				return;
@@ -295,9 +291,7 @@ export function useSessionHistory(
 					session.agentId,
 					cwd,
 				);
-				setLocalSessionIds(
-					new Set(localSessions.map((s) => s.sessionId)),
-				);
+				setLocalSessionIds(new Set(localSessions.map((s) => s.sessionId)));
 				setSessions(cacheRef.current!.sessions);
 				setNextCursor(cacheRef.current!.nextCursor);
 				setError(null);
@@ -327,8 +321,7 @@ export function useSessionHistory(
 					timestamp: Date.now(),
 				};
 			} catch (err) {
-				const errorMessage =
-					err instanceof Error ? err.message : String(err);
+				const errorMessage = err instanceof Error ? err.message : String(err);
 				setError(`Failed to fetch sessions: ${errorMessage}`);
 				setSessions([]);
 				setNextCursor(undefined);
@@ -383,8 +376,7 @@ export function useSessionHistory(
 				};
 			}
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : String(err);
+			const errorMessage = err instanceof Error ? err.message : String(err);
 			setError(`Failed to load more sessions: ${errorMessage}`);
 		} finally {
 			setLoading(false);
@@ -422,8 +414,7 @@ export function useSessionHistory(
 					onLoadEnd,
 				});
 			} catch (err) {
-				const errorMessage =
-					err instanceof Error ? err.message : String(err);
+				const errorMessage = err instanceof Error ? err.message : String(err);
 				setError(`Failed to restore session: ${errorMessage}`);
 				throw err; // Re-throw to allow caller to handle
 			} finally {
@@ -465,8 +456,7 @@ export function useSessionHistory(
 					invalidateCache,
 				});
 			} catch (err) {
-				const errorMessage =
-					err instanceof Error ? err.message : String(err);
+				const errorMessage = err instanceof Error ? err.message : String(err);
 				setError(`Failed to fork session: ${errorMessage}`);
 				throw err; // Re-throw to allow caller to handle
 			} finally {
@@ -495,15 +485,12 @@ export function useSessionHistory(
 				await settingsAccess.deleteSession(sessionId);
 
 				// Remove from local state
-				setSessions((prev) =>
-					prev.filter((s) => s.sessionId !== sessionId),
-				);
+				setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
 
 				// Invalidate cache to ensure consistency
 				invalidateCache();
 			} catch (err) {
-				const errorMessage =
-					err instanceof Error ? err.message : String(err);
+				const errorMessage = err instanceof Error ? err.message : String(err);
 				setError(`Failed to delete session: ${errorMessage}`);
 				throw err; // Re-throw to allow caller to handle
 			}
