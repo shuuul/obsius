@@ -88,8 +88,8 @@ If your plugin does not need CSS, delete this file.
 
 /* ===== Header Button Component ===== */
 .obsius-header-button {
-	width: 20px;
-	height: 20px;
+	width: 28px;
+	height: 28px;
 	padding: 0 !important;
 	margin: 0 !important;
 	border: none !important;
@@ -100,7 +100,6 @@ If your plugin does not need CSS, delete this file.
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 16px;
 	outline: none !important;
 	appearance: none;
 	box-shadow: none !important;
@@ -110,6 +109,8 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-header-button svg {
+	width: 20px;
+	height: 20px;
 	color: var(--text-muted);
 	transition: color 0.2s ease;
 }
@@ -528,8 +529,8 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-chat-view-header-chevron svg {
-	width: 14px;
-	height: 14px;
+	width: 16px;
+	height: 16px;
 }
 
 .obsius-chat-view-header-chevron--open {
