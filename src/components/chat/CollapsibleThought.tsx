@@ -9,10 +9,29 @@ interface CollapsibleThoughtProps {
 	plugin: AgentClientPlugin;
 }
 
+const SHORT_THOUGHT_MAX_CHARS = 120;
+const SHORT_THOUGHT_MAX_LINES = 2;
+
 export function CollapsibleThought({ text, plugin }: CollapsibleThoughtProps) {
+	const normalized = text.trim();
+	const lineCount = normalized.split(/\r?\n/).length;
+	const isShortThought =
+		normalized.length <= SHORT_THOUGHT_MAX_CHARS &&
+		lineCount <= SHORT_THOUGHT_MAX_LINES;
+
+	if (isShortThought) {
+		return (
+			<div className="ac-thought-inline">
+				<ObsidianIcon name="brain" className="ac-tool-icon" />
+				<span className="ac-row__title ac-thought__label">Thinking</span>
+				<span className="ac-thought-inline-text">{normalized}</span>
+			</div>
+		);
+	}
+
 	return (
 		<CollapsibleSection
-			className="ac-thought"
+			className="ac-thought ac-thought--long"
 			defaultExpanded={false}
 			header={
 				<>

@@ -21,7 +21,6 @@ import {
 	type PreparePromptInput,
 	type PreparePromptResult,
 } from "./types";
-
 export async function preparePrompt(
 	input: PreparePromptInput,
 	vaultAccess: IVaultAccess,
@@ -77,7 +76,6 @@ async function preparePromptWithEmbeddedContext(
 					content.substring(0, maxNoteLen) +
 					`\n\n[Note: Truncated from ${content.length} to ${maxNoteLen} characters]`;
 			}
-
 			let absolutePath = input.vaultBasePath
 				? `${input.vaultBasePath}/${file.path}`
 				: file.path;

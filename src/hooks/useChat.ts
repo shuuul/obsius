@@ -344,6 +344,7 @@ export function useChat(
 
 				case "available_commands_update":
 				case "current_mode_update":
+				case "usage_update":
 					break;
 
 				default: {

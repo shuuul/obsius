@@ -20,7 +20,15 @@ export interface UsePickerReturn {
 	setSelectedIndex: (index: number) => void;
 }
 
-export function usePicker(providers: PickerProvider[]): UsePickerReturn {
+export type PickerSortFn = (
+	items: PickerItem[],
+	query: string,
+) => PickerItem[];
+
+export function usePicker(
+	providers: PickerProvider[],
+	sortFn?: PickerSortFn,
+): UsePickerReturn {
 	const [isOpen, setIsOpen] = useState(false);
 	const [query, setQueryState] = useState("");
 	const [items, setItems] = useState<PickerItem[]>([]);
@@ -29,6 +37,9 @@ export function usePicker(providers: PickerProvider[]): UsePickerReturn {
 
 	const providersRef = useRef(providers);
 	providersRef.current = providers;
+
+	const sortFnRef = useRef(sortFn);
+	sortFnRef.current = sortFn;
 
 	const searchIdRef = useRef(0);
 
@@ -42,7 +53,10 @@ export function usePicker(providers: PickerProvider[]): UsePickerReturn {
 			allItems.push(...result);
 		}
 
-		setItems(allItems);
+		const sorted = sortFnRef.current
+			? sortFnRef.current(allItems, q)
+			: allItems;
+		setItems(sorted);
 		setSelectedIndex(0);
 		setPreview(null);
 	}, []);

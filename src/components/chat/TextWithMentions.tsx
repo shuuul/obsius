@@ -1,4 +1,5 @@
 import * as React from "react";
+import { TFolder } from "obsidian";
 import type AgentClientPlugin from "../../plugin";
 import { getFileIcon } from "./chat-input/file-icons";
 import { ObsidianIcon } from "./ObsidianIcon";
@@ -8,6 +9,7 @@ import {
 	parseChatContextToken,
 	type ChatContextReference,
 } from "../../shared/chat-context-token";
+import { parseSlashCommandToken } from "../../shared/slash-command-token";
 
 interface TextWithMentionsProps {
 	text: string;
@@ -73,14 +75,33 @@ function renderContextBadge(
 	);
 }
 
+function renderSlashCommandBadge(
+	commandName: string,
+	key: string,
+): React.ReactElement {
+	return (
+		<span
+			key={key}
+			className="obsius-inline-mention-badge obsius-inline-slash-badge"
+		>
+			<ObsidianIcon
+				name="terminal"
+				className="obsius-inline-mention-icon"
+				size={12}
+			/>
+			<span className="obsius-inline-mention-name">/{commandName}</span>
+		</span>
+	);
+}
+
 // Function to render text with @mentions and optional auto-mention
 export function TextWithMentions({
 	text,
 	plugin,
 	autoMentionContext,
 }: TextWithMentionsProps): React.ReactElement {
-	// Match @[[filename]] and context token format
-	const mentionRegex = /@\[obsius-context:[A-Za-z0-9_-]+\]|@\[\[([^\]]+)\]\]/g;
+	// Match @[[filename]], context tokens, and slash command tokens
+	const mentionRegex = /@\[obsius-context:[A-Za-z0-9_-]+\]|@\[obsius-slash:([^\]]+)\]|@\[\[([^\]]+)\]\]/g;
 	const parts: React.ReactNode[] = [];
 
 	if (autoMentionContext) {
@@ -141,31 +162,73 @@ export function TextWithMentions({
 			} else {
 				parts.push(token);
 			}
+		} else if (token.startsWith("@[obsius-slash:")) {
+			const cmdName = parseSlashCommandToken(token);
+			if (cmdName) {
+				parts.push(
+					renderSlashCommandBadge(cmdName, `slash-token-${match.index}`),
+				);
+			} else {
+				parts.push(token);
+			}
 		} else {
-			// Extract filename from [[brackets]]
-			const noteName = match[1];
+			const noteName = match[2];
 
-			// Check if file actually exists
 			const file = plugin.app.vault
 				.getMarkdownFiles()
 				.find((f) => f.basename === noteName);
 
 			if (file) {
-				// File exists - render as clickable mention
 				parts.push(
 					<span
 						key={match.index}
-						className="obsius-text-mention"
+						className="obsius-inline-mention-badge obsius-inline-context-badge obsius-inline-context-badge-clickable"
+						title={file.path}
 						onClick={() => {
 							void plugin.app.workspace.openLinkText(file.path, "");
 						}}
+						role="button"
+						tabIndex={0}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								void plugin.app.workspace.openLinkText(file.path, "");
+							}
+						}}
 					>
-						@{noteName}
+						<ObsidianIcon
+							name={getFileIcon(file.path)}
+							className="obsius-inline-mention-icon"
+							size={12}
+						/>
+						<span className="obsius-inline-mention-name">
+							{noteName}
+						</span>
 					</span>,
 				);
 			} else {
-				// File doesn't exist - render as plain text
-				parts.push(`@${noteName}`);
+				const abstractFile =
+					plugin.app.vault.getAbstractFileByPath(noteName);
+				if (abstractFile instanceof TFolder) {
+					parts.push(
+						<span
+							key={match.index}
+							className="obsius-inline-mention-badge obsius-inline-context-badge"
+							title={abstractFile.path}
+						>
+							<ObsidianIcon
+								name="folder"
+								className="obsius-inline-mention-icon"
+								size={12}
+							/>
+							<span className="obsius-inline-mention-name">
+								{noteName}
+							</span>
+						</span>,
+					);
+				} else {
+					parts.push(`@${noteName}`);
+				}
 			}
 		}
 

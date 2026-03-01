@@ -51,6 +51,55 @@ export function getModelIcon(modelId: string, modelName: string): string {
 }
 
 /**
+ * Maps agent ID / display name patterns to @lobehub/icons CDN slugs.
+ */
+const AGENT_SLUG_PATTERNS: [RegExp, string][] = [
+	[/claude/i, "claudecode"],
+	[/codex/i, "codex"],
+	[/gemini/i, "gemini"],
+	[/opencode/i, "opencode"],
+	[/amp\b/i, "amp"],
+	[/cline/i, "cline"],
+	[/cursor/i, "cursor"],
+];
+
+/**
+ * Get the @lobehub/icons CDN slug for a given agent.
+ * Returns null if no matching icon is found.
+ */
+export function getAgentSlug(
+	agentId: string,
+	displayName: string,
+): string | null {
+	const combined = `${agentId} ${displayName}`;
+	for (const [pattern, slug] of AGENT_SLUG_PATTERNS) {
+		if (pattern.test(combined)) return slug;
+	}
+	return null;
+}
+
+const AGENT_FALLBACK_ICONS: [RegExp, string][] = [
+	[/claude/i, "sparkles"],
+	[/codex/i, "code-2"],
+	[/gemini/i, "star"],
+	[/opencode/i, "terminal"],
+];
+
+/**
+ * Get a Lucide fallback icon for agents without a lobe-icons slug.
+ */
+export function getAgentFallbackIcon(
+	agentId: string,
+	displayName: string,
+): string {
+	const combined = `${agentId} ${displayName}`;
+	for (const [pattern, icon] of AGENT_FALLBACK_ICONS) {
+		if (pattern.test(combined)) return icon;
+	}
+	return "bot";
+}
+
+/**
  * Maps provider name patterns to @lobehub/icons CDN slugs.
  * Slugs correspond to SVG filenames at:
  *   https://unpkg.com/@lobehub/icons-static-svg@latest/icons/{slug}.svg

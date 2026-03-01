@@ -65,6 +65,9 @@ export function MessageRenderer({
 		<div
 			className={`obsius-message-renderer ${message.role === "user" ? "obsius-message-user" : "obsius-message-assistant"}`}
 		>
+			{message.role === "user" && (
+				<div className="obsius-message-user-titlebar">User Prompt</div>
+			)}
 			{groups.map((group, idx) => {
 				if (group.type === "images") {
 					// Render images in horizontal scroll container

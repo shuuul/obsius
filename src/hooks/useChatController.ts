@@ -96,6 +96,11 @@ export function useChatController(
 
 	const { messages, isSending } = chat;
 
+	const [contextUsage, setContextUsage] = useState<{
+		size: number;
+		used: number;
+	} | null>(null);
+
 	const permission = usePermission(acpAdapter, messages);
 
 	const mentions = useMentions(vaultAccessAdapter, plugin);
@@ -225,6 +230,7 @@ export function useChatController(
 			autoMention.toggle(false);
 			setInputValue("");
 			setAttachedImages([]);
+			setContextUsage(null);
 			chat.clearMessages();
 
 			const newAgentId = isAgentSwitch ? requestedAgentId : session.agentId;
@@ -416,6 +422,11 @@ export function useChatController(
 				return;
 			}
 
+			if (update.type === "usage_update") {
+				setContextUsage({ size: update.size, used: update.used });
+				return;
+			}
+
 			chat.handleSessionUpdate(update);
 
 			if (update.type === "available_commands_update") {
@@ -520,5 +531,6 @@ export function useChatController(
 		setAttachedImages,
 		restoredMessage,
 		handleRestoredMessageConsumed,
+		contextUsage,
 	};
 }

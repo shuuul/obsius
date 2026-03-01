@@ -21,10 +21,11 @@ import {
 	FolderPickerProvider,
 } from "../picker/mention-provider";
 import { CommandPickerProvider } from "../picker/command-provider";
-import { usePicker } from "../../hooks/usePicker";
+import { usePicker, type PickerSortFn } from "../../hooks/usePicker";
 import { classifyCommands } from "../../shared/command-classification";
 import { ErrorOverlay } from "./ErrorOverlay";
 import { ImagePreviewStrip, type AttachedImage } from "./ImagePreviewStrip";
+import type { ContextUsage } from "./chat-input/ContextUsageMeter";
 import { InputActions, type SendButtonState } from "./chat-input/InputActions";
 import {
 	RichTextarea,
@@ -70,6 +71,7 @@ export interface ChatInputProps {
 	onClearError: () => void;
 	messages: ChatMessage[];
 	vaultAccess: IVaultAccess;
+	contextUsage?: ContextUsage | null;
 }
 
 export function ChatInput({
@@ -101,6 +103,7 @@ export function ChatInput({
 	onClearError,
 	messages,
 	vaultAccess,
+	contextUsage,
 }: ChatInputProps) {
 	const settings = useSettings(plugin);
 
@@ -220,8 +223,37 @@ export function ChatInput({
 		[cmdProvider, mcpProvider, skillProvider],
 	);
 
-	const mentionPicker = usePicker(mentionProviders);
-	const commandPicker = usePicker(commandProviders);
+	const mentionSort = useCallback<PickerSortFn>((items, q) => {
+		if (!q) return items;
+		const ql = q.toLowerCase();
+		return [...items].sort((a, b) => {
+			const al = a.label.toLowerCase();
+			const bl = b.label.toLowerCase();
+			const aStart = al.startsWith(ql) ? 2 : al.includes(ql) ? 1 : 0;
+			const bStart = bl.startsWith(ql) ? 2 : bl.includes(ql) ? 1 : 0;
+			if (aStart !== bStart) return bStart - aStart;
+			const aFolder = a.category === "folder" ? 1 : 0;
+			const bFolder = b.category === "folder" ? 1 : 0;
+			if (aFolder !== bFolder) return bFolder - aFolder;
+			return al.localeCompare(bl);
+		});
+	}, []);
+
+	const commandSort = useCallback<PickerSortFn>((items, q) => {
+		if (!q) return items;
+		const ql = q.toLowerCase();
+		return [...items].sort((a, b) => {
+			const al = a.label.toLowerCase().replace(/^\//, "");
+			const bl = b.label.toLowerCase().replace(/^\//, "");
+			const aStart = al.startsWith(ql) ? 2 : al.includes(ql) ? 1 : 0;
+			const bStart = bl.startsWith(ql) ? 2 : bl.includes(ql) ? 1 : 0;
+			if (aStart !== bStart) return bStart - aStart;
+			return al.localeCompare(bl);
+		});
+	}, []);
+
+	const mentionPicker = usePicker(mentionProviders, mentionSort);
+	const commandPicker = usePicker(commandProviders, commandSort);
 
 	const prevMentionOpen = useRef(false);
 	useEffect(() => {
@@ -545,6 +577,8 @@ export function ChatInput({
 								: "Send message"
 					}
 					onSendOrStop={() => void handleSendOrStop()}
+					contextUsage={contextUsage}
+					isSessionReady={isSessionReady}
 				/>
 			</div>
 		</div>

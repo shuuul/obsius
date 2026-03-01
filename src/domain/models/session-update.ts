@@ -135,6 +135,18 @@ export interface CurrentModeUpdate extends SessionUpdateBase {
 	currentModeId: string;
 }
 
+/**
+ * Context window usage update.
+ * Reports how much of the context window is currently used.
+ */
+export interface UsageUpdate extends SessionUpdateBase {
+	type: "usage_update";
+	/** Total context window size in tokens */
+	size: number;
+	/** Tokens currently in context */
+	used: number;
+}
+
 // ============================================================================
 // Union Type
 // ============================================================================
@@ -151,6 +163,7 @@ export interface CurrentModeUpdate extends SessionUpdateBase {
  * - plan: Agent's task plan
  * - available_commands_update: Slash commands changed
  * - current_mode_update: Mode changed
+ * - usage_update: Context window usage
  *
  * All session update types include a sessionId field to identify which
  * session the update belongs to. This enables filtering/routing of updates
@@ -164,4 +177,5 @@ export type SessionUpdate =
 	| ToolCallUpdate
 	| Plan
 	| AvailableCommandsUpdate
-	| CurrentModeUpdate;
+	| CurrentModeUpdate
+	| UsageUpdate;

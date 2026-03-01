@@ -96,6 +96,16 @@ export function routeSessionUpdate(
 			return;
 		}
 
+		case "usage_update": {
+			handleSessionUpdate({
+				type: "usage_update",
+				sessionId,
+				size: update.size,
+				used: update.used,
+			});
+			return;
+		}
+
 		default: {
 			return;
 		}

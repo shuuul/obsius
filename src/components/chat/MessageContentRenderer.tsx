@@ -71,15 +71,27 @@ export function MessageContentRenderer({
 		case "plan": {
 			return (
 				<div className="obsius-message-plan">
-					<div className="obsius-message-plan-title">Plan</div>
-					{content.entries.map((entry, idx) => (
-						<div
-							key={idx}
-							className={`obsius-message-plan-entry obsius-plan-status-${entry.status}`}
-						>
-							{entry.content}
-						</div>
-					))}
+					<div className="obsius-message-plan-title">Todo Plan</div>
+					<div className="obsius-message-plan-list" role="list">
+						{content.entries.map((entry, idx) => (
+							<div
+								key={idx}
+								role="listitem"
+								className={`obsius-message-plan-entry obsius-plan-status-${entry.status}`}
+							>
+								<span className="obsius-message-plan-entry-icon" aria-hidden="true">
+									{entry.status === "completed"
+										? "✓"
+										: entry.status === "in_progress"
+											? "◉"
+											: "○"}
+								</span>
+								<span className="obsius-message-plan-entry-text">
+									{entry.content}
+								</span>
+							</div>
+						))}
+					</div>
 				</div>
 			);
 		}

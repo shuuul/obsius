@@ -367,6 +367,7 @@ export function TabContent({
 				onClearError={handleClearError}
 				messages={messages}
 				vaultAccess={controller.vaultAccessAdapter}
+				contextUsage={controller.contextUsage}
 			/>
 		</div>
 	);

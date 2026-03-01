@@ -1,6 +1,7 @@
 import type * as React from "react";
 import type AgentClientPlugin from "../../plugin";
 import type { AttachedImage } from "../../components/chat/ImagePreviewStrip";
+import type { ContextUsage } from "../../components/chat/chat-input/ContextUsageMeter";
 import type { ImagePromptContent } from "../../domain/models/prompt-content";
 import type { SessionModelState } from "../../domain/models/chat-session";
 import { useSettings } from "../useSettings";
@@ -80,4 +81,5 @@ export interface UseChatControllerReturn {
 	setAttachedImages: React.Dispatch<React.SetStateAction<AttachedImage[]>>;
 	restoredMessage: string | null;
 	handleRestoredMessageConsumed: () => void;
+	contextUsage: ContextUsage | null;
 }

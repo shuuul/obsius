@@ -21,12 +21,12 @@ export function getAvailableAgentsFromSettings(
 ): AgentInfo[] {
 	return [
 		{
-			id: settings.claude.id,
-			displayName: settings.claude.displayName || settings.claude.id,
-		},
-		{
 			id: settings.opencode.id,
 			displayName: settings.opencode.displayName || settings.opencode.id,
+		},
+		{
+			id: settings.claude.id,
+			displayName: settings.claude.displayName || settings.claude.id,
 		},
 		{
 			id: settings.codex.id,

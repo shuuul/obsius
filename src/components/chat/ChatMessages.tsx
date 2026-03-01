@@ -5,8 +5,10 @@ import type { ChatMessage } from "../../domain/models/chat-message";
 import type { IAcpClient } from "../../adapters/acp/acp.adapter";
 import type AgentClientPlugin from "../../plugin";
 import type { IChatViewHost } from "./types";
-import { setIcon } from "obsidian";
+import { Notice, setIcon } from "obsidian";
 import { MessageRenderer } from "./MessageRenderer";
+import { ObsidianIcon } from "./ObsidianIcon";
+import { getLastAssistantMessage } from "../../shared/session-file-restoration";
 
 /**
  * Props for ChatMessages component
@@ -132,6 +134,23 @@ export function ChatMessages({
 							<span className="ac-loading__dot" />
 							<span className="ac-loading__dot" />
 						</div>
+					)}
+					{!isSending && messages.length > 0 && (
+						<button
+							className="obsius-copy-session-btn"
+							title="Copy final output"
+							onClick={() => {
+								const text = getLastAssistantMessage(messages);
+								if (text) {
+									void navigator.clipboard.writeText(text);
+									new Notice("Copied to clipboard");
+								} else {
+									new Notice("No assistant message found");
+								}
+							}}
+						>
+							<ObsidianIcon name="copy" size={14} />
+						</button>
 					)}
 					{!isAtBottom && (
 						<button

@@ -20,6 +20,8 @@ interface SelectorButtonProps {
 	onChange: (value: string) => void;
 	className?: string;
 	title?: string;
+	/** Open the popover below the button instead of above */
+	dropDown?: boolean;
 }
 
 export function SelectorButton({
@@ -28,6 +30,7 @@ export function SelectorButton({
 	onChange,
 	className,
 	title,
+	dropDown,
 }: SelectorButtonProps) {
 	const buttonRef = useRef<HTMLDivElement>(null);
 	const popoverRef = useRef<HTMLDivElement>(null);
@@ -75,12 +78,19 @@ export function SelectorButton({
 	const popoverStyle = useMemo<React.CSSProperties>(() => {
 		if (!isOpen || !buttonRef.current) return {};
 		const rect = buttonRef.current.getBoundingClientRect();
+		if (dropDown) {
+			return {
+				position: "fixed",
+				left: rect.left,
+				top: rect.bottom + 4,
+			};
+		}
 		return {
 			position: "fixed",
 			left: rect.left,
 			bottom: window.innerHeight - rect.top + 4,
 		};
-	}, [isOpen]);
+	}, [isOpen, dropDown]);
 
 	return (
 		<>

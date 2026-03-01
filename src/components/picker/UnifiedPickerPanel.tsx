@@ -1,15 +1,13 @@
 import * as React from "react";
 import type { UsePickerReturn } from "../../hooks/usePicker";
 import {
-	CATEGORY_LABELS,
-	type PickerCategory,
 	type PickerItem,
 	type PickerMode,
 	type PickerTreeNode,
 } from "./types";
 import { ObsidianIcon } from "../chat/ObsidianIcon";
 
-const { useRef, useEffect, useCallback, useMemo } = React;
+const { useRef, useEffect, useCallback } = React;
 
 interface UnifiedPickerPanelProps {
 	picker: UsePickerReturn;
@@ -17,19 +15,7 @@ interface UnifiedPickerPanelProps {
 	onKeyDown?: (e: React.KeyboardEvent) => boolean;
 }
 
-function groupByCategory(
-	items: PickerItem[],
-): Map<PickerCategory, PickerItem[]> {
-	const groups = new Map<PickerCategory, PickerItem[]>();
-	for (const item of items) {
-		const list = groups.get(item.category) || [];
-		list.push(item);
-		groups.set(item.category, list);
-	}
-	return groups;
-}
-
-function PickerItemRow({
+function MentionItemRow({
 	item,
 	isSelected,
 	onClick,
@@ -60,6 +46,28 @@ function PickerItemRow({
 					</span>
 				)}
 			</div>
+		</div>
+	);
+}
+
+function CommandItemRow({
+	item,
+	isSelected,
+	onClick,
+	onHover,
+}: {
+	item: PickerItem;
+	isSelected: boolean;
+	onClick: () => void;
+	onHover: () => void;
+}) {
+	return (
+		<div
+			className={`obsius-picker-item ${isSelected ? "obsius-picker-item--selected" : ""}`}
+			data-selected={isSelected}
+			onClick={onClick}
+			onMouseEnter={onHover}
+		>
 			{item.badge && (
 				<span className="obsius-picker-badge">
 					<ObsidianIcon
@@ -70,7 +78,15 @@ function PickerItemRow({
 					{item.badge.label}
 				</span>
 			)}
-			{!item.badge && item.description && (
+			<div className="obsius-picker-item-text">
+				<span className="obsius-picker-item-label">{item.label}</span>
+				{item.sublabel && (
+					<span className="obsius-picker-item-sublabel">
+						{item.sublabel}
+					</span>
+				)}
+			</div>
+			{item.description && (
 				<span className="obsius-picker-item-desc">{item.description}</span>
 			)}
 		</div>
@@ -140,48 +156,35 @@ function DetailPane({
 }
 
 function ItemList({
-	groups,
 	items,
 	selectedIndex,
 	listRef,
+	mode,
 	onSelect,
 	onHover,
 }: {
-	groups: Map<PickerCategory, PickerItem[]>;
 	items: PickerItem[];
 	selectedIndex: number;
 	listRef: React.RefObject<HTMLDivElement | null>;
+	mode: PickerMode;
 	onSelect: (index: number) => void;
 	onHover: (index: number) => void;
 }) {
-	let flatIndex = 0;
+	const Row = mode === "mention" ? MentionItemRow : CommandItemRow;
 
 	return (
 		<div className="obsius-picker-list" ref={listRef}>
 			{items.length === 0 && (
 				<div className="obsius-picker-empty">No results</div>
 			)}
-
-			{Array.from(groups.entries()).map(([category, categoryItems]) => (
-				<div key={category} className="obsius-picker-group">
-					<div className="obsius-picker-group-label">
-						{CATEGORY_LABELS[category]}
-					</div>
-					{categoryItems.map((item) => {
-						const idx = flatIndex++;
-						const isSelected = idx === selectedIndex;
-						const currentIdx = idx;
-						return (
-							<PickerItemRow
-								key={item.id}
-								item={item}
-								isSelected={isSelected}
-								onClick={() => onSelect(currentIdx)}
-								onHover={() => onHover(currentIdx)}
-							/>
-						);
-					})}
-				</div>
+			{items.map((item, idx) => (
+				<Row
+					key={item.id}
+					item={item}
+					isSelected={idx === selectedIndex}
+					onClick={() => onSelect(idx)}
+					onHover={() => onHover(idx)}
+				/>
 			))}
 		</div>
 	);
@@ -242,11 +245,6 @@ export function UnifiedPickerPanel({
 		[picker],
 	);
 
-	const groups = useMemo(
-		() => groupByCategory(picker.items),
-		[picker.items],
-	);
-
 	const placeholder =
 		mode === "mention"
 			? "Search files, folders..."
@@ -254,10 +252,10 @@ export function UnifiedPickerPanel({
 
 	const listPane = (
 		<ItemList
-			groups={groups}
 			items={picker.items}
 			selectedIndex={picker.selectedIndex}
 			listRef={listRef}
+			mode={mode}
 			onSelect={handleItemSelect}
 			onHover={handleItemHover}
 		/>

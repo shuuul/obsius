@@ -1,6 +1,24 @@
 import * as React from "react";
 
-const CDN_BASE = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
+export const CDN_BASE =
+	"https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
+
+const preloadedUrls = new Set<string>();
+
+/**
+ * Preload provider logo SVGs into the browser cache.
+ * Call early (e.g. when model/agent options arrive) so icons render instantly
+ * when the selector opens.
+ */
+export function preloadProviderLogos(slugs: string[]): void {
+	for (const slug of slugs) {
+		const url = `${CDN_BASE}/${slug}.svg`;
+		if (preloadedUrls.has(url)) continue;
+		preloadedUrls.add(url);
+		const img = new Image();
+		img.src = url;
+	}
+}
 
 interface ProviderLogoProps {
 	slug: string;

@@ -1,12 +1,18 @@
 import * as React from "react";
 
+const { useMemo, useEffect } = React;
+
 import type {
 	SessionModeState,
 	SessionModelState,
 } from "../../../domain/models/chat-session";
 import { SelectorButton, type SelectorOption } from "./SelectorButton";
+import {
+	ContextUsageMeter,
+	type ContextUsage,
+} from "./ContextUsageMeter";
 import { getModeIcon, parseModelDisplay } from "./mode-icons";
-import { ProviderLogo } from "./ProviderLogo";
+import { ProviderLogo, preloadProviderLogos } from "./ProviderLogo";
 
 export type SendButtonState = "sending" | "ready" | "disabled";
 
@@ -20,6 +26,8 @@ interface InputActionsProps {
 	isButtonDisabled: boolean;
 	buttonTitle: string;
 	onSendOrStop: () => void;
+	contextUsage?: ContextUsage | null;
+	isSessionReady: boolean;
 }
 
 export function InputActions({
@@ -32,6 +40,8 @@ export function InputActions({
 	isButtonDisabled,
 	buttonTitle,
 	onSendOrStop,
+	contextUsage,
+	isSessionReady,
 }: InputActionsProps) {
 	const modeOptions: SelectorOption[] | undefined = modes?.availableModes.map(
 		(mode, index) => ({
@@ -55,6 +65,18 @@ export function InputActions({
 				icon: parsed.providerSlug ? undefined : parsed.fallbackIcon,
 			};
 		});
+
+	// Preload model provider logos as soon as model list arrives
+	const modelSlugs = useMemo(() => {
+		if (!models?.availableModels) return [];
+		return models.availableModels
+			.map((m) => parseModelDisplay(m.modelId, m.name).providerSlug)
+			.filter((s): s is string => s !== null);
+	}, [models?.availableModels]);
+
+	useEffect(() => {
+		if (modelSlugs.length > 0) preloadProviderLogos(modelSlugs);
+	}, [modelSlugs]);
 
 	const showModes =
 		modeOptions && modeOptions.length > 1 && modes && onModeChange;
@@ -93,13 +115,16 @@ export function InputActions({
 				</div>
 			)}
 
-			<button
-				ref={sendButtonRef}
-				onClick={onSendOrStop}
-				disabled={isButtonDisabled}
-				className={`obsius-chat-send-button obsius-send-${sendButtonState}`}
-				title={buttonTitle}
-			></button>
+			<div className="obsius-input-actions-right">
+				<ContextUsageMeter usage={contextUsage ?? null} isSessionReady={isSessionReady} />
+				<button
+					ref={sendButtonRef}
+					onClick={onSendOrStop}
+					disabled={isButtonDisabled}
+					className={`obsius-chat-send-button obsius-send-${sendButtonState}`}
+					title={buttonTitle}
+				></button>
+			</div>
 		</div>
 	);
 }

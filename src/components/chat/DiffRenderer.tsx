@@ -15,6 +15,7 @@ interface DiffRendererProps {
 	plugin: AgentClientPlugin;
 	autoCollapse?: boolean;
 	collapseThreshold?: number;
+	showHeader?: boolean;
 }
 
 interface DiffLine {
@@ -23,6 +24,11 @@ interface DiffLine {
 	newLineNumber?: number;
 	content: string;
 	wordDiff?: { type: "added" | "removed" | "context"; value: string }[];
+}
+
+interface DiffStats {
+	added: number;
+	removed: number;
 }
 
 function isNewFile(diff: DiffRendererProps["diff"]): boolean {
@@ -89,6 +95,7 @@ export function DiffRenderer({
 	plugin,
 	autoCollapse = false,
 	collapseThreshold = 10,
+	showHeader = true,
 }: DiffRendererProps) {
 	const vaultPath = useMemo(() => {
 		const adapter = plugin.app.vault.adapter;
@@ -107,42 +114,72 @@ export function DiffRenderer({
 
 	const isVaultFile = diff.path !== relativePath || !diff.path.startsWith("/");
 
+	const findExistingLeaf = useCallback(
+		(filePath: string) =>
+			plugin.app.workspace.getLeavesOfType("markdown").find((leaf) => {
+				if ("file" in leaf.view) {
+					return (leaf.view as { file: { path: string } | null }).file
+						?.path === filePath;
+				}
+				return false;
+			}),
+		[plugin],
+	);
+
 	const handleFileClick = useCallback(() => {
-		if (isVaultFile) {
+		if (!isVaultFile) return;
+		const existing = findExistingLeaf(relativePath);
+		if (existing) {
+			plugin.app.workspace.setActiveLeaf(existing, { focus: true });
+		} else {
 			void plugin.app.workspace.openLinkText(relativePath, "", "tab");
 		}
-	}, [plugin, relativePath, isVaultFile]);
+	}, [plugin, relativePath, isVaultFile, findExistingLeaf]);
+
+	const scrollEditorToLine = useCallback(
+		(view: unknown, lineNumber: number) => {
+			if (view && typeof view === "object" && "editor" in view) {
+				const editor = (
+					view as {
+						editor: {
+							setCursor: (pos: { line: number; ch: number }) => void;
+							scrollIntoView: (
+								range: {
+									from: { line: number; ch: number };
+									to: { line: number; ch: number };
+								},
+								center: boolean,
+							) => void;
+						};
+					}
+				).editor;
+				const pos = { line: lineNumber - 1, ch: 0 };
+				editor.setCursor(pos);
+				editor.scrollIntoView({ from: pos, to: pos }, true);
+			}
+		},
+		[],
+	);
 
 	const handleLineClick = useCallback(
 		(lineNumber: number) => {
 			if (!isVaultFile) return;
-			const leaf = plugin.app.workspace.getLeaf("tab");
-			void leaf
-				.openFile(plugin.app.vault.getAbstractFileByPath(relativePath) as never)
-				.then(() => {
-					const view = leaf.view;
-					if (view && "editor" in view) {
-						const editor = (
-							view as {
-								editor: {
-									setCursor: (pos: { line: number; ch: number }) => void;
-									scrollIntoView: (
-										range: {
-											from: { line: number; ch: number };
-											to: { line: number; ch: number };
-										},
-										center: boolean,
-									) => void;
-								};
-							}
-						).editor;
-						const pos = { line: lineNumber - 1, ch: 0 };
-						editor.setCursor(pos);
-						editor.scrollIntoView({ from: pos, to: pos }, true);
-					}
-				});
+			const existing = findExistingLeaf(relativePath);
+			if (existing) {
+				plugin.app.workspace.setActiveLeaf(existing, { focus: true });
+				scrollEditorToLine(existing.view, lineNumber);
+			} else {
+				const leaf = plugin.app.workspace.getLeaf("tab");
+				void leaf
+					.openFile(
+						plugin.app.vault.getAbstractFileByPath(
+							relativePath,
+						) as never,
+					)
+					.then(() => scrollEditorToLine(leaf.view, lineNumber));
+			}
 		},
-		[plugin, relativePath, isVaultFile],
+		[plugin, relativePath, isVaultFile, findExistingLeaf, scrollEditorToLine],
 	);
 
 	const diffLines = useMemo(() => {
@@ -225,6 +262,16 @@ export function DiffRenderer({
 		return result;
 	}, [diff.oldText, diff.newText]);
 
+	const diffStats = useMemo<DiffStats>(() => {
+		let added = 0;
+		let removed = 0;
+		for (const line of diffLines) {
+			if (line.type === "added") added += 1;
+			if (line.type === "removed") removed += 1;
+		}
+		return { added, removed };
+	}, [diffLines]);
+
 	const renderLine = (line: DiffLine, idx: number) => {
 		const isHunkHeader =
 			line.type === "context" && line.content.startsWith("@@");
@@ -294,15 +341,31 @@ export function DiffRenderer({
 
 	return (
 		<div className="obsius-tool-call-diff">
-			<div className="obsius-diff-line-info">
-				<span
-					className={`obsius-diff-file-name ${isVaultFile ? "obsius-diff-file-name--link" : ""}`}
-					onClick={isVaultFile ? handleFileClick : undefined}
-				>
-					{fileName || relativePath}
-				</span>
-				{isNewFile(diff) && <span className="obsius-diff-new-badge">new</span>}
-			</div>
+			{showHeader && (
+				<div className="obsius-diff-line-info">
+					<span
+						className={`obsius-diff-file-name ${isVaultFile ? "obsius-diff-file-name--link" : ""}`}
+						onClick={isVaultFile ? handleFileClick : undefined}
+					>
+						{fileName || relativePath}
+					</span>
+					{isNewFile(diff) && <span className="obsius-diff-new-badge">new</span>}
+					{(diffStats.added > 0 || diffStats.removed > 0) && (
+						<span className="obsius-diff-line-stats">
+							{diffStats.added > 0 && (
+								<span className="obsius-diff-line-stats-added">
+									+{diffStats.added}
+								</span>
+							)}
+							{diffStats.removed > 0 && (
+								<span className="obsius-diff-line-stats-removed">
+									-{diffStats.removed}
+								</span>
+							)}
+						</span>
+					)}
+				</div>
+			)}
 			<div className="obsius-tool-call-diff-content">
 				{visibleLines.map((line, idx) => renderLine(line, idx))}
 			</div>

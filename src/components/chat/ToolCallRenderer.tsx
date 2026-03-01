@@ -1,5 +1,6 @@
 import * as React from "react";
 const { useState, useMemo, useCallback } = React;
+import * as Diff from "diff";
 import { FileSystemAdapter } from "obsidian";
 import type { MessageContent } from "../../domain/models/chat-message";
 import type { IAcpClient } from "../../adapters/acp/acp.adapter";
@@ -18,6 +19,20 @@ import {
 	getStatusIconName,
 } from "../../shared/tool-icons";
 
+const FILE_EDIT_TITLES = new Set([
+	"write", "edit", "notebookedit", "editnotebook", "multiedit",
+	"strreplace", "writefile", "createfile", "editfile", "writetofile",
+	"applydiff", "replaceinfile",
+]);
+
+const FILE_READ_TITLES = new Set([
+	"read", "readfile", "viewfile",
+]);
+
+const SHELL_TITLES = new Set([
+	"bash", "shell", "runcommand", "executecommand",
+]);
+
 interface ToolCallRendererProps {
 	content: Extract<MessageContent, { type: "tool_call" }>;
 	plugin: AgentClientPlugin;
@@ -33,10 +48,18 @@ function countDiffStats(
 	let removed = 0;
 	for (const item of content) {
 		if (item.type !== "diff") continue;
-		const newLines = (item.newText || "").split("\n");
-		const oldLines = (item.oldText || "").split("\n");
-		added += Math.max(0, newLines.length - oldLines.length);
-		removed += Math.max(0, oldLines.length - newLines.length);
+		const oldText = item.oldText || "";
+		const newText = item.newText || "";
+		if (!oldText && !newText) continue;
+		if (!oldText) {
+			added += newText.split("\n").length;
+			continue;
+		}
+		const changes = Diff.diffLines(oldText, newText);
+		for (const change of changes) {
+			if (change.added) added += change.count ?? 0;
+			else if (change.removed) removed += change.count ?? 0;
+		}
 	}
 	if (added === 0 && removed === 0) return null;
 	return { added, removed };
@@ -94,11 +117,38 @@ export function ToolCallRenderer({
 
 	const diffStats = useMemo(() => countDiffStats(toolContent), [toolContent]);
 
+	const normalizedTitle = (title ?? "").replace(/[\s_-]+/g, "").toLowerCase();
+	const isFileEditTool = kind === "edit" || FILE_EDIT_TITLES.has(normalizedTitle);
+	const isFileReadTool = kind === "read" || FILE_READ_TITLES.has(normalizedTitle);
+	const isFileTool = isFileEditTool || isFileReadTool;
+
+	const fileTitle = useMemo(() => {
+		if (!isFileTool) return "";
+		if (summary) return summary;
+		if (locations && locations.length > 0) {
+			return toRelativePath(locations[0].path, vaultPath);
+		}
+		return displayName;
+	}, [isFileTool, summary, locations, vaultPath, displayName]);
+
 	const handlePathClick = useCallback(
 		(path: string, e?: React.MouseEvent) => {
 			if (e) e.stopPropagation();
 			const relativePath = toRelativePath(path, vaultPath);
-			void plugin.app.workspace.openLinkText(relativePath, "", "tab");
+			const existing = plugin.app.workspace
+				.getLeavesOfType("markdown")
+				.find((leaf) => {
+					if ("file" in leaf.view) {
+						return (leaf.view as { file: { path: string } | null }).file
+							?.path === relativePath;
+					}
+					return false;
+				});
+			if (existing) {
+				plugin.app.workspace.setActiveLeaf(existing, { focus: true });
+			} else {
+				void plugin.app.workspace.openLinkText(relativePath, "", "tab");
+			}
 		},
 		[plugin, vaultPath],
 	);
@@ -136,18 +186,40 @@ export function ToolCallRenderer({
 	const header = (
 		<>
 			<ObsidianIcon name={iconName} className="ac-tool-icon" />
-			<span className="ac-row__title">{displayName}</span>
-			{summary && (
-				<span
-					className={`ac-row__summary ${summaryIsFile ? "ac-row__summary--link" : ""}`}
-					onClick={
-						summaryIsFile && summaryClickPath
-							? (e) => handlePathClick(summaryClickPath, e)
-							: undefined
-					}
-				>
-					{summary}
-				</span>
+			{isFileTool ? (
+				<>
+					{isFileReadTool && (
+						<span className="ac-row__title ac-row__action-label">
+							Read
+						</span>
+					)}
+					<span
+						className={`ac-row__title ac-row__title--file ${summaryIsFile ? "ac-row__title--file-link" : ""}`}
+						onClick={
+							summaryIsFile && summaryClickPath
+								? (e) => handlePathClick(summaryClickPath, e)
+								: undefined
+						}
+					>
+						{fileTitle}
+					</span>
+				</>
+			) : (
+				<>
+					<span className="ac-row__title">{displayName}</span>
+					{summary && (
+						<span
+							className={`ac-row__summary ${summaryIsFile ? "ac-row__summary--link" : ""}`}
+							onClick={
+								summaryIsFile && summaryClickPath
+									? (e) => handlePathClick(summaryClickPath, e)
+									: undefined
+							}
+						>
+							{summary}
+						</span>
+					)}
+				</>
 			)}
 			{diffStats && (
 				<span className="ac-tool-diff-stats">
@@ -165,11 +237,11 @@ export function ToolCallRenderer({
 
 	return (
 		<CollapsibleSection
-			className="ac-toolcall"
+			className={`ac-toolcall ${isFileEditTool ? "ac-toolcall--file-edit" : ""}`}
 			defaultExpanded={!!permissionRequest}
 			header={header}
 		>
-			{kind === "execute" &&
+			{(kind === "execute" || SHELL_TITLES.has(normalizedTitle)) &&
 				rawInput &&
 				typeof rawInput.command === "string" && (
 					<div className="ac-tree__item">
@@ -182,7 +254,7 @@ export function ToolCallRenderer({
 					</div>
 				)}
 
-			{locations && locations.length > 0 && (
+			{!isFileTool && locations && locations.length > 0 && (
 				<div className="ac-tree__item ac-tree__locations">
 					{locations.map((loc, idx) => {
 						const rel = toRelativePath(loc.path, vaultPath);
@@ -231,6 +303,7 @@ export function ToolCallRenderer({
 								<DiffRenderer
 									diff={item}
 									plugin={plugin}
+								showHeader={!isFileEditTool}
 									autoCollapse={
 										plugin.settings.displaySettings.autoCollapseDiffs
 									}
