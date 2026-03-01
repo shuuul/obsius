@@ -8,7 +8,7 @@ If your plugin does not need CSS, delete this file.
 */
 
 /* ===== Settings Tab Custom Agent Block ===== */
-.agent-client-custom-agent {
+.obsius-custom-agent {
 	padding: 16px;
 	margin-bottom: 24px;
 	background-color: var(--background-secondary);
@@ -51,7 +51,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* ===== Scroll to Bottom Button ===== */
-.agent-client-scroll-to-bottom {
+.obsius-scroll-to-bottom {
 	position: sticky;
 	bottom: 4px;
 	align-self: center;
@@ -73,21 +73,21 @@ If your plugin does not need CSS, delete this file.
 	z-index: 10;
 }
 
-.agent-client-scroll-to-bottom svg {
+.obsius-scroll-to-bottom svg {
 	color: var(--text-muted);
 	transition: color 0.2s ease;
 }
 
-.agent-client-scroll-to-bottom:hover {
+.obsius-scroll-to-bottom:hover {
 	background-color: var(--background-primary) !important;
 }
 
-.agent-client-scroll-to-bottom:hover svg {
+.obsius-scroll-to-bottom:hover svg {
 	color: var(--interactive-accent);
 }
 
 /* ===== Header Button Component ===== */
-.agent-client-header-button {
+.obsius-header-button {
 	width: 20px;
 	height: 20px;
 	padding: 0 !important;
@@ -109,16 +109,16 @@ If your plugin does not need CSS, delete this file.
 	min-height: unset !important;
 }
 
-.agent-client-header-button svg {
+.obsius-header-button svg {
 	color: var(--text-muted);
 	transition: color 0.2s ease;
 }
 
-.agent-client-header-button:hover {
+.obsius-header-button:hover {
 	background-color: var(--background-modifier-hover) !important;
 }
 
-.agent-client-header-button:hover svg {
+.obsius-header-button:hover svg {
 	color: var(--interactive-accent);
 }
 
@@ -181,26 +181,59 @@ If your plugin does not need CSS, delete this file.
 	display: none;
 }
 
-/* Status indicator dot */
-.ac-status {
+/* Tool icon in header */
+.ac-tool-icon {
+	display: flex;
+	align-items: center;
+	color: var(--text-accent);
+	flex-shrink: 0;
+}
+
+.ac-tool-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Tool status indicator */
+.ac-tool-status {
 	display: flex;
 	align-items: center;
 	flex-shrink: 0;
 	margin-inline-start: auto;
-	font-family: var(--font-monospace);
-	font-size: 12px;
-	color: var(--text-muted);
 }
 
-.ac-status--running {
+.ac-tool-status svg {
+	width: 14px;
+	height: 14px;
+}
+
+.ac-tool-status--running {
 	color: var(--text-accent);
 }
 
-.ac-status--completed {
+.ac-tool-status--completed {
 	color: var(--color-green);
 }
 
-.ac-status--error {
+.ac-tool-status--error {
+	color: var(--color-red);
+}
+
+/* Diff stats in header (+N -M) */
+.ac-tool-diff-stats {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+	font-family: var(--font-monospace);
+	font-size: 12px;
+}
+
+.ac-tool-diff-added {
+	color: var(--color-green);
+}
+
+.ac-tool-diff-removed {
 	color: var(--color-red);
 }
 
@@ -219,6 +252,17 @@ If your plugin does not need CSS, delete this file.
 	font-family: var(--font-monospace);
 	font-size: 12px;
 	color: var(--text-muted);
+}
+
+.ac-tree__location--link {
+	cursor: pointer;
+	color: var(--text-accent);
+	text-decoration: none;
+}
+
+.ac-tree__location--link:hover {
+	text-decoration: underline;
+	opacity: 0.85;
 }
 
 .ac-inline-code {
@@ -266,19 +310,19 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* ===== Plan ===== */
-.agent-client-message-plan {
+.obsius-message-plan {
 	margin: 4px 0;
 	font-size: 13px;
 	user-select: text;
 	max-width: 100%;
 }
 
-.agent-client-message-plan-title {
+.obsius-message-plan-title {
 	font-weight: 500;
 	margin-bottom: 4px;
 }
 
-.agent-client-message-plan-entry {
+.obsius-message-plan-entry {
 	margin: 2px 0;
 	padding: 2px 0;
 	padding-inline-start: 16px;
@@ -287,17 +331,17 @@ If your plugin does not need CSS, delete this file.
 	user-select: text;
 }
 
-.agent-client-message-plan-entry.agent-client-plan-status-completed {
+.obsius-message-plan-entry.obsius-plan-status-completed {
 	text-decoration: line-through;
 	color: var(--text-muted);
 }
 
-.agent-client-message-plan-entry.agent-client-plan-status-in_progress {
+.obsius-message-plan-entry.obsius-plan-status-in_progress {
 	font-weight: bold;
 }
 
 /* Permission Request */
-.agent-client-message-permission-request {
+.obsius-message-permission-request {
 	padding: 6px 0px;
 	margin-top: 4px;
 	font-size: 14px;
@@ -308,7 +352,7 @@ If your plugin does not need CSS, delete this file.
 	max-width: 100%;
 }
 
-.agent-client-message-permission-request-title {
+.obsius-message-permission-request-title {
 	font-weight: bold;
 	margin-bottom: 8px;
 	display: flex;
@@ -320,7 +364,7 @@ If your plugin does not need CSS, delete this file.
 	word-break: break-word;
 }
 
-.agent-client-message-permission-request-description {
+.obsius-message-permission-request-description {
 	margin-bottom: 12px;
 	color: var(--text-normal);
 	user-select: text;
@@ -329,14 +373,14 @@ If your plugin does not need CSS, delete this file.
 	word-break: break-word;
 }
 
-.agent-client-message-permission-request-options {
+.obsius-message-permission-request-options {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
 	justify-content: flex-end;
 }
 
-.agent-client-message-permission-request-result {
+.obsius-message-permission-request-result {
 	padding: 8px;
 	background-color: var(--background-primary);
 	border-radius: 4px;
@@ -344,16 +388,16 @@ If your plugin does not need CSS, delete this file.
 	user-select: text;
 }
 
-.agent-client-message-permission-request-result.agent-client-selected {
+.obsius-message-permission-request-result.obsius-selected {
 	color: var(--text-accent);
 }
 
-.agent-client-message-permission-request-result.agent-client-cancelled {
+.obsius-message-permission-request-result.obsius-cancelled {
 	color: var(--color-orange);
 }
 
 /* ===== Permission Request Buttons ===== */
-.agent-client-permission-option {
+.obsius-permission-option {
 	padding: 8px 16px !important;
 	border: 1px solid var(--background-modifier-border) !important;
 	border-radius: 6px !important;
@@ -368,62 +412,62 @@ If your plugin does not need CSS, delete this file.
 	opacity: 1;
 }
 
-.agent-client-permission-option.agent-client-selected {
+.obsius-permission-option.obsius-selected {
 	background-color: var(--interactive-accent) !important;
 	color: white !important;
 	font-weight: 600;
 }
 
-.agent-client-permission-option.agent-client-disabled {
+.obsius-permission-option.obsius-disabled {
 	background-color: var(--background-modifier-border) !important;
 	color: var(--text-muted) !important;
 	cursor: not-allowed !important;
 }
 
-.agent-client-permission-option.agent-client-disabled:not(
-		.agent-client-selected
+.obsius-permission-option.obsius-disabled:not(
+		.obsius-selected
 	) {
 	opacity: 0.5;
 }
 
 /* Special kinds */
-.agent-client-permission-option.agent-client-permission-kind-allow_always:not(
-		.agent-client-selected
-	):not(.agent-client-disabled) {
+.obsius-permission-option.obsius-permission-kind-allow_always:not(
+		.obsius-selected
+	):not(.obsius-disabled) {
 	background-color: var(--color-green) !important;
 	color: white !important;
 	border-color: var(--color-green) !important;
 }
 
-.agent-client-permission-option.agent-client-permission-kind-reject_once:not(
-		.agent-client-selected
-	):not(.agent-client-disabled) {
+.obsius-permission-option.obsius-permission-kind-reject_once:not(
+		.obsius-selected
+	):not(.obsius-disabled) {
 	background-color: var(--color-red) !important;
 	color: white !important;
 	border-color: var(--color-red) !important;
 }
 
-.agent-client-permission-option.agent-client-permission-kind-allow_once:not(
-		.agent-client-selected
-	):not(.agent-client-disabled) {
+.obsius-permission-option.obsius-permission-kind-allow_once:not(
+		.obsius-selected
+	):not(.obsius-disabled) {
 	background-color: var(--color-orange) !important;
 	color: white !important;
 	border-color: var(--color-orange) !important;
 }
 
 /* Normal option button hover (no kind specified) */
-.agent-client-permission-option:not(
-		.agent-client-permission-kind-allow_always
-	):not(.agent-client-permission-kind-reject_once):not(
-		.agent-client-permission-kind-allow_once
-	):not(.agent-client-disabled):not(.agent-client-selected):hover {
+.obsius-permission-option:not(
+		.obsius-permission-kind-allow_always
+	):not(.obsius-permission-kind-reject_once):not(
+		.obsius-permission-kind-allow_once
+	):not(.obsius-disabled):not(.obsius-selected):hover {
 	background-color: var(--background-modifier-hover) !important;
 }
 
 /* ===== Chat View Components ===== */
 
 /* Main container */
-.agent-client-chat-view-container {
+.obsius-chat-view-container {
 	--ac-chat-font-size: var(--font-text-size);
 	height: 100%;
 	display: flex;
@@ -432,7 +476,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Header — single row: [agent selector] [tabs] [actions] */
-.agent-client-chat-view-header {
+.obsius-chat-view-header {
 	padding: 8px 12px;
 	border-bottom: 1px solid var(--background-modifier-border);
 	flex-shrink: 0;
@@ -441,7 +485,7 @@ If your plugin does not need CSS, delete this file.
 	gap: 8px;
 }
 
-.agent-client-chat-view-header-main {
+.obsius-chat-view-header-main {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -450,14 +494,14 @@ If your plugin does not need CSS, delete this file.
 	min-width: 0;
 }
 
-.agent-client-chat-view-header-title {
+.obsius-chat-view-header-title {
 	margin: 0 !important;
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
 }
 
-.agent-client-chat-view-header-title--clickable {
+.obsius-chat-view-header-title--clickable {
 	cursor: pointer;
 	border-radius: 6px;
 	padding: 2px 6px;
@@ -465,27 +509,27 @@ If your plugin does not need CSS, delete this file.
 	transition: background-color 0.15s ease;
 }
 
-.agent-client-chat-view-header-title--clickable:hover {
+.obsius-chat-view-header-title--clickable:hover {
 	background-color: var(--background-modifier-hover);
 }
 
-.agent-client-chat-view-header-chevron {
+.obsius-chat-view-header-chevron {
 	display: inline-flex;
 	align-items: center;
 	color: var(--text-faint);
 	transition: transform 0.15s ease;
 }
 
-.agent-client-chat-view-header-chevron svg {
+.obsius-chat-view-header-chevron svg {
 	width: 14px;
 	height: 14px;
 }
 
-.agent-client-chat-view-header-chevron--open {
+.obsius-chat-view-header-chevron--open {
 	transform: rotate(180deg);
 }
 
-.agent-client-header-agent-dropdown {
+.obsius-header-agent-dropdown {
 	position: absolute;
 	top: 100%;
 	left: 0;
@@ -499,7 +543,7 @@ If your plugin does not need CSS, delete this file.
 	box-shadow: var(--shadow-s);
 }
 
-.agent-client-header-agent-dropdown-item {
+.obsius-header-agent-dropdown-item {
 	padding: 4px 8px;
 	border-radius: 4px;
 	cursor: pointer;
@@ -508,16 +552,16 @@ If your plugin does not need CSS, delete this file.
 	transition: background-color 0.1s ease;
 }
 
-.agent-client-header-agent-dropdown-item:hover {
+.obsius-header-agent-dropdown-item:hover {
 	background-color: var(--background-modifier-hover);
 }
 
-.agent-client-header-agent-dropdown-item--active {
+.obsius-header-agent-dropdown-item--active {
 	color: var(--text-accent);
 	font-weight: var(--font-semibold);
 }
 
-.agent-client-chat-view-header-update {
+.obsius-chat-view-header-update {
 	padding: 1px 5px;
 	font-size: 10px;
 	color: var(--text-muted);
@@ -528,7 +572,7 @@ If your plugin does not need CSS, delete this file.
 	white-space: nowrap;
 }
 
-.agent-client-chat-view-header-actions {
+.obsius-chat-view-header-actions {
 	display: flex;
 	gap: 4px;
 	flex: 1;
@@ -536,18 +580,18 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Tab badges — numbered squares, centered in header */
-.agent-client-tab-bar {
+.obsius-tab-bar {
 	display: flex;
 	align-items: center;
 	flex: 0 0 auto;
 	gap: 6px;
 }
 
-.agent-client-tab-bar::-webkit-scrollbar {
+.obsius-tab-bar::-webkit-scrollbar {
 	display: none;
 }
 
-.agent-client-tab-badge {
+.obsius-tab-badge {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -567,18 +611,18 @@ If your plugin does not need CSS, delete this file.
 		background 0.15s ease;
 }
 
-.agent-client-tab-badge:hover {
+.obsius-tab-badge:hover {
 	background: var(--background-modifier-hover);
 	color: var(--text-normal);
 }
 
-.agent-client-tab-badge--active {
+.obsius-tab-badge--active {
 	border-color: var(--interactive-accent);
 	color: var(--text-normal);
 }
 
 /* Messages container */
-.agent-client-chat-view-messages {
+.obsius-chat-view-messages {
 	flex: 1;
 	padding: 16px;
 	overflow-y: auto;
@@ -591,14 +635,14 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Allow horizontal scroll for wide tables within messages */
-.agent-client-chat-view-messages table {
+.obsius-chat-view-messages table {
 	display: block;
 	overflow-x: auto;
 	max-width: 100%;
 }
 
 /* Error display */
-.agent-client-chat-error-container {
+.obsius-chat-error-container {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
@@ -610,12 +654,12 @@ If your plugin does not need CSS, delete this file.
 	overflow: hidden;
 }
 
-.agent-client-chat-error-title {
+.obsius-chat-error-title {
 	margin: 0 0 8px 0 !important;
 	color: var(--color-red) !important;
 }
 
-.agent-client-chat-error-message {
+.obsius-chat-error-message {
 	margin: 0 !important;
 	color: var(--text-normal);
 	font-size: 14px;
@@ -625,7 +669,7 @@ If your plugin does not need CSS, delete this file.
 	overflow-wrap: anywhere;
 }
 
-.agent-client-chat-error-suggestion {
+.obsius-chat-error-suggestion {
 	margin: 8px 0 0 0 !important;
 	color: var(--text-muted);
 	font-size: 13px;
@@ -636,7 +680,7 @@ If your plugin does not need CSS, delete this file.
 	overflow-wrap: anywhere;
 }
 
-.agent-client-chat-error-button {
+.obsius-chat-error-button {
 	padding: 8px 16px !important;
 	border: 1px solid var(--background-modifier-border) !important;
 	border-radius: 6px !important;
@@ -650,7 +694,7 @@ If your plugin does not need CSS, delete this file.
    Error Overlay (displayed above input field)
    ============================================================ */
 
-.agent-client-error-overlay {
+.obsius-error-overlay {
 	position: absolute;
 	bottom: 100%;
 	left: 0;
@@ -664,21 +708,21 @@ If your plugin does not need CSS, delete this file.
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.agent-client-error-overlay-header {
+.obsius-error-overlay-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 8px;
 }
 
-.agent-client-error-overlay-title {
+.obsius-error-overlay-title {
 	margin: 0 !important;
 	color: var(--color-red) !important;
 	font-size: 14px;
 	font-weight: 600;
 }
 
-.agent-client-error-overlay-close {
+.obsius-error-overlay-close {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -695,26 +739,26 @@ If your plugin does not need CSS, delete this file.
 	outline: none !important;
 }
 
-.agent-client-error-overlay-close svg {
+.obsius-error-overlay-close svg {
 	width: 14px;
 	height: 14px;
 	color: inherit;
 }
 
-.agent-client-error-overlay-close:hover {
+.obsius-error-overlay-close:hover {
 	background: none !important;
 	box-shadow: none !important;
 	color: var(--interactive-accent);
 }
 
-.agent-client-error-overlay-close:active,
-.agent-client-error-overlay-close:focus {
+.obsius-error-overlay-close:active,
+.obsius-error-overlay-close:focus {
 	background: none !important;
 	box-shadow: none !important;
 	outline: none !important;
 }
 
-.agent-client-error-overlay-message {
+.obsius-error-overlay-message {
 	margin: 0 !important;
 	color: var(--text-normal);
 	font-size: 13px;
@@ -723,7 +767,7 @@ If your plugin does not need CSS, delete this file.
 	word-break: break-word;
 }
 
-.agent-client-error-overlay-suggestion {
+.obsius-error-overlay-suggestion {
 	margin: 8px 0 0 0 !important;
 	color: var(--text-muted);
 	font-size: 12px;
@@ -732,20 +776,20 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Empty state */
-.agent-client-chat-empty-state {
+.obsius-chat-empty-state {
 	color: var(--text-muted);
 	text-align: center;
 	margin-top: 20px;
 }
 
 /* Input area */
-.agent-client-chat-input-container {
+.obsius-chat-input-container {
 	flex-shrink: 0;
 	position: relative;
 }
 
 /* Input box - outer container with border and background */
-.agent-client-chat-input-box {
+.obsius-chat-input-box {
 	display: flex;
 	flex-direction: column;
 	border: 1px solid var(--background-modifier-border);
@@ -755,16 +799,16 @@ If your plugin does not need CSS, delete this file.
 	transition: box-shadow 0.15s ease;
 }
 
-.agent-client-chat-input-box:focus-within {
+.obsius-chat-input-box:focus-within {
 	box-shadow: 0 0 0 1.5px var(--background-modifier-border);
 }
 
-.agent-client-chat-input-box.agent-client-dragging-over {
+.obsius-chat-input-box.obsius-dragging-over {
 	background-color: var(--background-secondary);
 }
 
 /* Auto-mention inline display */
-.agent-client-auto-mention-inline {
+.obsius-auto-mention-inline {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -774,7 +818,7 @@ If your plugin does not need CSS, delete this file.
 	background-color: transparent;
 }
 
-.agent-client-mention-badge {
+.obsius-mention-badge {
 	background-color: transparent;
 	color: var(--interactive-accent-hover);
 	border-radius: 3px;
@@ -789,12 +833,12 @@ If your plugin does not need CSS, delete this file.
 	max-width: calc(100% - 24px);
 }
 
-.agent-client-mention-badge.agent-client-disabled {
+.obsius-mention-badge.obsius-disabled {
 	color: var(--text-faint);
 	text-decoration: line-through;
 }
 
-.agent-client-auto-mention-toggle-btn {
+.obsius-auto-mention-toggle-btn {
 	background: none;
 	background-color: transparent !important;
 	border: none !important;
@@ -815,26 +859,26 @@ If your plugin does not need CSS, delete this file.
 	flex-shrink: 0;
 }
 
-.agent-client-auto-mention-toggle-btn svg {
+.obsius-auto-mention-toggle-btn svg {
 	width: 14px;
 	height: 14px;
 	color: inherit;
 }
 
-.agent-client-auto-mention-toggle-btn:hover {
+.obsius-auto-mention-toggle-btn:hover {
 	background: none;
 	box-shadow: none;
 	color: var(--interactive-accent);
 }
 
-.agent-client-auto-mention-toggle-btn:active,
-.agent-client-auto-mention-toggle-btn:focus {
+.obsius-auto-mention-toggle-btn:active,
+.obsius-auto-mention-toggle-btn:focus {
 	background: none;
 	box-shadow: none;
 	outline: none;
 }
 
-.agent-client-chat-input-textarea {
+.obsius-chat-input-textarea {
 	width: 100%;
 	padding: 12px;
 	border: none;
@@ -853,39 +897,39 @@ If your plugin does not need CSS, delete this file.
 	-ms-overflow-style: none;
 }
 
-.agent-client-chat-input-textarea::-webkit-scrollbar {
+.obsius-chat-input-textarea::-webkit-scrollbar {
 	display: none;
 }
 
-.agent-client-chat-input-textarea:hover {
+.obsius-chat-input-textarea:hover {
 	border: none !important;
 	background-color: transparent !important;
 }
 
-.agent-client-chat-input-textarea:focus {
+.obsius-chat-input-textarea:focus {
 	border: none !important;
 	outline: none !important;
 	box-shadow: none !important;
 }
 
 /* Dynamic textarea height management */
-.agent-client-chat-input-textarea.agent-client-textarea-auto-height {
+.obsius-chat-input-textarea.obsius-textarea-auto-height {
 	height: auto;
 }
 
-.agent-client-chat-input-textarea.agent-client-textarea-expanded {
+.obsius-chat-input-textarea.obsius-textarea-expanded {
 	height: var(--textarea-height, auto);
 }
 
 /* Textarea wrapper for hint overlay */
-.agent-client-textarea-wrapper {
+.obsius-textarea-wrapper {
 	position: relative;
 	flex: 1;
 	min-height: 80px;
 }
 
 /* Hint overlay for slash commands */
-.agent-client-hint-overlay {
+.obsius-hint-overlay {
 	/* Positioning - exact overlay on textarea */
 	position: absolute;
 	top: 0;
@@ -905,16 +949,16 @@ If your plugin does not need CSS, delete this file.
 	overflow: hidden;
 }
 
-.agent-client-hint-overlay .agent-client-invisible {
+.obsius-hint-overlay .obsius-invisible {
 	visibility: hidden;
 }
 
-.agent-client-hint-overlay .agent-client-hint-text {
+.obsius-hint-overlay .obsius-hint-text {
 	color: var(--text-faint);
 }
 
 /* Input Actions Container */
-.agent-client-chat-input-actions {
+.obsius-chat-input-actions {
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
@@ -923,7 +967,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Mode Selector */
-.agent-client-mode-selector {
+.obsius-mode-selector {
 	display: inline-flex;
 	align-items: center;
 	padding: 0 4px;
@@ -934,11 +978,11 @@ If your plugin does not need CSS, delete this file.
 	max-width: 120px;
 }
 
-.agent-client-mode-selector:hover {
+.obsius-mode-selector:hover {
 	background-color: var(--background-modifier-hover);
 }
 
-.agent-client-mode-selector-icon {
+.obsius-mode-selector-icon {
 	display: flex;
 	align-items: center;
 	pointer-events: none;
@@ -947,12 +991,12 @@ If your plugin does not need CSS, delete this file.
 	order: 2;
 }
 
-.agent-client-mode-selector-icon svg {
+.obsius-mode-selector-icon svg {
 	width: 12px;
 	height: 12px;
 }
 
-.agent-client-mode-selector select.dropdown {
+.obsius-mode-selector select.dropdown {
 	padding: 0 !important;
 	margin: 0 !important;
 	border: none !important;
@@ -975,15 +1019,15 @@ If your plugin does not need CSS, delete this file.
 	white-space: nowrap;
 }
 
-.agent-client-mode-selector select.dropdown:hover,
-.agent-client-mode-selector select.dropdown:focus {
+.obsius-mode-selector select.dropdown:hover,
+.obsius-mode-selector select.dropdown:focus {
 	color: var(--text-faint) !important;
 	background-color: transparent !important;
 	box-shadow: none !important;
 }
 
 /* Model Selector (experimental) */
-.agent-client-model-selector {
+.obsius-model-selector {
 	display: inline-flex;
 	align-items: center;
 	padding: 0 4px;
@@ -994,11 +1038,11 @@ If your plugin does not need CSS, delete this file.
 	max-width: 120px;
 }
 
-.agent-client-model-selector:hover {
+.obsius-model-selector:hover {
 	background-color: var(--background-modifier-hover);
 }
 
-.agent-client-model-selector-icon {
+.obsius-model-selector-icon {
 	display: flex;
 	align-items: center;
 	pointer-events: none;
@@ -1007,12 +1051,12 @@ If your plugin does not need CSS, delete this file.
 	order: 2;
 }
 
-.agent-client-model-selector-icon svg {
+.obsius-model-selector-icon svg {
 	width: 12px;
 	height: 12px;
 }
 
-.agent-client-model-selector select.dropdown {
+.obsius-model-selector select.dropdown {
 	padding: 0 !important;
 	margin: 0 !important;
 	border: none !important;
@@ -1035,15 +1079,15 @@ If your plugin does not need CSS, delete this file.
 	white-space: nowrap;
 }
 
-.agent-client-model-selector select.dropdown:hover,
-.agent-client-model-selector select.dropdown:focus {
+.obsius-model-selector select.dropdown:hover,
+.obsius-model-selector select.dropdown:focus {
 	color: var(--text-faint) !important;
 	background-color: transparent !important;
 	box-shadow: none !important;
 }
 
 /* Send button */
-.agent-client-chat-send-button {
+.obsius-chat-send-button {
 	width: 20px;
 	height: 20px;
 	padding: 0 !important;
@@ -1062,29 +1106,29 @@ If your plugin does not need CSS, delete this file.
 	transition: all 0.2s ease;
 }
 
-.agent-client-chat-send-button.agent-client-disabled {
+.obsius-chat-send-button.obsius-disabled {
 	cursor: not-allowed !important;
 }
 
 /* Send button icon states */
-.agent-client-chat-send-button svg {
+.obsius-chat-send-button svg {
 	transition: color 0.2s ease;
 }
 
-.agent-client-chat-send-button svg.agent-client-icon-sending {
+.obsius-chat-send-button svg.obsius-icon-sending {
 	color: var(--color-red);
 }
 
-.agent-client-chat-send-button svg.agent-client-icon-active {
+.obsius-chat-send-button svg.obsius-icon-active {
 	color: var(--interactive-accent);
 }
 
-.agent-client-chat-send-button svg.agent-client-icon-inactive {
+.obsius-chat-send-button svg.obsius-icon-inactive {
 	color: var(--text-muted);
 }
 
 /* Mention Dropdown */
-.agent-client-mention-dropdown {
+.obsius-mention-dropdown {
 	position: absolute;
 	bottom: 100%;
 	left: 0;
@@ -1100,7 +1144,7 @@ If your plugin does not need CSS, delete this file.
 	z-index: 1000;
 }
 
-.agent-client-mention-dropdown-item {
+.obsius-mention-dropdown-item {
 	padding: 4px 16px;
 	cursor: pointer;
 	background-color: transparent;
@@ -1108,28 +1152,28 @@ If your plugin does not need CSS, delete this file.
 	transition: background-color 0.1s ease;
 }
 
-.agent-client-mention-dropdown-item.agent-client-selected {
+.obsius-mention-dropdown-item.obsius-selected {
 	background-color: var(--background-primary);
 }
 
-.agent-client-mention-dropdown-item.agent-client-has-border {
+.obsius-mention-dropdown-item.obsius-has-border {
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.agent-client-mention-dropdown-item-name {
+.obsius-mention-dropdown-item-name {
 	font-weight: 500;
 	color: var(--text-normal);
 	margin-bottom: 2px;
 }
 
-.agent-client-mention-dropdown-item-path {
+.obsius-mention-dropdown-item-path {
 	font-size: 12px;
 	color: var(--text-muted);
 	opacity: 0.8;
 }
 
 /* Message Renderer */
-.agent-client-message-renderer {
+.obsius-message-renderer {
 	padding: 0px 16px;
 	width: 100%;
 	margin: 4px 0;
@@ -1141,20 +1185,20 @@ If your plugin does not need CSS, delete this file.
 	box-sizing: border-box;
 }
 
-.agent-client-message-renderer.agent-client-message-user {
+.obsius-message-renderer.obsius-message-user {
 	background-color: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 8px;
 }
 
-.agent-client-message-renderer.agent-client-message-assistant {
+.obsius-message-renderer.obsius-message-assistant {
 	background-color: transparent;
 	border: none;
 	border-radius: 0;
 }
 
 /* Text with Mentions */
-.agent-client-text-with-mentions {
+.obsius-text-with-mentions {
 	user-select: text;
 	white-space: pre-wrap;
 	word-wrap: break-word;
@@ -1165,7 +1209,7 @@ If your plugin does not need CSS, delete this file.
 	max-width: 100%;
 }
 
-.agent-client-text-mention {
+.obsius-text-mention {
 	background-color: transparent;
 	color: var(--interactive-accent-hover);
 	border-radius: 3px;
@@ -1175,7 +1219,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Markdown Text Renderer */
-.agent-client-markdown-text-renderer {
+.obsius-markdown-text-renderer {
 	user-select: text;
 	font-size: var(--ac-chat-font-size);
 	overflow-wrap: break-word;
@@ -1184,7 +1228,7 @@ If your plugin does not need CSS, delete this file.
 	max-width: 100%;
 }
 
-.agent-client-markdown-text-renderer .markdown-rendered {
+.obsius-markdown-text-renderer .markdown-rendered {
 	font-size: inherit;
 	overflow-wrap: break-word;
 	word-wrap: break-word;
@@ -1192,13 +1236,13 @@ If your plugin does not need CSS, delete this file.
 	max-width: 100%;
 }
 
-.agent-client-markdown-text-renderer .markdown-rendered pre {
+.obsius-markdown-text-renderer .markdown-rendered pre {
 	max-width: 100%;
 	overflow-x: auto;
 }
 
 /* Tool Call Diff Renderer */
-.agent-client-tool-call-diff {
+.obsius-tool-call-diff {
 	margin-top: 8px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 4px;
@@ -1207,12 +1251,12 @@ If your plugin does not need CSS, delete this file.
 	font-size: 12px;
 }
 
-.agent-client-tool-call-diff-content {
+.obsius-tool-call-diff-content {
 	background-color: var(--background-primary);
 	overflow: auto;
 }
 
-.agent-client-diff-line-info {
+.obsius-diff-line-info {
 	padding: 4px 12px;
 	background-color: var(--background-secondary);
 	color: var(--text-muted);
@@ -1220,14 +1264,14 @@ If your plugin does not need CSS, delete this file.
 	font-style: italic;
 }
 
-.agent-client-diff-line {
+.obsius-diff-line {
 	display: flex;
 	align-items: flex-start;
 	line-height: 1.5;
 	user-select: text;
 }
 
-.agent-client-diff-line-number {
+.obsius-diff-line-number {
 	display: inline-block;
 	width: 40px;
 	padding: 2px 8px;
@@ -1238,15 +1282,15 @@ If your plugin does not need CSS, delete this file.
 	font-size: 11px;
 }
 
-.agent-client-diff-line-number-old {
+.obsius-diff-line-number-old {
 	border-right: 1px solid var(--background-modifier-border);
 }
 
-.agent-client-diff-line-number-new {
+.obsius-diff-line-number-new {
 	border-right: 1px solid var(--background-modifier-border);
 }
 
-.agent-client-diff-line-marker {
+.obsius-diff-line-marker {
 	display: inline-block;
 	width: 20px;
 	padding: 2px 4px;
@@ -1256,39 +1300,39 @@ If your plugin does not need CSS, delete this file.
 	text-align: center;
 }
 
-.agent-client-diff-line-content {
+.obsius-diff-line-content {
 	flex: 1;
 	padding: 2px 12px;
 	white-space: pre-wrap;
 	word-break: break-all;
 }
 
-.agent-client-diff-line-added {
+.obsius-diff-line-added {
 	background-color: rgba(46, 160, 67, 0.15);
 }
 
-.agent-client-diff-line-added .agent-client-diff-line-marker {
+.obsius-diff-line-added .obsius-diff-line-marker {
 	color: var(--color-green);
 }
 
-.agent-client-diff-line-removed {
+.obsius-diff-line-removed {
 	background-color: rgba(248, 81, 73, 0.15);
 }
 
-.agent-client-diff-line-removed .agent-client-diff-line-marker {
+.obsius-diff-line-removed .obsius-diff-line-marker {
 	color: var(--color-red);
 }
 
-.agent-client-diff-line-context {
+.obsius-diff-line-context {
 	background-color: transparent;
 }
 
-.agent-client-diff-line-context .agent-client-diff-line-marker {
+.obsius-diff-line-context .obsius-diff-line-marker {
 	color: var(--text-faint);
 }
 
 /* Hunk header styling */
-.agent-client-diff-hunk-header {
+.obsius-diff-hunk-header {
 	padding: 4px 12px;
 	background-color: var(--background-secondary-alt);
 	color: var(--text-muted);
@@ -1299,19 +1343,19 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Word-level diff highlighting */
-.agent-client-diff-word-added {
+.obsius-diff-word-added {
 	background-color: rgba(46, 160, 67, 0.4);
 	font-weight: 600;
 }
 
-.agent-client-diff-word-removed {
+.obsius-diff-word-removed {
 	background-color: rgba(248, 81, 73, 0.4);
 	font-weight: 600;
 	text-decoration: line-through;
 }
 
 /* Diff Expand/Collapse Bar */
-.agent-client-diff-expand-bar {
+.obsius-diff-expand-bar {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1323,30 +1367,30 @@ If your plugin does not need CSS, delete this file.
 	transition: background-color 0.1s ease;
 }
 
-.agent-client-diff-expand-bar:hover {
+.obsius-diff-expand-bar:hover {
 	background-color: var(--background-modifier-hover);
 }
 
-.agent-client-diff-expand-text {
+.obsius-diff-expand-text {
 	font-size: 11px;
 	color: var(--text-muted);
 	font-family: var(--font-monospace);
 }
 
-.agent-client-diff-expand-icon {
+.obsius-diff-expand-icon {
 	font-size: 0.8em;
 	color: var(--text-muted);
 	margin-left: 8px;
 }
 
 /* Tool Call Details */
-.agent-client-tool-call-read-details,
-.agent-client-tool-call-edit-details,
-.agent-client-tool-call-delete-details,
-.agent-client-tool-call-move-details,
-.agent-client-tool-call-search-details,
-.agent-client-tool-call-execute-details,
-.agent-client-tool-call-fetch-details {
+.obsius-tool-call-read-details,
+.obsius-tool-call-edit-details,
+.obsius-tool-call-delete-details,
+.obsius-tool-call-move-details,
+.obsius-tool-call-search-details,
+.obsius-tool-call-execute-details,
+.obsius-tool-call-fetch-details {
 	padding: 4px 0;
 	font-size: 12px;
 	color: var(--text-muted);
@@ -1356,14 +1400,14 @@ If your plugin does not need CSS, delete this file.
 	max-width: 100%;
 }
 
-.agent-client-tool-call-location {
+.obsius-tool-call-location {
 	padding: 2px 0;
 	overflow-wrap: break-word;
 	word-wrap: break-word;
 	word-break: break-word;
 }
 
-.agent-client-tool-call-line {
+.obsius-tool-call-line {
 	color: var(--text-accent);
 	font-weight: 500;
 	overflow-wrap: break-word;
@@ -1371,7 +1415,7 @@ If your plugin does not need CSS, delete this file.
 	word-break: break-word;
 }
 
-.agent-client-tool-call-content {
+.obsius-tool-call-content {
 	padding: 8px 0;
 	overflow-wrap: break-word;
 	word-wrap: break-word;
@@ -1379,7 +1423,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* ===== Image Preview Strip ===== */
-.agent-client-image-preview-strip {
+.obsius-image-preview-strip {
 	display: flex;
 	gap: 8px;
 	padding: 8px 12px;
@@ -1389,27 +1433,27 @@ If your plugin does not need CSS, delete this file.
 	-ms-overflow-style: none;
 }
 
-.agent-client-image-preview-strip::-webkit-scrollbar {
+.obsius-image-preview-strip::-webkit-scrollbar {
 	height: 4px;
 }
 
-.agent-client-image-preview-strip::-webkit-scrollbar-track {
+.obsius-image-preview-strip::-webkit-scrollbar-track {
 	background: transparent;
 }
 
-.agent-client-image-preview-strip::-webkit-scrollbar-thumb {
+.obsius-image-preview-strip::-webkit-scrollbar-thumb {
 	background-color: var(--background-modifier-border);
 	border-radius: 2px;
 }
 
-.agent-client-image-preview-item {
+.obsius-image-preview-item {
 	position: relative;
 	flex-shrink: 0;
 	width: 64px;
 	height: 64px;
 }
 
-.agent-client-image-preview-thumbnail {
+.obsius-image-preview-thumbnail {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
@@ -1418,7 +1462,7 @@ If your plugin does not need CSS, delete this file.
 	border: 1px solid var(--background-modifier-border);
 }
 
-.agent-client-image-preview-remove {
+.obsius-image-preview-remove {
 	position: absolute;
 	top: -6px;
 	right: -6px;
@@ -1438,22 +1482,22 @@ If your plugin does not need CSS, delete this file.
 	box-shadow: none !important;
 }
 
-.agent-client-image-preview-remove svg {
+.obsius-image-preview-remove svg {
 	width: 12px;
 	height: 12px;
 }
 
-.agent-client-image-preview-item:hover .agent-client-image-preview-remove {
+.obsius-image-preview-item:hover .obsius-image-preview-remove {
 	opacity: 1;
 }
 
 /* ===== Message Image (in chat history) ===== */
-.agent-client-message-image {
+.obsius-message-image {
 	display: inline-block;
 	margin: 4px 4px 4px 0;
 }
 
-.agent-client-message-image-thumbnail {
+.obsius-message-image-thumbnail {
 	width: 120px;
 	height: 120px;
 	object-fit: cover;
@@ -1463,7 +1507,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* ===== Message Images Strip (horizontal scroll in chat history) ===== */
-.agent-client-message-images-strip {
+.obsius-message-images-strip {
 	display: flex;
 	gap: 8px;
 	padding: 8px 0;
@@ -1472,32 +1516,32 @@ If your plugin does not need CSS, delete this file.
 	-ms-overflow-style: none;
 }
 
-.agent-client-message-images-strip::-webkit-scrollbar {
+.obsius-message-images-strip::-webkit-scrollbar {
 	height: 4px;
 }
 
-.agent-client-message-images-strip::-webkit-scrollbar-track {
+.obsius-message-images-strip::-webkit-scrollbar-track {
 	background: transparent;
 }
 
-.agent-client-message-images-strip::-webkit-scrollbar-thumb {
+.obsius-message-images-strip::-webkit-scrollbar-thumb {
 	background-color: var(--background-modifier-border);
 	border-radius: 2px;
 }
 
-.agent-client-message-images-strip .agent-client-message-image {
+.obsius-message-images-strip .obsius-message-image {
 	flex-shrink: 0;
 	margin: 0;
 }
 
 /* ===== Session History Modal ===== */
-.agent-client-session-history-filter {
+.obsius-session-history-filter {
 	margin-bottom: 16px;
 	padding-bottom: 12px;
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.agent-client-session-history-filter-label {
+.obsius-session-history-filter-label {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -1506,17 +1550,17 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-normal);
 }
 
-.agent-client-session-history-filter-label input[type="checkbox"] {
+.obsius-session-history-filter-label input[type="checkbox"] {
 	cursor: pointer;
 }
 
-.agent-client-session-history-list {
+.obsius-session-history-list {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
 }
 
-.agent-client-session-history-item {
+.obsius-session-history-item {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -1527,20 +1571,20 @@ If your plugin does not need CSS, delete this file.
 	transition: background-color 0.1s ease;
 }
 
-.agent-client-session-history-item--clickable {
+.obsius-session-history-item--clickable {
 	cursor: pointer;
 }
 
-.agent-client-session-history-item--clickable:hover {
+.obsius-session-history-item--clickable:hover {
 	background: var(--background-modifier-hover);
 }
 
-.agent-client-session-history-item-content {
+.obsius-session-history-item-content {
 	flex: 1;
 	min-width: 0;
 }
 
-.agent-client-session-history-item-title {
+.obsius-session-history-item-title {
 	font-weight: 500;
 	font-size: 14px;
 	color: var(--text-normal);
@@ -1550,18 +1594,18 @@ If your plugin does not need CSS, delete this file.
 	white-space: nowrap;
 }
 
-.agent-client-session-history-item-metadata {
+.obsius-session-history-item-metadata {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 }
 
-.agent-client-session-history-item-timestamp {
+.obsius-session-history-item-timestamp {
 	font-size: 12px;
 	color: var(--text-muted);
 }
 
-.agent-client-session-history-item-actions {
+.obsius-session-history-item-actions {
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -1569,7 +1613,7 @@ If your plugin does not need CSS, delete this file.
 	margin-left: 12px;
 }
 
-.agent-client-session-history-action-icon {
+.obsius-session-history-action-icon {
 	width: 24px;
 	height: 24px;
 	display: flex;
@@ -1581,38 +1625,38 @@ If your plugin does not need CSS, delete this file.
 	transition: all 0.2s;
 }
 
-.agent-client-session-history-action-icon:hover {
+.obsius-session-history-action-icon:hover {
 	background: var(--background-modifier-hover);
 	color: var(--text-normal);
 }
 
-.agent-client-session-history-action-icon svg {
+.obsius-session-history-action-icon svg {
 	width: 16px;
 	height: 16px;
 }
 
-.agent-client-session-history-restore-icon:hover {
+.obsius-session-history-restore-icon:hover {
 	color: var(--text-accent);
 }
 
-.agent-client-session-history-fork-icon:hover {
+.obsius-session-history-fork-icon:hover {
 	color: var(--text-accent);
 }
 
-.agent-client-session-history-loading,
-.agent-client-session-history-empty,
-.agent-client-session-history-error {
+.obsius-session-history-loading,
+.obsius-session-history-empty,
+.obsius-session-history-error {
 	padding: 32px;
 	text-align: center;
 	color: var(--text-muted);
 }
 
-.agent-client-session-history-error-text {
+.obsius-session-history-error-text {
 	color: var(--text-error);
 	margin-bottom: 12px;
 }
 
-.agent-client-session-history-retry-button {
+.obsius-session-history-retry-button {
 	padding: 6px 12px;
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
@@ -1621,12 +1665,12 @@ If your plugin does not need CSS, delete this file.
 	cursor: pointer;
 }
 
-.agent-client-session-history-load-more {
+.obsius-session-history-load-more {
 	margin-top: 16px;
 	text-align: center;
 }
 
-.agent-client-session-history-load-more-button {
+.obsius-session-history-load-more-button {
 	padding: 8px 16px;
 	background: var(--background-secondary);
 	border: 1px solid var(--background-modifier-border);
@@ -1636,17 +1680,17 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-normal);
 }
 
-.agent-client-session-history-load-more-button:hover {
+.obsius-session-history-load-more-button:hover {
 	background: var(--background-modifier-hover);
 }
 
-.agent-client-session-history-load-more-button:disabled {
+.obsius-session-history-load-more-button:disabled {
 	opacity: 0.5;
 	cursor: not-allowed;
 }
 
 /* Debug mode manual input form */
-.agent-client-session-history-debug {
+.obsius-session-history-debug {
 	margin-bottom: 16px;
 	padding: 12px;
 	background: var(--background-secondary);
@@ -1654,24 +1698,24 @@ If your plugin does not need CSS, delete this file.
 	border: 1px dashed var(--text-muted);
 }
 
-.agent-client-session-history-debug h3 {
+.obsius-session-history-debug h3 {
 	margin: 0 0 12px 0;
 	font-size: 14px;
 	color: var(--text-muted);
 }
 
-.agent-client-session-history-debug-group {
+.obsius-session-history-debug-group {
 	margin-bottom: 10px;
 }
 
-.agent-client-session-history-debug-group label {
+.obsius-session-history-debug-group label {
 	display: block;
 	margin-bottom: 4px;
 	font-size: 12px;
 	color: var(--text-muted);
 }
 
-.agent-client-session-history-debug-input {
+.obsius-session-history-debug-input {
 	width: 100%;
 	padding: 6px 8px;
 	font-size: 13px;
@@ -1681,13 +1725,13 @@ If your plugin does not need CSS, delete this file.
 	background: var(--background-primary);
 }
 
-.agent-client-session-history-debug-actions {
+.obsius-session-history-debug-actions {
 	display: flex;
 	gap: 8px;
 	margin-top: 12px;
 }
 
-.agent-client-session-history-debug-button {
+.obsius-session-history-debug-button {
 	padding: 6px 12px;
 	font-size: 13px;
 	border-radius: 4px;
@@ -1697,18 +1741,18 @@ If your plugin does not need CSS, delete this file.
 	border: none;
 }
 
-.agent-client-session-history-debug-button:hover {
+.obsius-session-history-debug-button:hover {
 	background: var(--interactive-accent-hover);
 }
 
-.agent-client-session-history-debug-separator {
+.obsius-session-history-debug-separator {
 	margin: 16px 0;
 	border: none;
 	border-top: 1px solid var(--background-modifier-border);
 }
 
 /* Local sessions banner */
-.agent-client-session-history-local-banner {
+.obsius-session-history-local-banner {
 	padding: 8px 12px;
 	margin-bottom: 12px;
 	background: var(--background-secondary);
@@ -1719,7 +1763,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Warning banner for agents that don't support restoration */
-.agent-client-session-history-warning-banner {
+.obsius-session-history-warning-banner {
 	padding: 8px 12px;
 	margin-bottom: 12px;
 	background: var(--background-secondary);
@@ -1727,33 +1771,33 @@ If your plugin does not need CSS, delete this file.
 	border-left: 3px solid var(--text-warning);
 }
 
-.agent-client-session-history-warning-banner p {
+.obsius-session-history-warning-banner p {
 	margin: 0;
 	color: var(--text-muted);
 	font-size: 12px;
 }
 
 /* Delete button */
-.agent-client-session-history-delete-icon {
+.obsius-session-history-delete-icon {
 	color: var(--text-muted);
 }
 
-.agent-client-session-history-delete-icon:hover {
+.obsius-session-history-delete-icon:hover {
 	color: var(--text-error);
 }
 
 /* Confirm delete modal */
-.agent-client-confirm-delete-message {
+.obsius-confirm-delete-message {
 	margin-bottom: 8px;
 }
 
-.agent-client-confirm-delete-warning {
+.obsius-confirm-delete-warning {
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 	margin-bottom: 16px;
 }
 
-.agent-client-confirm-delete-buttons {
+.obsius-confirm-delete-buttons {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
@@ -1761,7 +1805,7 @@ If your plugin does not need CSS, delete this file.
 
 /* ===== Code Block Chat View ===== */
 /* TODO(code-block): Styles for future code block chat view */
-.agent-client-code-block-container {
+.obsius-code-block-container {
 	display: flex;
 	flex-direction: column;
 	border: 1px solid var(--background-modifier-border);
@@ -1770,13 +1814,13 @@ If your plugin does not need CSS, delete this file.
 	overflow: hidden;
 }
 
-.agent-client-code-block-content {
+.obsius-code-block-content {
 	display: flex;
 	flex-direction: column;
 	padding: 8px;
 }
 
-.agent-client-code-block-status {
+.obsius-code-block-status {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -1788,21 +1832,21 @@ If your plugin does not need CSS, delete this file.
 	gap: 8px;
 }
 
-.agent-client-code-block-status-actions {
+.obsius-code-block-status-actions {
 	display: flex;
 	align-items: center;
 	gap: 4px;
 	flex-wrap: wrap;
 }
 
-.agent-client-code-block-messages {
+.obsius-code-block-messages {
 	max-height: 400px;
 	overflow-y: auto;
 	margin-bottom: 8px;
 }
 
 /* ===== Agent Selector (InlineHeader) ===== */
-.agent-client-agent-selector {
+.obsius-agent-selector {
 	display: inline-flex;
 	align-items: center;
 	padding: 0 4px;
@@ -1813,11 +1857,11 @@ If your plugin does not need CSS, delete this file.
 	max-width: 160px;
 }
 
-.agent-client-agent-selector:hover {
+.obsius-agent-selector:hover {
 	background-color: var(--background-modifier-hover);
 }
 
-.agent-client-agent-selector-icon {
+.obsius-agent-selector-icon {
 	display: flex;
 	align-items: center;
 	pointer-events: none;
@@ -1826,12 +1870,12 @@ If your plugin does not need CSS, delete this file.
 	order: 2;
 }
 
-.agent-client-agent-selector-icon svg {
+.obsius-agent-selector-icon svg {
 	width: 12px;
 	height: 12px;
 }
 
-.agent-client-agent-selector select.dropdown {
+.obsius-agent-selector select.dropdown {
 	padding: 0 !important;
 	margin: 0 !important;
 	border: none !important;
@@ -1853,15 +1897,15 @@ If your plugin does not need CSS, delete this file.
 	overflow: hidden;
 }
 
-.agent-client-agent-selector select.dropdown:hover,
-.agent-client-agent-selector select.dropdown:focus {
+.obsius-agent-selector select.dropdown:hover,
+.obsius-agent-selector select.dropdown:focus {
 	color: var(--text-normal) !important;
 	background-color: transparent !important;
 	box-shadow: none !important;
 }
 
 /* Agent label (single agent) */
-.agent-client-agent-label {
+.obsius-agent-label {
 	color: var(--text-normal);
 	font-size: 12px;
 }
@@ -1870,26 +1914,26 @@ If your plugin does not need CSS, delete this file.
    Model Preferences (Settings)
    ============================================================================ */
 
-.agent-client-model-prefs-agent {
+.obsius-model-prefs-agent {
 	margin-bottom: 4px;
 }
 
-.agent-client-model-chips {
+.obsius-model-chips {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 4px;
 	padding: 0 var(--size-4-4);
 }
 
-.agent-client-model-chips:not(:empty) {
+.obsius-model-chips:not(:empty) {
 	margin-bottom: 8px;
 }
 
-.agent-client-model-chips.is-hidden {
+.obsius-model-chips.is-hidden {
 	display: none;
 }
 
-.agent-client-model-chip {
+.obsius-model-chip {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
@@ -1900,11 +1944,11 @@ If your plugin does not need CSS, delete this file.
 	line-height: 1.6;
 }
 
-.agent-client-model-chip-label {
+.obsius-model-chip-label {
 	color: var(--text-normal);
 }
 
-.agent-client-model-chip-remove {
+.obsius-model-chip-remove {
 	cursor: pointer;
 	color: var(--text-faint);
 	font-size: 14px;
@@ -1912,19 +1956,19 @@ If your plugin does not need CSS, delete this file.
 	padding: 0 2px;
 }
 
-.agent-client-model-chip-remove:hover {
+.obsius-model-chip-remove:hover {
 	color: var(--text-error);
 }
 
 /* Scrollable model picker (opened by "+" button) */
-.agent-client-model-picker {
+.obsius-model-picker {
 	margin: 0 var(--size-4-4) 8px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
 	background-color: var(--background-primary);
 }
 
-.agent-client-model-picker-search {
+.obsius-model-picker-search {
 	width: 100%;
 	padding: 6px 10px;
 	border: none;
@@ -1936,17 +1980,17 @@ If your plugin does not need CSS, delete this file.
 	box-sizing: border-box;
 }
 
-.agent-client-model-picker-search:focus {
+.obsius-model-picker-search:focus {
 	outline: none;
 	box-shadow: inset 0 -1px 0 var(--interactive-accent);
 }
 
-.agent-client-model-picker-list {
+.obsius-model-picker-list {
 	max-height: 240px;
 	overflow-y: auto;
 }
 
-.agent-client-model-picker-item {
+.obsius-model-picker-item {
 	display: flex;
 	align-items: flex-start;
 	gap: 8px;
@@ -1955,19 +1999,19 @@ If your plugin does not need CSS, delete this file.
 	border-bottom: 1px solid var(--background-modifier-border-focus);
 }
 
-.agent-client-model-picker-item:last-child {
+.obsius-model-picker-item:last-child {
 	border-bottom: none;
 }
 
-.agent-client-model-picker-item:hover {
+.obsius-model-picker-item:hover {
 	background-color: var(--background-modifier-hover);
 }
 
-.agent-client-model-picker-item.is-selected {
+.obsius-model-picker-item.is-selected {
 	background-color: var(--background-modifier-active-hover);
 }
 
-.agent-client-model-picker-check {
+.obsius-model-picker-check {
 	flex-shrink: 0;
 	width: 16px;
 	height: 16px;
@@ -1975,22 +2019,22 @@ If your plugin does not need CSS, delete this file.
 	color: var(--interactive-accent);
 }
 
-.agent-client-model-picker-check:empty {
+.obsius-model-picker-check:empty {
 	visibility: hidden;
 }
 
-.agent-client-model-picker-item-text {
+.obsius-model-picker-item-text {
 	display: flex;
 	flex-direction: column;
 	min-width: 0;
 }
 
-.agent-client-model-picker-item-name {
+.obsius-model-picker-item-name {
 	font-size: var(--font-ui-small);
 	color: var(--text-normal);
 }
 
-.agent-client-model-picker-item-desc {
+.obsius-model-picker-item-desc {
 	font-size: var(--font-smallest);
 	color: var(--text-faint);
 	margin-top: 1px;
@@ -1999,7 +2043,7 @@ If your plugin does not need CSS, delete this file.
 	text-overflow: ellipsis;
 }
 
-.agent-client-model-picker-empty {
+.obsius-model-picker-empty {
 	padding: 12px 10px;
 	font-size: var(--font-smallest);
 	color: var(--text-faint);

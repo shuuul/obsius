@@ -24,7 +24,7 @@ interface AppWithSettings {
 	};
 }
 
-export const VIEW_TYPE_CHAT = "agent-client-chat-view";
+export const VIEW_TYPE_CHAT = "obsius-chat-view";
 
 // ============================================================
 // ChatComponent - Manages header, tabs, and per-tab content
@@ -191,7 +191,9 @@ function ChatComponent({
 	// Workspace events routed to active tab
 	const wsAutoMentionToggle = useCallback(
 		(force?: boolean) => {
-			tabActionsMapRef.current.get(tabState.activeTabId)?.autoMentionToggle(force);
+			tabActionsMapRef.current
+				.get(tabState.activeTabId)
+				?.autoMentionToggle(force);
 		},
 		[tabState.activeTabId],
 	);
@@ -257,7 +259,7 @@ function ChatComponent({
 	}, [view, tabState.activeTabId, activeAgentLabel]);
 
 	return (
-		<div className="agent-client-chat-view-container">
+		<div className="obsius-chat-view-container">
 			<ChatHeader
 				agentLabel={activeAgentLabel}
 				availableAgents={availableAgents}
@@ -267,9 +269,7 @@ function ChatComponent({
 				onNewTab={tabState.handleNewTab}
 				onNewSession={handleNewSession}
 				onOpenSettings={handleOpenSettings}
-				onOpenHistory={
-					activeTabCanShowHistory ? handleOpenHistory : undefined
-				}
+				onOpenHistory={activeTabCanShowHistory ? handleOpenHistory : undefined}
 				tabs={tabState.tabsWithLabels}
 				activeTabId={tabState.activeTabId}
 				canAddTab={tabState.canAddTab}
@@ -452,7 +452,7 @@ export class ChatView extends ItemView implements IChatViewContainer {
 	focus(): void {
 		void this.app.workspace.revealLeaf(this.leaf).then(() => {
 			const textarea = this.containerEl.querySelector(
-				"textarea.agent-client-chat-input-textarea",
+				"textarea.obsius-chat-input-textarea",
 			);
 			if (textarea instanceof HTMLTextAreaElement) {
 				textarea.focus();

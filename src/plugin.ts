@@ -140,7 +140,7 @@ export default class AgentClientPlugin extends Plugin {
 				void this.activateView();
 			},
 		);
-		ribbonIconEl.addClass("agent-client-ribbon-icon");
+		ribbonIconEl.addClass("obsius-ribbon-icon");
 
 		this.addCommand({
 			id: "open-chat-view",

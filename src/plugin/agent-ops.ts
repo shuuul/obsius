@@ -92,7 +92,7 @@ export const openChatWithAgent = async (
 ): Promise<void> => {
 	await host.activateView();
 	host.app.workspace.trigger(
-		"agent-client:new-chat-requested" as "quit",
+		"obsius:new-chat-requested" as "quit",
 		agentId,
 	);
 };
@@ -117,7 +117,7 @@ export const registerPermissionCommands = (host: AgentOpsHost): void => {
 		callback: async () => {
 			await host.activateView();
 			host.app.workspace.trigger(
-				"agent-client:approve-active-permission" as "quit",
+				"obsius:approve-active-permission" as "quit",
 				host.lastActiveChatViewId,
 			);
 		},
@@ -129,7 +129,7 @@ export const registerPermissionCommands = (host: AgentOpsHost): void => {
 		callback: async () => {
 			await host.activateView();
 			host.app.workspace.trigger(
-				"agent-client:reject-active-permission" as "quit",
+				"obsius:reject-active-permission" as "quit",
 				host.lastActiveChatViewId,
 			);
 		},
@@ -141,7 +141,7 @@ export const registerPermissionCommands = (host: AgentOpsHost): void => {
 		callback: async () => {
 			await host.activateView();
 			host.app.workspace.trigger(
-				"agent-client:toggle-auto-mention" as "quit",
+				"obsius:toggle-auto-mention" as "quit",
 				host.lastActiveChatViewId,
 			);
 		},
@@ -152,7 +152,7 @@ export const registerPermissionCommands = (host: AgentOpsHost): void => {
 		name: "Cancel current message",
 		callback: () => {
 			host.app.workspace.trigger(
-				"agent-client:cancel-message" as "quit",
+				"obsius:cancel-message" as "quit",
 				host.lastActiveChatViewId,
 			);
 		},
@@ -239,4 +239,3 @@ export const registerBroadcastCommands = (host: AgentOpsHost): void => {
 		},
 	});
 };
-

@@ -540,7 +540,7 @@ function renderCustomAgent(
 ): void {
 	const store = plugin.settingsStore;
 	const blockEl = containerEl.createDiv({
-		cls: "agent-client-custom-agent",
+		cls: "obsius-custom-agent",
 	});
 
 	const idSetting = new Setting(blockEl)

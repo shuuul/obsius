@@ -15,13 +15,13 @@ export function AutoMentionBadge({
 	}
 
 	return (
-		<div className="agent-client-auto-mention-inline">
+		<div className="obsius-auto-mention-inline">
 			<span
-				className={`agent-client-mention-badge ${autoMention.isDisabled ? "agent-client-disabled" : ""}`}
+				className={`obsius-mention-badge ${autoMention.isDisabled ? "obsius-disabled" : ""}`}
 			>
 				@{autoMention.activeNote.name}
 				{autoMention.activeNote.selection && (
-					<span className="agent-client-selection-indicator">
+					<span className="obsius-selection-indicator">
 						{":"}
 						{autoMention.activeNote.selection.from.line + 1}-
 						{autoMention.activeNote.selection.to.line + 1}
@@ -29,7 +29,7 @@ export function AutoMentionBadge({
 				)}
 			</span>
 			<button
-				className="agent-client-auto-mention-toggle-btn"
+				className="obsius-auto-mention-toggle-btn"
 				onClick={(e) => {
 					const newDisabledState = !autoMention.isDisabled;
 					autoMention.toggle(newDisabledState);

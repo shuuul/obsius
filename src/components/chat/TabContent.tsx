@@ -106,17 +106,14 @@ export function TabContent({
 			setAttachedImages(state.images);
 		},
 		sendMessage: async () => {
-			const hasContent =
-				inputValue.trim() !== "" || attachedImages.length > 0;
+			const hasContent = inputValue.trim() !== "" || attachedImages.length > 0;
 			if (!hasContent || !isSessionReady || sessionHistory.loading || isSending)
 				return false;
-			const imagesToSend: ImagePromptContent[] = attachedImages.map(
-				(img) => ({
-					type: "image",
-					data: img.data,
-					mimeType: img.mimeType,
-				}),
-			);
+			const imagesToSend: ImagePromptContent[] = attachedImages.map((img) => ({
+				type: "image",
+				data: img.data,
+				mimeType: img.mimeType,
+			}));
 			const messageToSend = inputValue.trim();
 			setInputValue("");
 			setAttachedImages([]);
@@ -127,8 +124,7 @@ export function TabContent({
 			return true;
 		},
 		canSend: () => {
-			const hasContent =
-				inputValue.trim() !== "" || attachedImages.length > 0;
+			const hasContent = inputValue.trim() !== "" || attachedImages.length > 0;
 			return (
 				hasContent && isSessionReady && !sessionHistory.loading && !isSending
 			);
@@ -157,7 +153,7 @@ export function TabContent({
 
 	return (
 		<div
-			className="agent-client-tab-content"
+			className="obsius-tab-content"
 			style={{
 				display: isActive ? "flex" : "none",
 				flexDirection: "column",

@@ -26,16 +26,16 @@ export function ImagePreviewStrip({
 	if (images.length === 0) return null;
 
 	return (
-		<div className="agent-client-image-preview-strip">
+		<div className="obsius-image-preview-strip">
 			{images.map((image) => (
-				<div key={image.id} className="agent-client-image-preview-item">
+				<div key={image.id} className="obsius-image-preview-item">
 					<img
 						src={`data:${image.mimeType};base64,${image.data}`}
 						alt="Attached image"
-						className="agent-client-image-preview-thumbnail"
+						className="obsius-image-preview-thumbnail"
 					/>
 					<button
-						className="agent-client-image-preview-remove"
+						className="obsius-image-preview-remove"
 						onClick={() => onRemove(image.id)}
 						title="Remove image"
 						type="button"

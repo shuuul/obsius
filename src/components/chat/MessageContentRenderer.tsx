@@ -60,12 +60,12 @@ export function MessageContentRenderer({
 
 		case "plan": {
 			return (
-				<div className="agent-client-message-plan">
-					<div className="agent-client-message-plan-title">Plan</div>
+				<div className="obsius-message-plan">
+					<div className="obsius-message-plan-title">Plan</div>
 					{content.entries.map((entry, idx) => (
 						<div
 							key={idx}
-							className={`agent-client-message-plan-entry agent-client-plan-status-${entry.status}`}
+							className={`obsius-message-plan-entry obsius-plan-status-${entry.status}`}
 						>
 							{entry.content}
 						</div>
@@ -85,11 +85,11 @@ export function MessageContentRenderer({
 
 		case "image":
 			return (
-				<div className="agent-client-message-image">
+				<div className="obsius-message-image">
 					<img
 						src={`data:${content.mimeType};base64,${content.data}`}
 						alt="Attached image"
-						className="agent-client-message-image-thumbnail"
+						className="obsius-message-image-thumbnail"
 					/>
 				</div>
 			);

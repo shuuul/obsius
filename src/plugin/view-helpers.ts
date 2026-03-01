@@ -57,7 +57,7 @@ export function focusChatTextarea(leaf: WorkspaceLeaf, delayMs = 50): void {
 
 	window.setTimeout(() => {
 		const textarea = viewContainerEl.querySelector(
-			"textarea.agent-client-chat-input-textarea",
+			"textarea.obsius-chat-input-textarea",
 		);
 		if (textarea instanceof HTMLTextAreaElement) {
 			textarea.focus();

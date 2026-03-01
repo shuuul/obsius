@@ -51,7 +51,7 @@ export function useWorkspaceEvents({
 	useEffect(() => {
 		const ref = onCustomEvent(
 			workspace,
-			"agent-client:toggle-auto-mention",
+			"obsius:toggle-auto-mention",
 			(targetViewId?: string) => {
 				if (targetViewId && targetViewId !== viewId) return;
 				autoMentionToggle();
@@ -63,7 +63,7 @@ export function useWorkspaceEvents({
 	useEffect(() => {
 		const ref = onCustomEvent(
 			workspace,
-			"agent-client:new-chat-requested",
+			"obsius:new-chat-requested",
 			(agentId?: string) => {
 				if (lastActiveChatViewId && lastActiveChatViewId !== viewId) {
 					return;
@@ -77,7 +77,7 @@ export function useWorkspaceEvents({
 	useEffect(() => {
 		const approveRef = onCustomEvent(
 			workspace,
-			"agent-client:approve-active-permission",
+			"obsius:approve-active-permission",
 			(targetViewId?: string) => {
 				if (targetViewId && targetViewId !== viewId) return;
 				void (async () => {
@@ -91,7 +91,7 @@ export function useWorkspaceEvents({
 
 		const rejectRef = onCustomEvent(
 			workspace,
-			"agent-client:reject-active-permission",
+			"obsius:reject-active-permission",
 			(targetViewId?: string) => {
 				if (targetViewId && targetViewId !== viewId) return;
 				void (async () => {
@@ -105,7 +105,7 @@ export function useWorkspaceEvents({
 
 		const cancelRef = onCustomEvent(
 			workspace,
-			"agent-client:cancel-message",
+			"obsius:cancel-message",
 			(targetViewId?: string) => {
 				if (targetViewId && targetViewId !== viewId) return;
 				void handleStopGeneration();

@@ -1,5 +1,5 @@
 import * as React from "react";
-const { useState, useMemo } = React;
+const { useState, useMemo, useCallback } = React;
 import { FileSystemAdapter } from "obsidian";
 import type { MessageContent } from "../../domain/models/chat-message";
 import type { IAcpClient } from "../../adapters/acp/acp.adapter";
@@ -9,6 +9,14 @@ import { PermissionRequestSection } from "./PermissionRequestSection";
 import { DiffRenderer } from "./DiffRenderer";
 import { toRelativePath } from "../../shared/path-utils";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { ObsidianIcon } from "./ObsidianIcon";
+import {
+	getToolIconName,
+	getToolDisplayName,
+	getToolSummary,
+	getStatusDisplayClass,
+	getStatusIconName,
+} from "../../shared/tool-icons";
 
 interface ToolCallRendererProps {
 	content: Extract<MessageContent, { type: "tool_call" }>;
@@ -17,42 +25,21 @@ interface ToolCallRendererProps {
 	onApprovePermission?: (requestId: string, optionId: string) => Promise<void>;
 }
 
-function getStatusClass(status?: string): string {
-	switch (status) {
-		case "running":
-			return "ac-status--running";
-		case "completed":
-			return "ac-status--completed";
-		case "error":
-			return "ac-status--error";
-		default:
-			return "";
+function countDiffStats(
+	content: Extract<MessageContent, { type: "tool_call" }>["content"],
+): { added: number; removed: number } | null {
+	if (!content) return null;
+	let added = 0;
+	let removed = 0;
+	for (const item of content) {
+		if (item.type !== "diff") continue;
+		const newLines = (item.newText || "").split("\n");
+		const oldLines = (item.oldText || "").split("\n");
+		added += Math.max(0, newLines.length - oldLines.length);
+		removed += Math.max(0, oldLines.length - newLines.length);
 	}
-}
-
-function getSummary(
-	kind: string | undefined,
-	locations: { path: string; line?: number | null }[] | undefined,
-	rawInput: Record<string, unknown> | undefined,
-	vaultPath: string,
-): string {
-	if (
-		kind === "execute" &&
-		rawInput &&
-		typeof rawInput.command === "string"
-	) {
-		let cmd = rawInput.command as string;
-		if (Array.isArray(rawInput.args) && rawInput.args.length > 0) {
-			cmd += ` ${(rawInput.args as string[]).join(" ")}`;
-		}
-		return cmd.length > 60 ? `${cmd.slice(0, 60)}...` : cmd;
-	}
-	if (locations && locations.length > 0) {
-		const rel = toRelativePath(locations[0].path, vaultPath);
-		const suffix = locations[0].line != null ? `:${locations[0].line}` : "";
-		return `${rel}${suffix}`;
-	}
-	return "";
+	if (added === 0 && removed === 0) return null;
+	return { added, removed };
 }
 
 export function ToolCallRenderer({
@@ -90,16 +77,47 @@ export function ToolCallRenderer({
 		return "";
 	}, [plugin]);
 
+	const iconName = useMemo(() => getToolIconName(title, kind), [title, kind]);
+
+	const displayName = useMemo(
+		() => getToolDisplayName(title, kind),
+		[title, kind],
+	);
+
 	const summary = useMemo(
-		() => getSummary(kind, locations, rawInput, vaultPath),
-		[kind, locations, rawInput, vaultPath],
+		() => getToolSummary(title, kind, rawInput, locations, vaultPath),
+		[title, kind, rawInput, locations, vaultPath],
+	);
+
+	const statusClass = getStatusDisplayClass(status);
+	const statusIcon = getStatusIconName(status);
+
+	const diffStats = useMemo(() => countDiffStats(toolContent), [toolContent]);
+
+	const handlePathClick = useCallback(
+		(path: string) => {
+			const relativePath = toRelativePath(path, vaultPath);
+			void plugin.app.workspace.openLinkText(relativePath, "", "tab");
+		},
+		[plugin, vaultPath],
 	);
 
 	const header = (
 		<>
-			<span className="ac-row__title">{title}</span>
+			<ObsidianIcon name={iconName} className="ac-tool-icon" />
+			<span className="ac-row__title">{displayName}</span>
 			{summary && <span className="ac-row__summary">{summary}</span>}
-			<span className={`ac-status ${getStatusClass(status)}`} />
+			{diffStats && (
+				<span className="ac-tool-diff-stats">
+					<span className="ac-tool-diff-added">+{diffStats.added}</span>
+					<span className="ac-tool-diff-removed">-{diffStats.removed}</span>
+				</span>
+			)}
+			<span
+				className={`ac-tool-status ${statusClass ? `ac-tool-status--${statusClass}` : ""}`}
+			>
+				{statusIcon && <ObsidianIcon name={statusIcon} size={14} />}
+			</span>
 		</>
 	);
 
@@ -124,12 +142,31 @@ export function ToolCallRenderer({
 
 			{locations && locations.length > 0 && (
 				<div className="ac-tree__item ac-tree__locations">
-					{locations.map((loc, idx) => (
-						<span key={idx} className="ac-tree__location">
-							{toRelativePath(loc.path, vaultPath)}
-							{loc.line != null && `:${loc.line}`}
-						</span>
-					))}
+					{locations.map((loc, idx) => {
+						const rel = toRelativePath(loc.path, vaultPath);
+						const isVaultFile = loc.path !== rel || !loc.path.startsWith("/");
+						return (
+							<span
+								key={idx}
+								className={`ac-tree__location ${isVaultFile ? "ac-tree__location--link" : ""}`}
+								onClick={
+									isVaultFile ? () => handlePathClick(loc.path) : undefined
+								}
+								onKeyDown={
+									isVaultFile
+										? (e) => {
+												if (e.key === "Enter") handlePathClick(loc.path);
+											}
+										: undefined
+								}
+								role={isVaultFile ? "link" : undefined}
+								tabIndex={isVaultFile ? 0 : undefined}
+							>
+								{rel}
+								{loc.line != null && `:${loc.line}`}
+							</span>
+						);
+					})}
 				</div>
 			)}
 

@@ -22,11 +22,7 @@ export interface ErrorOverlayProps {
  * - Closes on Escape key (consistent with Obsidian's native Menu)
  * - Does not block chat messages from being visible
  */
-export function ErrorOverlay({
-	errorInfo,
-	onClose,
-	view,
-}: ErrorOverlayProps) {
+export function ErrorOverlay({ errorInfo, onClose, view }: ErrorOverlayProps) {
 	const overlayRef = useRef<HTMLDivElement>(null);
 
 	// Handle outside click to close
@@ -56,11 +52,11 @@ export function ErrorOverlay({
 	}, [onClose, view]);
 
 	return (
-		<div ref={overlayRef} className="agent-client-error-overlay">
-			<div className="agent-client-error-overlay-header">
-				<h4 className="agent-client-error-overlay-title">{errorInfo.title}</h4>
+		<div ref={overlayRef} className="obsius-error-overlay">
+			<div className="obsius-error-overlay-header">
+				<h4 className="obsius-error-overlay-title">{errorInfo.title}</h4>
 				<button
-					className="agent-client-error-overlay-close"
+					className="obsius-error-overlay-close"
 					onClick={onClose}
 					aria-label="Close error"
 					type="button"
@@ -71,9 +67,9 @@ export function ErrorOverlay({
 					}}
 				/>
 			</div>
-			<p className="agent-client-error-overlay-message">{errorInfo.message}</p>
+			<p className="obsius-error-overlay-message">{errorInfo.message}</p>
 			{errorInfo.suggestion && (
-				<p className="agent-client-error-overlay-suggestion">
+				<p className="obsius-error-overlay-suggestion">
 					{errorInfo.suggestion}
 				</p>
 			)}

@@ -91,10 +91,10 @@ export function ChatHeader({
 	}, [isDropdownOpen]);
 
 	return (
-		<div className="agent-client-chat-view-header">
-			<div className="agent-client-chat-view-header-main" ref={dropdownRef}>
+		<div className="obsius-chat-view-header">
+			<div className="obsius-chat-view-header-main" ref={dropdownRef}>
 				<h3
-					className={`agent-client-chat-view-header-title${hasMultipleAgents ? " agent-client-chat-view-header-title--clickable" : ""}`}
+					className={`obsius-chat-view-header-title${hasMultipleAgents ? " obsius-chat-view-header-title--clickable" : ""}`}
 					onClick={handleTitleClick}
 					onKeyDown={(e) => {
 						if (e.key === "Enter" || e.key === " ") {
@@ -106,20 +106,20 @@ export function ChatHeader({
 					{agentLabel}
 					{hasMultipleAgents && (
 						<span
-							className={`agent-client-chat-view-header-chevron${isDropdownOpen ? " agent-client-chat-view-header-chevron--open" : ""}`}
+							className={`obsius-chat-view-header-chevron${isDropdownOpen ? " obsius-chat-view-header-chevron--open" : ""}`}
 							ref={chevronRef}
 						/>
 					)}
 				</h3>
 				{isDropdownOpen && (
-					<div className="agent-client-header-agent-dropdown">
+					<div className="obsius-header-agent-dropdown">
 						{availableAgents.map((agent) => (
 							<div
 								key={agent.id}
 								role="option"
 								tabIndex={0}
 								aria-selected={agent.id === currentAgentId}
-								className={`agent-client-header-agent-dropdown-item${agent.id === currentAgentId ? " agent-client-header-agent-dropdown-item--active" : ""}`}
+								className={`obsius-header-agent-dropdown-item${agent.id === currentAgentId ? " obsius-header-agent-dropdown-item--active" : ""}`}
 								onClick={() => handleAgentSelect(agent.id)}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {
@@ -144,10 +144,10 @@ export function ChatHeader({
 			/>
 
 			{isUpdateAvailable && (
-				<span className="agent-client-chat-view-header-update">Update</span>
+				<span className="obsius-chat-view-header-update">Update</span>
 			)}
 
-			<div className="agent-client-chat-view-header-actions">
+			<div className="obsius-chat-view-header-actions">
 				{canAddTab && (
 					<HeaderButton
 						iconName="square-plus"

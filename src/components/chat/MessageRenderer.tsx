@@ -63,13 +63,13 @@ export function MessageRenderer({
 
 	return (
 		<div
-			className={`agent-client-message-renderer ${message.role === "user" ? "agent-client-message-user" : "agent-client-message-assistant"}`}
+			className={`obsius-message-renderer ${message.role === "user" ? "obsius-message-user" : "obsius-message-assistant"}`}
 		>
 			{groups.map((group, idx) => {
 				if (group.type === "images") {
 					// Render images in horizontal scroll container
 					return (
-						<div key={idx} className="agent-client-message-images-strip">
+						<div key={idx} className="obsius-message-images-strip">
 							{group.items.map((content, imgIdx) => (
 								<MessageContentRenderer
 									key={imgIdx}

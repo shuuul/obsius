@@ -106,9 +106,9 @@ export function ChatMessages({
 	}, [view, checkIfAtBottom]);
 
 	return (
-		<div ref={containerRef} className="agent-client-chat-view-messages">
+		<div ref={containerRef} className="obsius-chat-view-messages">
 			{messages.length === 0 ? (
-				<div className="agent-client-chat-empty-state">
+				<div className="obsius-chat-empty-state">
 					{isRestoringSession
 						? "Restoring session..."
 						: !isSessionReady
@@ -135,7 +135,7 @@ export function ChatMessages({
 					)}
 					{!isAtBottom && (
 						<button
-							className="agent-client-scroll-to-bottom"
+							className="obsius-scroll-to-bottom"
 							onClick={() => {
 								const container = containerRef.current;
 								if (container) {

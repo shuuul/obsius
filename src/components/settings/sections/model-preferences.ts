@@ -46,7 +46,7 @@ function renderCandidateModelPicker(
 	models: CachedModel[],
 ): void {
 	const wrapper = containerEl.createDiv({
-		cls: "agent-client-model-prefs-agent",
+		cls: "obsius-model-prefs-agent",
 	});
 
 	const candidates = (plugin.settings.candidateModels?.[agentId] ?? []).filter(
@@ -62,7 +62,7 @@ function renderCandidateModelPicker(
 		);
 
 	const chipsEl = wrapper.createDiv({
-		cls: `agent-client-model-chips${candidates.length === 0 ? " is-hidden" : ""}`,
+		cls: `obsius-model-chips${candidates.length === 0 ? " is-hidden" : ""}`,
 	});
 	if (candidates.length > 0) {
 		refreshChips(chipsEl, plugin, agentId, models, () =>
@@ -120,14 +120,14 @@ function refreshChips(
 
 	for (const modelId of candidates) {
 		const model = models.find((m) => m.modelId === modelId);
-		const chip = chipsEl.createDiv({ cls: "agent-client-model-chip" });
+		const chip = chipsEl.createDiv({ cls: "obsius-model-chip" });
 		chip.createSpan({
 			text: model?.name ?? modelId,
-			cls: "agent-client-model-chip-label",
+			cls: "obsius-model-chip-label",
 		});
 		const removeBtn = chip.createSpan({
 			text: "\u00d7",
-			cls: "agent-client-model-chip-remove",
+			cls: "obsius-model-chip-remove",
 			attr: { "aria-label": `Remove ${model?.name ?? modelId}` },
 		});
 		removeBtn.addEventListener("click", () => {
@@ -160,22 +160,22 @@ function togglePicker(
 	onUpdate: () => void,
 ): void {
 	const existing: HTMLElement | null = wrapper.querySelector(
-		".agent-client-model-picker",
+		".obsius-model-picker",
 	);
 	if (existing) {
 		destroyPicker(existing);
 		return;
 	}
 
-	const picker = wrapper.createDiv({ cls: "agent-client-model-picker" });
+	const picker = wrapper.createDiv({ cls: "obsius-model-picker" });
 
 	const searchEl = picker.createEl("input", {
 		type: "text",
 		placeholder: "Filter models...",
-		cls: "agent-client-model-picker-search",
+		cls: "obsius-model-picker-search",
 	});
 
-	const listEl = picker.createDiv({ cls: "agent-client-model-picker-list" });
+	const listEl = picker.createDiv({ cls: "obsius-model-picker-list" });
 
 	const renderList = (query: string) => {
 		listEl.empty();
@@ -194,7 +194,7 @@ function togglePicker(
 		if (filtered.length === 0) {
 			listEl.createDiv({
 				text: "No matching models.",
-				cls: "agent-client-model-picker-empty",
+				cls: "obsius-model-picker-empty",
 			});
 			return;
 		}
@@ -202,27 +202,27 @@ function togglePicker(
 		for (const model of filtered) {
 			const isSelected = currentCandidates.includes(model.modelId);
 			const item = listEl.createDiv({
-				cls: `agent-client-model-picker-item${isSelected ? " is-selected" : ""}`,
+				cls: `obsius-model-picker-item${isSelected ? " is-selected" : ""}`,
 			});
 
 			const checkEl = item.createSpan({
-				cls: "agent-client-model-picker-check",
+				cls: "obsius-model-picker-check",
 			});
 			if (isSelected) {
 				setIcon(checkEl, "check");
 			}
 
 			const textEl = item.createDiv({
-				cls: "agent-client-model-picker-item-text",
+				cls: "obsius-model-picker-item-text",
 			});
 			textEl.createSpan({
 				text: model.name,
-				cls: "agent-client-model-picker-item-name",
+				cls: "obsius-model-picker-item-name",
 			});
 			if (model.description) {
 				textEl.createSpan({
 					text: model.description,
-					cls: "agent-client-model-picker-item-desc",
+					cls: "obsius-model-picker-item-desc",
 				});
 			}
 
@@ -290,22 +290,22 @@ function renderModeModelMapping(
 					dropdown.addOption(model.modelId, model.name);
 				}
 				dropdown.setValue(defaults[mode.id] ?? "");
-			dropdown.onChange((value) => {
-				const current = plugin.settings.modeModelDefaults?.[agentId] ?? {};
-				let modeDefaults: Record<string, string>;
-				if (value === "") {
-					modeDefaults = { ...current };
-					delete modeDefaults[mode.id];
-				} else {
-					modeDefaults = { ...current, [mode.id]: value };
-				}
-				void plugin.settingsStore.updateSettings({
-					modeModelDefaults: {
-						...plugin.settings.modeModelDefaults,
-						[agentId]: modeDefaults,
-					},
+				dropdown.onChange((value) => {
+					const current = plugin.settings.modeModelDefaults?.[agentId] ?? {};
+					let modeDefaults: Record<string, string>;
+					if (value === "") {
+						modeDefaults = { ...current };
+						delete modeDefaults[mode.id];
+					} else {
+						modeDefaults = { ...current, [mode.id]: value };
+					}
+					void plugin.settingsStore.updateSettings({
+						modeModelDefaults: {
+							...plugin.settings.modeModelDefaults,
+							[agentId]: modeDefaults,
+						},
+					});
 				});
-			});
 			});
 	}
 }

@@ -4,6 +4,7 @@ import type { IAcpClient } from "../../adapters/acp/acp.adapter";
 import { getLogger } from "../../shared/logger";
 import type AgentClientPlugin from "../../plugin";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { ObsidianIcon } from "./ObsidianIcon";
 
 interface TerminalRendererProps {
 	terminalId: string;
@@ -96,24 +97,23 @@ export function TerminalRenderer({
 		}
 	}, [isRunning]);
 
-	const statusLabel = isRunning
-		? "running"
-		: isCancelled
-			? "cancelled"
-			: "finished";
 	const statusClass = isRunning
-		? "ac-status--running"
+		? "ac-tool-status--running"
 		: isCancelled
-			? "ac-status--error"
-			: "ac-status--completed";
+			? "ac-tool-status--error"
+			: "ac-tool-status--completed";
+	const statusIconName = isRunning ? "" : isCancelled ? "x" : "check";
 
 	const header = (
 		<>
-			<span className="ac-row__title">Terminal {terminalId.slice(0, 8)}</span>
+			<ObsidianIcon name="terminal" className="ac-tool-icon" />
+			<span className="ac-row__title">Terminal</span>
 			{exitStatus?.exitCode != null && (
 				<span className="ac-row__summary">exit {exitStatus.exitCode}</span>
 			)}
-			<span className={`ac-status ${statusClass}`}>{statusLabel}</span>
+			<span className={`ac-tool-status ${statusClass}`}>
+				{statusIconName && <ObsidianIcon name={statusIconName} size={14} />}
+			</span>
 		</>
 	);
 

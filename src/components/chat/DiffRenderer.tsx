@@ -65,13 +65,13 @@ function renderWordDiff(
 			{filteredParts.map((part, partIdx) => {
 				if (part.type === "added") {
 					return (
-						<span key={partIdx} className="agent-client-diff-word-added">
+						<span key={partIdx} className="obsius-diff-word-added">
 							{part.value}
 						</span>
 					);
 				} else if (part.type === "removed") {
 					return (
-						<span key={partIdx} className="agent-client-diff-word-removed">
+						<span key={partIdx} className="obsius-diff-word-removed">
 							{part.value}
 						</span>
 					);
@@ -176,35 +176,35 @@ export function DiffRenderer({
 
 		if (isHunkHeader) {
 			return (
-				<div key={idx} className="agent-client-diff-hunk-header">
+				<div key={idx} className="obsius-diff-hunk-header">
 					{line.content}
 				</div>
 			);
 		}
 
-		let lineClass = "agent-client-diff-line";
+		let lineClass = "obsius-diff-line";
 		let marker = " ";
 
 		if (line.type === "added") {
-			lineClass += " agent-client-diff-line-added";
+			lineClass += " obsius-diff-line-added";
 			marker = "+";
 		} else if (line.type === "removed") {
-			lineClass += " agent-client-diff-line-removed";
+			lineClass += " obsius-diff-line-removed";
 			marker = "-";
 		} else {
-			lineClass += " agent-client-diff-line-context";
+			lineClass += " obsius-diff-line-context";
 		}
 
 		return (
 			<div key={idx} className={lineClass}>
-				<span className="agent-client-diff-line-number agent-client-diff-line-number-old">
+				<span className="obsius-diff-line-number obsius-diff-line-number-old">
 					{line.oldLineNumber ?? ""}
 				</span>
-				<span className="agent-client-diff-line-number agent-client-diff-line-number-new">
+				<span className="obsius-diff-line-number obsius-diff-line-number-new">
 					{line.newLineNumber ?? ""}
 				</span>
-				<span className="agent-client-diff-line-marker">{marker}</span>
-				<span className="agent-client-diff-line-content">
+				<span className="obsius-diff-line-marker">{marker}</span>
+				<span className="obsius-diff-line-content">
 					{line.wordDiff && (line.type === "added" || line.type === "removed")
 						? renderWordDiff(line.wordDiff, line.type)
 						: line.content}
@@ -221,22 +221,22 @@ export function DiffRenderer({
 	const remainingLines = diffLines.length - collapseThreshold;
 
 	return (
-		<div className="agent-client-tool-call-diff">
+		<div className="obsius-tool-call-diff">
 			{isNewFile(diff) ? (
-				<div className="agent-client-diff-line-info">New file</div>
+				<div className="obsius-diff-line-info">New file</div>
 			) : null}
-			<div className="agent-client-tool-call-diff-content">
+			<div className="obsius-tool-call-diff-content">
 				{visibleLines.map((line, idx) => renderLine(line, idx))}
 			</div>
 			{shouldCollapse && (
 				<div
-					className="agent-client-diff-expand-bar"
+					className="obsius-diff-expand-bar"
 					onClick={() => setIsCollapsed(!isCollapsed)}
 				>
-					<span className="agent-client-diff-expand-text">
+					<span className="obsius-diff-expand-text">
 						{isCollapsed ? `${remainingLines} more lines` : "Collapse"}
 					</span>
-					<span className="agent-client-diff-expand-icon">
+					<span className="obsius-diff-expand-icon">
 						{isCollapsed ? "▶" : "▲"}
 					</span>
 				</div>

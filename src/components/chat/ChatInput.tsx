@@ -200,12 +200,12 @@ export function ChatInput({
 		if (textarea) {
 			// Remove previous dynamic height classes
 			textarea.classList.remove(
-				"agent-client-textarea-auto-height",
-				"agent-client-textarea-expanded",
+				"obsius-textarea-auto-height",
+				"obsius-textarea-expanded",
 			);
 
 			// Temporarily use auto to measure
-			textarea.classList.add("agent-client-textarea-auto-height");
+			textarea.classList.add("obsius-textarea-auto-height");
 			const scrollHeight = textarea.scrollHeight;
 			const minHeight = 80;
 			const maxHeight = 300;
@@ -218,7 +218,7 @@ export function ChatInput({
 
 			// Apply expanded class if needed
 			if (calculatedHeight > minHeight) {
-				textarea.classList.add("agent-client-textarea-expanded");
+				textarea.classList.add("obsius-textarea-expanded");
 				// Set CSS variable for dynamic height
 				textarea.style.setProperty(
 					"--textarea-height",
@@ -228,7 +228,7 @@ export function ChatInput({
 				textarea.style.removeProperty("--textarea-height");
 			}
 
-			textarea.classList.remove("agent-client-textarea-auto-height");
+			textarea.classList.remove("obsius-textarea-auto-height");
 		}
 	}, []);
 
@@ -239,22 +239,22 @@ export function ChatInput({
 		(svg: SVGElement) => {
 			// Remove all state classes
 			svg.classList.remove(
-				"agent-client-icon-sending",
-				"agent-client-icon-active",
-				"agent-client-icon-inactive",
+				"obsius-icon-sending",
+				"obsius-icon-active",
+				"obsius-icon-inactive",
 			);
 
 			if (isSending) {
 				// Stop button - always active when sending
-				svg.classList.add("agent-client-icon-sending");
+				svg.classList.add("obsius-icon-sending");
 			} else {
 				// Send button - active when has input (text or images)
 				const hasContent =
 					inputValue.trim() !== "" || attachedImages.length > 0;
 				svg.classList.add(
 					hasContent
-						? "agent-client-icon-active"
-						: "agent-client-icon-inactive",
+						? "obsius-icon-active"
+						: "obsius-icon-inactive",
 				);
 			}
 		},
@@ -392,7 +392,7 @@ export function ChatInput({
 	const placeholder = `Message ${agentLabel} - @ to mention notes${availableCommands.length > 0 ? ", / for commands" : ""}`;
 
 	return (
-		<div className="agent-client-chat-input-container">
+		<div className="obsius-chat-input-container">
 			{/* Error Overlay - displayed above input */}
 			{errorInfo && (
 				<ErrorOverlay
@@ -430,7 +430,7 @@ export function ChatInput({
 
 			{/* Input Box - flexbox container with border */}
 			<div
-				className={`agent-client-chat-input-box ${isDraggingOver ? "agent-client-dragging-over" : ""}`}
+				className={`obsius-chat-input-box ${isDraggingOver ? "obsius-dragging-over" : ""}`}
 				onDragOver={handleDragOver}
 				onDragEnter={handleDragEnter}
 				onDragLeave={handleDragLeave}
@@ -442,7 +442,7 @@ export function ChatInput({
 				/>
 
 				{/* Textarea with Hint Overlay */}
-				<div className="agent-client-textarea-wrapper">
+				<div className="obsius-textarea-wrapper">
 					<textarea
 						ref={textareaRef}
 						value={inputValue}
@@ -450,14 +450,14 @@ export function ChatInput({
 						onKeyDown={handleKeyDown}
 						onPaste={(e) => void handlePaste(e)}
 						placeholder={placeholder}
-						className={`agent-client-chat-input-textarea ${autoMentionEnabled && autoMention.activeNote ? "has-auto-mention" : ""}`}
+						className={`obsius-chat-input-textarea ${autoMentionEnabled && autoMention.activeNote ? "has-auto-mention" : ""}`}
 						rows={1}
 						spellCheck={obsidianSpellcheck}
 					/>
 					{hintText && (
-						<div className="agent-client-hint-overlay" aria-hidden="true">
-							<span className="agent-client-invisible">{commandText}</span>
-							<span className="agent-client-hint-text">{hintText}</span>
+						<div className="obsius-hint-overlay" aria-hidden="true">
+							<span className="obsius-invisible">{commandText}</span>
+							<span className="obsius-hint-text">{hintText}</span>
 						</div>
 					)}
 				</div>

@@ -57,6 +57,11 @@ npm run lint
 npm run test
 ```
 
+## Acknowledgments
+
+- [obsidian-agent-client](https://github.com/RAIT-09/obsidian-agent-client) — This project is forked from it
+- [Claudian](https://github.com/YishenTu/claudian) — Design inspiration
+
 ## License
 
 Apache License 2.0 - see [LICENSE](LICENSE) for details.

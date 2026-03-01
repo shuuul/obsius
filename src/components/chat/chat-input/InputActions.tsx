@@ -30,10 +30,10 @@ export function InputActions({
 	onSendOrStop,
 }: InputActionsProps) {
 	return (
-		<div className="agent-client-chat-input-actions">
+		<div className="obsius-chat-input-actions">
 			{modes && modes.availableModes.length > 1 && (
 				<div
-					className="agent-client-mode-selector"
+					className="obsius-mode-selector"
 					title={
 						modes.availableModes.find((m) => m.id === modes.currentModeId)
 							?.description ?? "Select mode"
@@ -41,7 +41,7 @@ export function InputActions({
 				>
 					<div ref={modeDropdownRef} />
 					<span
-						className="agent-client-mode-selector-icon"
+						className="obsius-mode-selector-icon"
 						ref={(el) => {
 							if (el) setIcon(el, "chevron-down");
 						}}
@@ -51,7 +51,7 @@ export function InputActions({
 
 			{models && models.availableModels.length > 1 && (
 				<div
-					className="agent-client-model-selector"
+					className="obsius-model-selector"
 					title={
 						models.availableModels.find(
 							(m) => m.modelId === models.currentModelId,
@@ -60,7 +60,7 @@ export function InputActions({
 				>
 					<div ref={modelDropdownRef} />
 					<span
-						className="agent-client-model-selector-icon"
+						className="obsius-model-selector-icon"
 						ref={(el) => {
 							if (el) setIcon(el, "chevron-down");
 						}}
@@ -72,7 +72,7 @@ export function InputActions({
 				ref={sendButtonRef}
 				onClick={onSendOrStop}
 				disabled={isButtonDisabled}
-				className={`agent-client-chat-send-button ${isSending ? "sending" : ""} ${isButtonDisabled ? "agent-client-disabled" : ""}`}
+				className={`obsius-chat-send-button ${isSending ? "sending" : ""} ${isButtonDisabled ? "obsius-disabled" : ""}`}
 				title={buttonTitle}
 			></button>
 		</div>

@@ -32,7 +32,7 @@ export function TabBar({
 	);
 
 	return (
-		<div className="agent-client-tab-bar">
+		<div className="obsius-tab-bar">
 			{tabs.map((tab, index) => (
 				<div
 					key={tab.id}
@@ -41,7 +41,7 @@ export function TabBar({
 					aria-label={tab.label}
 					title={tab.label}
 					aria-selected={tab.id === activeTabId}
-					className={`agent-client-tab-badge${tab.id === activeTabId ? " agent-client-tab-badge--active" : ""}`}
+					className={`obsius-tab-badge${tab.id === activeTabId ? " obsius-tab-badge--active" : ""}`}
 					onClick={() => onTabClick(tab.id)}
 					onContextMenu={(e) => handleContextMenu(e, tab.id)}
 					onKeyDown={(e) => {
