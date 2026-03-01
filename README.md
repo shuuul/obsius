@@ -1,4 +1,7 @@
-# Obsius — AI Agents in Obsidian
+<h1>
+	<img src="assets/icons/obsius-o.svg" alt="O" width="28" height="28" style="vertical-align: -4px;" />
+	bsius — AI Agents in Obsidian
+</h1>
 
 Bring AI agents into your Obsidian vault with fine-grained context controls.
 
@@ -19,4 +22,4 @@ Bring AI agents into your Obsidian vault with fine-grained context controls.
 
 ## License
 
-Apache License 2.0 - see [LICENSE](LICENSE) for details.
+Apache License 2.0. This project is modified from [obsidian-agent-client](https://github.com/RAIT-09/obsidian-agent-client). See [LICENSE](LICENSE) for details.

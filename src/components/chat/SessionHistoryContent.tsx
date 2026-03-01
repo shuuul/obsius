@@ -17,6 +17,8 @@ export interface SessionHistoryContentProps {
 	hasMore: boolean;
 	/** Current working directory for filtering */
 	currentCwd: string;
+	/** Current active session ID */
+	currentSessionId?: string | null;
 
 	// Capability flags (from useSessionHistory)
 	/** Whether session/list is supported (unstable) */
@@ -48,7 +50,7 @@ export interface SessionHistoryContentProps {
 	onLoadMore: () => void;
 	/** Callback to fetch sessions with filter */
 	onFetchSessions: (cwd?: string) => void;
-	/** Callback to close the modal */
+	/** Callback to close the popover */
 	onClose: () => void;
 }
 
@@ -82,6 +84,24 @@ function IconButton({
 			onClick={onClick}
 		/>
 	);
+}
+
+function RowIcon({
+	iconName,
+	className,
+}: {
+	iconName: string;
+	className: string;
+}) {
+	const iconRef = React.useRef<HTMLDivElement>(null);
+
+	React.useEffect(() => {
+		if (iconRef.current) {
+			setIcon(iconRef.current, iconName);
+		}
+	}, [iconName]);
+
+	return <div ref={iconRef} className={className} aria-hidden="true" />;
 }
 
 /**
@@ -212,6 +232,7 @@ function DebugForm({
  */
 function SessionItem({
 	session,
+	isCurrent,
 	canRestore,
 	canFork,
 	onRestoreSession,
@@ -220,6 +241,7 @@ function SessionItem({
 	onClose,
 }: {
 	session: SessionInfo;
+	isCurrent: boolean;
 	canRestore: boolean;
 	canFork: boolean;
 	onRestoreSession: (sessionId: string, cwd: string) => Promise<void>;
@@ -252,7 +274,7 @@ function SessionItem({
 
 	return (
 		<div
-			className={`obsius-session-history-item${canRestore ? " obsius-session-history-item--clickable" : ""}`}
+			className={`obsius-session-history-item${canRestore ? " obsius-session-history-item--clickable" : ""}${isCurrent ? " obsius-session-history-item--current" : ""}`}
 			onClick={handleClick}
 			role={canRestore ? "button" : undefined}
 			tabIndex={canRestore ? 0 : undefined}
@@ -263,15 +285,26 @@ function SessionItem({
 				}
 			}}
 		>
+			<RowIcon
+				iconName={isCurrent ? "message-square-dot" : "message-square"}
+				className="obsius-session-history-item-icon"
+			/>
+
 			<div className="obsius-session-history-item-content">
 				<div className="obsius-session-history-item-title">
 					<span>{truncateTitle(session.title ?? "Untitled Session")}</span>
 				</div>
 				<div className="obsius-session-history-item-metadata">
-					{session.updatedAt && (
+					{isCurrent ? (
+						<span className="obsius-session-history-item-current">
+							Current session
+						</span>
+					) : (
+						session.updatedAt && (
 						<span className="obsius-session-history-item-timestamp">
 							{formatRelativeTime(new Date(session.updatedAt))}
 						</span>
+						)
 					)}
 				</div>
 			</div>
@@ -312,6 +345,7 @@ export function SessionHistoryContent({
 	error,
 	hasMore,
 	currentCwd,
+	currentSessionId,
 	canList,
 	canRestore,
 	canFork,
@@ -326,32 +360,18 @@ export function SessionHistoryContent({
 	onFetchSessions,
 	onClose,
 }: SessionHistoryContentProps) {
-	const [filterByCurrentVault, setFilterByCurrentVault] = useState(true);
-	const [hideNonLocalSessions, setHideNonLocalSessions] = useState(true);
-
-	const handleFilterChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
-			const checked = e.target.checked;
-			setFilterByCurrentVault(checked);
-			const cwd = checked ? currentCwd : undefined;
-			onFetchSessions(cwd);
-		},
-		[currentCwd, onFetchSessions],
-	);
-
 	const handleRetry = useCallback(() => {
-		const cwd = filterByCurrentVault ? currentCwd : undefined;
-		onFetchSessions(cwd);
-	}, [filterByCurrentVault, currentCwd, onFetchSessions]);
+		onFetchSessions(currentCwd);
+	}, [currentCwd, onFetchSessions]);
 
-	// Filter sessions based on hideNonLocalSessions setting
-	// Only applies to agent session/list (not local sessions which are already filtered)
+	// When using agent session/list, only keep sessions that already have local data.
+	// This mirrors the fixed UI behavior (no user toggles in the popover).
 	const filteredSessions = React.useMemo(() => {
-		if (isUsingLocalSessions || !hideNonLocalSessions) {
+		if (isUsingLocalSessions) {
 			return sessions;
 		}
 		return sessions.filter((s) => localSessionIds.has(s.sessionId));
-	}, [sessions, isUsingLocalSessions, hideNonLocalSessions, localSessionIds]);
+	}, [sessions, isUsingLocalSessions, localSessionIds]);
 
 	// Show preparing message if agent is not ready
 	if (!isAgentReady) {
@@ -411,28 +431,6 @@ export function SessionHistoryContent({
 
 			{canShowList && (
 				<>
-					{/* Filter toggles - only for agent session/list */}
-					{canList && !isUsingLocalSessions && (
-						<div className="obsius-session-history-filter">
-							<label className="obsius-session-history-filter-label">
-								<input
-									type="checkbox"
-									checked={filterByCurrentVault}
-									onChange={handleFilterChange}
-								/>
-								<span>Show current vault only</span>
-							</label>
-							<label className="obsius-session-history-filter-label">
-								<input
-									type="checkbox"
-									checked={hideNonLocalSessions}
-									onChange={(e) => setHideNonLocalSessions(e.target.checked)}
-								/>
-								<span>Hide sessions without local data</span>
-							</label>
-						</div>
-					)}
-
 					{/* Error state */}
 					{error && (
 						<div className="obsius-session-history-error">
@@ -465,12 +463,13 @@ export function SessionHistoryContent({
 					{/* Session list */}
 					{!error && filteredSessions.length > 0 && (
 						<div className="obsius-session-history-list">
-							{filteredSessions.map((session) => (
-								<SessionItem
-									key={session.sessionId}
-									session={session}
-									canRestore={canRestore}
-									canFork={canFork}
+								{filteredSessions.map((session) => (
+									<SessionItem
+										key={session.sessionId}
+										session={session}
+										isCurrent={session.sessionId === currentSessionId}
+										canRestore={canRestore}
+										canFork={canFork}
 									onRestoreSession={onRestoreSession}
 									onForkSession={onForkSession}
 									onDeleteSession={onDeleteSession}

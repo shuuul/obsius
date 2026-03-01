@@ -54,7 +54,7 @@ export interface MessagesRestoreCallback {
  * Options for useSessionHistory hook.
  */
 export interface UseSessionHistoryOptions {
-	/** Agent client for session operations */
+	/** ACP client for session operations */
 	agentClient: IAgentClient;
 	/** Current session (used to access agentCapabilities and agentId) */
 	session: ChatSession;
@@ -182,7 +182,7 @@ const CACHE_EXPIRY_MS = 5 * 60 * 1000;
  * Hook for managing session history.
  *
  * Handles listing, loading, resuming, forking, and caching of previous chat sessions.
- * Integrates with the agent client to fetch session metadata and
+ * Integrates with the ACP client to fetch session metadata and
  * load previous conversations.
  *
  * Capability detection is based on session.agentCapabilities, which is set

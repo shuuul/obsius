@@ -127,7 +127,7 @@ If your plugin does not need CSS, delete this file.
 
 /* Shared collapsible */
 .ac-collapsible {
-	margin: 4px 0;
+	margin: 0;
 }
 
 .ac-collapsible__header {
@@ -629,6 +629,22 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-normal);
 }
 
+.obsius-tab-badge--completed {
+	position: relative;
+}
+
+.obsius-tab-badge--completed::after {
+	content: "";
+	position: absolute;
+	top: -2px;
+	right: -2px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--interactive-accent);
+	border: 1.5px solid var(--background-primary);
+}
+
 /* Messages container */
 .obsius-chat-view-messages {
 	flex: 1;
@@ -862,6 +878,8 @@ If your plugin does not need CSS, delete this file.
 	cursor: default;
 	line-height: inherit;
 	user-select: none;
+	min-width: 0;
+	max-width: calc(100% - 6px);
 }
 
 .obsius-inline-mention-badge:hover {
@@ -882,9 +900,70 @@ If your plugin does not need CSS, delete this file.
 
 .obsius-inline-mention-name {
 	white-space: nowrap;
-	max-width: 160px;
+	max-width: 100%;
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.obsius-inline-context-badge {
+	background-color: color-mix(
+		in srgb,
+		var(--interactive-accent) 22%,
+		var(--background-secondary)
+	);
+	color: var(--text-normal);
+	border: 1px solid
+		color-mix(
+			in srgb,
+			var(--interactive-accent) 38%,
+			var(--background-modifier-border)
+		);
+	max-width: min(240px, calc(100% - 6px));
+}
+
+.obsius-inline-context-badge-clickable {
+	cursor: pointer;
+}
+
+.obsius-inline-context-badge:hover {
+	background-color: color-mix(
+		in srgb,
+		var(--interactive-accent) 30%,
+		var(--background-modifier-hover)
+	);
+}
+
+.obsius-inline-context-badge .obsius-inline-mention-name {
+	max-width: 100%;
+}
+
+.obsius-input-context-badge-strip {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 8px 12px 0 12px;
+}
+
+.obsius-input-context-badge-strip .obsius-inline-mention-badge {
+	max-width: min(360px, calc(100% - 6px));
+}
+
+.obsius-history-context-badge-strip {
+	padding: 0 0 8px 0;
+}
+
+.obsius-context-chip-remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: 2px;
+	opacity: 0.75;
+	cursor: pointer;
+}
+
+.obsius-context-chip-remove:hover {
+	opacity: 1;
 }
 
 /* Fixed auto-mention badge at the beginning of input */
@@ -1327,12 +1406,28 @@ If your plugin does not need CSS, delete this file.
 	padding: 0px 16px;
 	width: 100%;
 	margin: 4px 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 	/* Prevent long strings from overflowing */
 	overflow-wrap: break-word;
 	word-wrap: break-word;
 	word-break: break-word;
 	max-width: 100%;
 	box-sizing: border-box;
+}
+
+.obsius-message-content-item {
+	min-width: 0;
+}
+
+.obsius-message-content-item > .ac-collapsible,
+.obsius-message-content-item > .obsius-text-with-mentions,
+.obsius-message-content-item > .obsius-markdown-text-renderer,
+.obsius-message-content-item > .obsius-message-plan,
+.obsius-message-content-item > .obsius-message-image,
+.obsius-message-content-item > .obsius-message-images-strip {
+	margin: 0;
 }
 
 .obsius-message-renderer.obsius-message-user {
@@ -1354,7 +1449,7 @@ If your plugin does not need CSS, delete this file.
 	word-wrap: break-word;
 	word-break: break-word;
 	overflow-wrap: break-word;
-	margin: 1em 0;
+	margin: 0;
 	font-size: var(--ac-chat-font-size);
 	max-width: 100%;
 }
@@ -1722,6 +1817,80 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* ===== Session History Modal ===== */
+.obsius-tab-content {
+	position: relative;
+}
+
+.obsius-session-history-popover {
+	position: absolute;
+	top: 8px;
+	right: 12px;
+	width: min(460px, calc(100% - 24px));
+	max-height: min(70vh, 620px);
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 10px;
+	box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22);
+	z-index: 40;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.obsius-session-history-popover-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 12px;
+	background: var(--background-secondary);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.obsius-session-history-popover-title {
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	color: var(--text-muted);
+}
+
+.obsius-session-history-popover-close {
+	width: 22px;
+	height: 22px;
+	border: 1px solid var(--background-modifier-border);
+	background: transparent;
+	color: var(--text-muted);
+	border-radius: 5px;
+	cursor: pointer;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.obsius-session-history-popover-close:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.obsius-session-history-popover-close-icon {
+	width: 14px;
+	height: 14px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.obsius-session-history-popover-close-icon svg {
+	width: 14px;
+	height: 14px;
+	stroke: currentColor;
+}
+
+.obsius-session-history-popover-content {
+	padding: 10px 12px 12px;
+	overflow: auto;
+}
+
 .obsius-session-history-filter {
 	margin-bottom: 16px;
 	padding-bottom: 12px;
@@ -1744,18 +1913,29 @@ If your plugin does not need CSS, delete this file.
 .obsius-session-history-list {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 0;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 10px;
+	overflow: hidden;
+	background: var(--background-secondary);
 }
 
 .obsius-session-history-item {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 12px;
-	background: var(--background-secondary);
-	border-radius: 6px;
-	border: 1px solid var(--background-modifier-border);
-	transition: background-color 0.1s ease;
+	gap: 8px;
+	padding: 10px 12px;
+	background: var(--background-primary);
+	border: none;
+	border-bottom: 1px solid var(--background-modifier-border);
+	transition:
+		background-color 0.12s ease,
+		border-color 0.12s ease;
+}
+
+.obsius-session-history-item:last-child {
+	border-bottom: none;
 }
 
 .obsius-session-history-item--clickable {
@@ -1763,7 +1943,41 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-session-history-item--clickable:hover {
-	background: var(--background-modifier-hover);
+	background: color-mix(
+		in srgb,
+		var(--interactive-accent) 7%,
+		var(--background-modifier-hover)
+	);
+}
+
+.obsius-session-history-item--current {
+	background: color-mix(
+		in srgb,
+		var(--interactive-accent) 13%,
+		var(--background-primary)
+	);
+}
+
+.obsius-session-history-item--current + .obsius-session-history-item {
+	border-top-color: color-mix(
+		in srgb,
+		var(--interactive-accent) 18%,
+		var(--background-modifier-border)
+	);
+}
+
+.obsius-session-history-item-icon {
+	width: 18px;
+	height: 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-muted);
+	flex-shrink: 0;
+}
+
+.obsius-session-history-item--current .obsius-session-history-item-icon {
+	color: var(--interactive-accent);
 }
 
 .obsius-session-history-item-content {
@@ -1772,10 +1986,11 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-session-history-item-title {
-	font-weight: 500;
+	font-weight: 600;
 	font-size: 14px;
+	line-height: 1.2;
 	color: var(--text-normal);
-	margin-bottom: 4px;
+	margin-bottom: 2px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -1792,17 +2007,29 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-muted);
 }
 
+.obsius-session-history-item-current {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--interactive-accent);
+}
+
 .obsius-session-history-item-actions {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: 2px;
 	flex-shrink: 0;
-	margin-left: 12px;
+	margin-left: 8px;
+	opacity: 0.78;
+}
+
+.obsius-session-history-item:hover .obsius-session-history-item-actions,
+.obsius-session-history-item--current .obsius-session-history-item-actions {
+	opacity: 1;
 }
 
 .obsius-session-history-action-icon {
-	width: 24px;
-	height: 24px;
+	width: 22px;
+	height: 22px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1833,7 +2060,7 @@ If your plugin does not need CSS, delete this file.
 .obsius-session-history-loading,
 .obsius-session-history-empty,
 .obsius-session-history-error {
-	padding: 32px;
+	padding: 18px;
 	text-align: center;
 	color: var(--text-muted);
 }

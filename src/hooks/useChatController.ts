@@ -3,7 +3,6 @@ import { FileSystemAdapter } from "obsidian";
 
 import type { AttachedImage } from "../components/chat/ImagePreviewStrip";
 import { pluginNotice } from "../shared/plugin-notice";
-import { SessionHistoryModal } from "../components/chat/SessionHistoryModal";
 
 import { NoteMentionService } from "../adapters/obsidian/mention-service";
 import { getLogger } from "../shared/logger";
@@ -104,10 +103,7 @@ export function useChatController(
 
 	const mentions = useMentions(vaultAccessAdapter, plugin);
 	const autoMention = useAutoMention(vaultAccessAdapter);
-	const slashCommands = useSlashCommands(
-		session.availableCommands || [],
-		autoMention.toggle,
-	);
+	const slashCommands = useSlashCommands(session.availableCommands || []);
 
 	const handleSessionLoad = useCallback(
 		(
@@ -163,8 +159,6 @@ export function useChatController(
 	const [inputValue, setInputValue] = useState("");
 	const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
 
-	const historyModalRef = useRef<SessionHistoryModal | null>(null);
-
 	const activeAgentLabel = useMemo(() => {
 		const activeId = session.agentId;
 		if (activeId === plugin.settings.claude.id) {
@@ -196,9 +190,7 @@ export function useChatController(
 			const isFirstMessage = messages.length === 0;
 
 			await chat.sendMessage(content, {
-				activeNote: settings.autoMentionActiveNote
-					? autoMention.activeNote
-					: null,
+				activeNote: autoMention.isDisabled ? null : autoMention.activeNote,
 				vaultBasePath: vaultPath,
 				isAutoMentionDisabled: autoMention.isDisabled,
 				images,
@@ -219,7 +211,6 @@ export function useChatController(
 			session.sessionId,
 			sessionHistory,
 			logger,
-			settings.autoMentionActiveNote,
 		],
 	);
 
@@ -310,16 +301,17 @@ export function useChatController(
 		handleRestoreSession,
 		handleForkSession,
 		handleDeleteSession,
+		handleLoadMore,
+		handleFetchSessions,
 		handleOpenHistory,
+		handleCloseHistory,
+		isHistoryPopoverOpen,
 	} = useSessionHistoryHandlers({
 		app: plugin.app,
 		sessionHistory,
 		logger,
 		vaultPath,
-		isSessionReady,
-		debugMode: settings.debugMode,
 		clearMessages: chat.clearMessages,
-		historyModalRef,
 	});
 
 	const handleSetMode = useCallback(
@@ -613,7 +605,11 @@ export function useChatController(
 		handleRestoreSession,
 		handleForkSession,
 		handleDeleteSession,
+		handleLoadMore,
+		handleFetchSessions,
 		handleOpenHistory,
+		handleCloseHistory,
+		isHistoryPopoverOpen,
 		filteredModels,
 		handleSetMode,
 		handleSetModel,
@@ -624,7 +620,5 @@ export function useChatController(
 		setAttachedImages,
 		restoredMessage,
 		handleRestoredMessageConsumed,
-
-		historyModalRef,
 	};
 }

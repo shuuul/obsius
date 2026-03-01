@@ -32,6 +32,8 @@ export interface UseTabsReturn {
 	handleTabClose: (tabId: string) => void;
 	handleNewTab: () => void;
 	handleAgentChangeForTab: (agentId: string) => void;
+	markTabCompleted: (tabId: string) => void;
+	completedTabIds: ReadonlySet<string>;
 }
 
 export function useTabs({
@@ -44,6 +46,9 @@ export function useTabs({
 		{ id: crypto.randomUUID(), agentId: initialAgentId },
 	]);
 	const [activeTabId, setActiveTabId] = useState(() => tabs[0].id);
+	const [completedTabIds, setCompletedTabIds] = useState<ReadonlySet<string>>(
+		() => new Set(),
+	);
 
 	const activeTab = useMemo(
 		() => tabs.find((t) => t.id === activeTabId) ?? tabs[0],
@@ -63,6 +68,25 @@ export function useTabs({
 		(tabId: string) => {
 			if (tabId === activeTabId) return;
 			setActiveTabId(tabId);
+			setCompletedTabIds((prev) => {
+				if (!prev.has(tabId)) return prev;
+				const next = new Set(prev);
+				next.delete(tabId);
+				return next;
+			});
+		},
+		[activeTabId],
+	);
+
+	const markTabCompleted = useCallback(
+		(tabId: string) => {
+			if (tabId === activeTabId) return;
+			setCompletedTabIds((prev) => {
+				if (prev.has(tabId)) return prev;
+				const next = new Set(prev);
+				next.add(tabId);
+				return next;
+			});
 		},
 		[activeTabId],
 	);
@@ -110,5 +134,7 @@ export function useTabs({
 		handleTabClose,
 		handleNewTab,
 		handleAgentChangeForTab,
+		markTabCompleted,
+		completedTabIds,
 	};
 }

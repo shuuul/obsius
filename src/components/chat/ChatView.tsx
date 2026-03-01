@@ -1,8 +1,9 @@
-import { ItemView, Platform, type WorkspaceLeaf } from "obsidian";
+import { ItemView, Platform, type WorkspaceLeaf, type IconName } from "obsidian";
 import * as React from "react";
 
 import type {
 	ChatViewType,
+	ChatViewContextReference,
 	IChatViewContainer,
 } from "../../domain/ports/chat-view-container.port";
 
@@ -13,7 +14,9 @@ import type { ChatInputState } from "../../domain/models/chat-input-state";
 import { useTabs } from "../../hooks/useTabs";
 import { useWorkspaceEvents } from "../../hooks/useWorkspaceEvents";
 import type AgentClientPlugin from "../../plugin";
+import { playCompletionSound } from "../../shared/completion-sound";
 import { getLogger, type Logger } from "../../shared/logger";
+import { useSettings } from "../../hooks/useSettings";
 import { ChatHeader } from "./ChatHeader";
 import { TabContent, type TabContentActions } from "./TabContent";
 
@@ -44,6 +47,7 @@ function ChatComponent({
 	}
 
 	const logger = getLogger();
+	const settings = useSettings(plugin);
 
 	const [restoredAgentId, setRestoredAgentId] = useState<string | undefined>(
 		view.getInitialAgentId() ?? undefined,
@@ -188,6 +192,16 @@ function ChatComponent({
 		[tabState, view],
 	);
 
+	const handleSendComplete = useCallback(
+		(tabId: string) => {
+			tabState.markTabCompleted(tabId);
+			if (settings.displaySettings.completionSound) {
+				playCompletionSound();
+			}
+		},
+		[tabState.markTabCompleted, settings.displaySettings.completionSound],
+	);
+
 	// Workspace events routed to active tab
 	const wsAutoMentionToggle = useCallback(
 		(force?: boolean) => {
@@ -245,6 +259,8 @@ function ChatComponent({
 				getActiveActions()?.getDisplayName() ?? activeAgentLabel,
 			getInputState: () => getActiveActions()?.getInputState() ?? null,
 			setInputState: (state) => getActiveActions()?.setInputState(state),
+			addContextReference: (reference) =>
+				getActiveActions()?.addContextReference(reference) ?? false,
 			sendMessage: async () =>
 				(await getActiveActions()?.sendMessage()) ?? false,
 			canSend: () => getActiveActions()?.canSend() ?? false,
@@ -272,6 +288,7 @@ function ChatComponent({
 				onOpenHistory={activeTabCanShowHistory ? handleOpenHistory : undefined}
 				tabs={tabState.tabsWithLabels}
 				activeTabId={tabState.activeTabId}
+				completedTabIds={tabState.completedTabIds}
 				canAddTab={tabState.canAddTab}
 				canCloseTab={tabState.canCloseTab}
 				onTabClick={tabState.handleTabClick}
@@ -288,6 +305,7 @@ function ChatComponent({
 					isActive={tab.id === tabState.activeTabId}
 					viewId={viewId}
 					onActionsReady={handleActionsReady}
+					onSendComplete={handleSendComplete}
 				/>
 			))}
 		</div>
@@ -309,6 +327,9 @@ type SetInputStateCallback = (state: ChatInputState) => void;
 type SendMessageCallback = () => Promise<boolean>;
 type CanSendCallback = () => boolean;
 type CancelCallback = () => Promise<void>;
+type AddContextReferenceCallback = (
+	reference: ChatViewContextReference,
+) => boolean;
 
 export class ChatView extends ItemView implements IChatViewContainer {
 	private root: Root | null = null;
@@ -326,6 +347,7 @@ export class ChatView extends ItemView implements IChatViewContainer {
 	private sendMessageCallback: SendMessageCallback | null = null;
 	private canSendCallback: CanSendCallback | null = null;
 	private cancelCallback: CancelCallback | null = null;
+	private addContextReferenceCallback: AddContextReferenceCallback | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: AgentClientPlugin) {
 		super(leaf);
@@ -339,11 +361,11 @@ export class ChatView extends ItemView implements IChatViewContainer {
 	}
 
 	getDisplayText() {
-		return "Agent client";
+		return "Obsius";
 	}
 
 	getIcon() {
-		return "bot-message-square";
+		return "obsius-o" as IconName;
 	}
 
 	getState(): ChatViewState {
@@ -399,6 +421,7 @@ export class ChatView extends ItemView implements IChatViewContainer {
 		sendMessage: SendMessageCallback;
 		canSend: CanSendCallback;
 		cancel: CancelCallback;
+		addContextReference: AddContextReferenceCallback;
 	}): void {
 		this.getDisplayNameCallback = callbacks.getDisplayName;
 		this.getInputStateCallback = callbacks.getInputState;
@@ -406,6 +429,7 @@ export class ChatView extends ItemView implements IChatViewContainer {
 		this.sendMessageCallback = callbacks.sendMessage;
 		this.canSendCallback = callbacks.canSend;
 		this.cancelCallback = callbacks.cancel;
+		this.addContextReferenceCallback = callbacks.addContextReference;
 	}
 
 	unregisterInputCallbacks(): void {
@@ -415,6 +439,7 @@ export class ChatView extends ItemView implements IChatViewContainer {
 		this.sendMessageCallback = null;
 		this.canSendCallback = null;
 		this.cancelCallback = null;
+		this.addContextReferenceCallback = null;
 	}
 
 	getDisplayName(): string {
@@ -439,6 +464,10 @@ export class ChatView extends ItemView implements IChatViewContainer {
 
 	async cancelOperation(): Promise<void> {
 		await this.cancelCallback?.();
+	}
+
+	addContextReference(reference: ChatViewContextReference): boolean {
+		return this.addContextReferenceCallback?.(reference) ?? false;
 	}
 
 	onActivate(): void {

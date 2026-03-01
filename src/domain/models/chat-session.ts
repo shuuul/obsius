@@ -1,7 +1,7 @@
 /**
  * Domain Models for Chat Sessions
  *
- * These types represent the state and lifecycle of an agent chat session,
+ * These types represent the state and lifecycle of a chat session,
  * independent of the ACP protocol implementation. They encapsulate connection
  * state, authentication, and session metadata.
  */

@@ -1,223 +1,378 @@
 # Contributing to Obsius
 
-Thank you for your interest in contributing to Obsius!
+Obsidian desktop plugin for AI chat with coding agents. React 19 + TypeScript, communicating via Agent Client Protocol (ACP) over JSON-RPC stdin/stdout.
 
-## Before You Start
-
-### Please Open an Issue First
-
-**For significant changes, please open an issue before writing code:**
-
-- New features
-- Architecture changes
-- Adding or modifying external dependencies
-- Implementing draft/experimental ACP specifications
-
-This helps ensure alignment with the project direction and saves time for both contributors and maintainers.
-
-**You can submit a PR directly for:**
-
-- Obvious bug fixes (typos, crashes, etc.)
-- Fixes for existing issues
-- Documentation improvements
-
-### Project Scope
-
-This plugin focuses on **ACP client implementation** + **features that make ACP convenient to use in Obsidian**.
-
-**In scope:**
-
-- ACP protocol implementation
-- Note mentions (`@[[note]]` to pass note content to agents)
-- Obsidian-specific UI integration
-
-**Out of scope:**
-
-- Features achievable via standard protocols like MCP (these should be provided as MCP servers for a consistent experience across all agents)
-- Agent-specific features (these should be handled via agent-specific config files, e.g., `.claude/` directory)
-
-## Development Setup
-
-### Prerequisites
-
-- Node.js 20.19.0 or later
-- npm
-
-### Setup Steps
+## Quick Start
 
 ```bash
-# Navigate to your vault's plugins directory
-cd /path/to/your/vault/.obsidian/plugins
-
-# Clone the repository as "obsius"
-# The directory name must match the id in manifest.json
-git clone https://github.com/shuuul/obsius.git obsius
-cd obsius
-
-# Install dependencies
+cd .obsidian/plugins/obsius
 npm install
-
-# Start development build (watch mode)
-npm run dev
+npm run dev          # Vite watch build → reload Obsidian to test
+npm run lint         # Biome + ESLint + architecture guards
+npm run test         # Vitest
+npm run typecheck    # TypeScript only
 ```
 
-### Testing in Obsidian
+## Architecture
 
-1. After cloning to `.obsidian/plugins/obsius`, run `npm run dev`
-2. Enable the plugin in Obsidian Settings → Community Plugins
-3. Code changes trigger automatic rebuilds, but you need to reload the plugin (toggle it off/on in Community Plugins) to see changes
+### Layer Diagram
 
-## Available Commands
+```mermaid
+graph TB
+    subgraph Obsidian["Obsidian Host"]
+        Plugin["plugin.ts<br/>Plugin lifecycle"]
+        Settings["AgentClientSettingTab<br/>Settings UI"]
+        EditorCtx["editor-context.ts<br/>Context menus"]
+    end
 
-| Command             | Description                                      |
-| ------------------- | ------------------------------------------------ |
-| `npm run dev`       | Development build (watch mode)                   |
-| `npm run build`     | Production build (includes TypeScript type check)|
-| `npm run typecheck` | Run TypeScript type checks only                  |
-| `npm run lint`      | Run ESLint                                       |
-| `npm run lint:fix`  | Run ESLint with auto-fix                         |
-| `npm run test`      | Run Vitest suite                                 |
-| `npm run test:coverage` | Run tests with coverage report               |
-| `npm run format`    | Format code with Biome                           |
-| `npm run format:check` | Check formatting (used in CI)                 |
+    subgraph UI["React UI Layer"]
+        ChatView["ChatView.tsx<br/>ItemView → React root"]
+        Components["Components<br/>ChatHeader, TabBar, TabContent,<br/>ChatMessages, ChatInput, ..."]
+    end
+
+    subgraph Hooks["Hook Composition Layer"]
+        Controller["useChatController<br/>Central coordinator"]
+        SubHooks["useAgentSession · useChat<br/>usePermission · useMentions<br/>useSlashCommands · useAutoMention<br/>useSessionHistory · useTabs<br/>useSettings"]
+        State["hooks/state/<br/>Reducers + Actions"]
+    end
+
+    subgraph Domain["Domain Layer (zero deps)"]
+        Models["models/<br/>ChatMessage, SessionUpdate,<br/>ChatSession, AgentConfig, ..."]
+        Ports["ports/<br/>IAgentClient, IVaultAccess,<br/>ISettingsAccess, IChatViewContainer"]
+    end
+
+    subgraph Adapters["Adapter Layer"]
+        ACP["adapters/acp/<br/>AcpAdapter → JSON-RPC"]
+        ObsAdapters["adapters/obsidian/<br/>VaultAdapter, SettingsStore,<br/>MentionService"]
+    end
+
+    subgraph Shared["Shared Utilities"]
+        Utils["message-service, terminal-manager,<br/>chat-view-registry, settings-schema,<br/>chat-context-token, ..."]
+    end
+
+    subgraph External["External Processes"]
+        Agent["AI Agent<br/>(Claude Code, OpenCode,<br/>Codex, Gemini CLI, custom)"]
+    end
+
+    Plugin --> ChatView
+    Plugin --> Settings
+    Plugin --> EditorCtx
+    ChatView --> Components
+    Components --> Controller
+    Controller --> SubHooks
+    SubHooks --> State
+    SubHooks --> Ports
+    Controller --> Utils
+    ACP -.->|implements| Ports
+    ObsAdapters -.->|implements| Ports
+    ACP -->|stdin/stdout<br/>JSON-RPC| Agent
+```
+
+### Data Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant ChatInput
+    participant Controller as useChatController
+    participant Chat as useChat
+    participant MsgSvc as message-service
+    participant Adapter as AcpAdapter
+    participant Agent as AI Agent
+
+    User->>ChatInput: Type message + Enter
+    ChatInput->>Controller: handleSendMessage(text, images)
+    Controller->>Chat: sendMessage(text, images, context)
+    Chat->>MsgSvc: preparePrompt(text, mentions, autoMention)
+    MsgSvc-->>Chat: PreparePromptResult (display + agent content)
+    Chat->>MsgSvc: sendPreparedPrompt(content)
+    MsgSvc->>Adapter: agentClient.sendPrompt(sessionId, content)
+    Adapter->>Agent: JSON-RPC prompt
+
+    loop Streaming response
+        Agent->>Adapter: session_update (chunks, tool_calls, plans)
+        Adapter->>Controller: onSessionUpdate callback
+        Controller->>Chat: handleSessionUpdate(update)
+        Chat-->>ChatInput: messages[] → React re-render
+    end
+```
+
+### ACP Process Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Spawning: initialize(config)
+    Spawning --> Connected: NDJSON stream ready
+    Connected --> Initialized: connection.initialize handshake
+    Initialized --> SessionReady: newSession(cwd)
+    SessionReady --> Busy: sendPrompt()
+    Busy --> SessionReady: end_turn / cancel
+    SessionReady --> Authenticating: AUTHENTICATION_REQUIRED
+    Authenticating --> SessionReady: authenticate(methodId)
+    SessionReady --> Disconnected: disconnect()
+    Busy --> Disconnected: process crash
+    Disconnected --> [*]
+```
+
+### Hook Composition
+
+```mermaid
+graph LR
+    CC[useChatController] --> S[useSettings]
+    CC --> AS[useAgentSession]
+    CC --> C[useChat]
+    CC --> P[usePermission]
+    CC --> M[useMentions]
+    CC --> SC[useSlashCommands]
+    CC --> AM[useAutoMention]
+    CC --> SH[useSessionHistory]
+    CC --> T[useTabs]
+
+    AS --> SR[session.reducer]
+    C --> CR[chat.reducer]
+    P --> PR[permission.reducer]
+
+    CC -.->|creates| ACP[AcpAdapter]
+    CC -.->|creates| VA[VaultAdapter]
+    CC -.->|creates| MS[MentionService]
+```
+
+### Port / Adapter Mapping
+
+```mermaid
+graph LR
+    subgraph Ports["Domain Ports"]
+        IAC[IAgentClient]
+        IVA[IVaultAccess]
+        ISA[ISettingsAccess]
+        ICVC[IChatViewContainer]
+    end
+
+    subgraph Adapters
+        ACP[AcpAdapter]
+        OVA[ObsidianVaultAdapter]
+        SS[SettingsStore]
+        CV[ChatView]
+    end
+
+    ACP -.->|implements| IAC
+    OVA -.->|implements| IVA
+    SS -.->|implements| ISA
+    CV -.->|implements| ICVC
+```
+
+## UI Layout
+
+### Main Chat View
+
+```
+┌─────────────────────────────────────────────┐
+│  ChatHeader                                 │
+│  ┌─────────────────────────────────────────┐│
+│  │ ▼ Claude Code          [+][⟳][📋][⚙]  ││
+│  │  ┌───┬───┬───┐                         ││
+│  │  │ 1 │ 2 │ 3 │  ← TabBar (max 4)      ││
+│  │  └───┴───┴───┘                         ││
+│  └─────────────────────────────────────────┘│
+│                                             │
+│  TabContent                                 │
+│  ┌─────────────────────────────────────────┐│
+│  │                                         ││
+│  │  ┌─ user ──────────────────────────┐    ││
+│  │  │ How do I refactor this module?  │    ││
+│  │  └─────────────────────────────────┘    ││
+│  │                                         ││
+│  │  ┌─ assistant ─────────────────────┐    ││
+│  │  │ I'll help you refactor. Let me  │    ││
+│  │  │ start by reading the file...    │    ││
+│  │  │                                 │    ││
+│  │  │ ▶ Read src/module.ts    ✓       │    ││
+│  │  │ ▶ Edit src/module.ts    ✓       │    ││
+│  │  │   ┌─ diff ────────────────┐     │    ││
+│  │  │   │ - old code            │     │    ││
+│  │  │   │ + new code            │     │    ││
+│  │  │   └───────────────────────┘     │    ││
+│  │  │ ▶ Terminal: npm test     ⏳     │    ││
+│  │  │   ┌─ output ─────────────┐     │    ││
+│  │  │   │ PASS all tests       │     │    ││
+│  │  │   └───────────────────────┘     │    ││
+│  │  │                                 │    ││
+│  │  │ ⚠ Allow edit to config.ts?     │    ││
+│  │  │   [Allow once] [Always] [Deny]  │    ││
+│  │  └─────────────────────────────────┘    ││
+│  │                                         ││
+│  │  ┌─ Thinking ──────────────────────┐    ││
+│  │  │ ▶ Let me analyze the imports... │    ││
+│  │  └─────────────────────────────────┘    ││
+│  │                                    [↓]  ││
+│  └─────────────────────────────────────────┘│
+│                                             │
+│  ChatInput                                  │
+│  ┌─────────────────────────────────────────┐│
+│  │ ┌─ ErrorOverlay (if error) ───────────┐ ││
+│  │ │ ⚠ Connection failed — Retry?       │ ││
+│  │ └────────────────────────────────────┘ ││
+│  │                                         ││
+│  │ ┌─ SuggestionDropdown ───────────────┐ ││
+│  │ │  notes/architecture.md             │ ││
+│  │ │  notes/api-design.md        ← @    │ ││
+│  │ │  notes/todo.md                     │ ││
+│  │ └───────────────────────────────────┘ ││
+│  │                                         ││
+│  │ ┌─ ContextBadgeStrip ───────────────┐  ││
+│  │ │ 📄 module.ts:12-45  ✕  📝 auto ✕ │  ││
+│  │ └──────────────────────────────────┘  ││
+│  │                                         ││
+│  │ ┌─ RichTextarea ────────────────────┐  ││
+│  │ │ Refactor @[[notes/api]] to use... │  ││
+│  │ └──────────────────────────────────┘  ││
+│  │                                         ││
+│  │ ┌─ ImagePreviewStrip ──────────────┐   ││
+│  │ │ [🖼 img1.png ✕] [🖼 img2.png ✕] │   ││
+│  │ └─────────────────────────────────┘   ││
+│  │                                         ││
+│  │ ┌─ InputActions ───────────────────┐   ││
+│  │ │ [💬 Code] [🤖 claude-4]  [Send ▶]│   ││
+│  │ └─────────────────────────────────┘   ││
+│  └─────────────────────────────────────────┘│
+└─────────────────────────────────────────────┘
+```
+
+### Session History Popover
+
+```
+┌─────────────────────────────────────────────┐
+│  CONVERSATIONS                          [✕] │
+│  ┌─────────────────────────────────────────┐│
+│  │ 🔵 Refactor auth module          [⑂][🗑]││
+│  │    2 min ago · Claude Code              ││
+│  │─────────────────────────────────────────││
+│  │ ⚪ Fix CSS layout bug             [⑂][🗑]││
+│  │    1 hour ago · OpenCode                ││
+│  │─────────────────────────────────────────││
+│  │ ⚪ Add unit tests                 [⑂][🗑]││
+│  │    yesterday · Codex                    ││
+│  └─────────────────────────────────────────┘│
+│  [Load more...]                             │
+└─────────────────────────────────────────────┘
+```
+
+### Settings Tab
+
+```
+┌─────────────────────────────────────────────┐
+│  Obsius Settings                            │
+│                                             │
+│  Default Agent: [▼ Claude Code           ]  │
+│                                             │
+│  ── Core ──────────────────────────────     │
+│  Node.js Path:    [/usr/local/bin/node   ]  │
+│  Send Shortcut:   [▼ Enter              ]   │
+│  Max Note Length:  [10000                ]   │
+│  Max Selection:    [10000                ]   │
+│                                             │
+│  ── Display ───────────────────────────     │
+│  View Location:   [▼ Right sidebar tab  ]   │
+│  Font Size:       [14                    ]  │
+│  Completion Sound: [toggle]                 │
+│  Diff Collapse:    [toggle]                 │
+│                                             │
+│  ── Agents ────────────────────────────     │
+│  ▶ OpenCode   [command] [args] [env]        │
+│  ▶ Claude     [command] [args] [API key]    │
+│  ▶ Codex      [command] [args] [API key]    │
+│  ▶ Gemini     [command] [args] [API key]    │
+│                                             │
+│  ── Custom Agents ─────────────────────     │
+│  [+ Add Agent]                              │
+│  ▶ My Agent   [command] [args] [env]        │
+│                                             │
+│  ── Developer ─────────────────────────     │
+│  Debug Mode:   [toggle]                     │
+└─────────────────────────────────────────────┘
+```
+
+## Key Concepts
+
+### Agent Client Protocol (ACP)
+
+ACP is a JSON-RPC protocol over stdin/stdout. Obsius spawns an agent process, establishes an NDJSON stream, performs a handshake (`initialize`), then creates sessions and exchanges prompts/responses.
+
+Session updates stream back as typed events: message chunks, tool calls, plans, permission requests, mode/command updates.
+
+### Hook Composition Pattern
+
+All state and logic live in hooks, composed by `useChatController`. Components are pure renderers that receive props from the controller. No ViewModel or UseCase classes.
+
+### Domain Zero-Dep Rule
+
+The `domain/` layer contains only pure TypeScript types and interfaces. It never imports `obsidian`, `@agentclientprotocol/sdk`, or `react`. This keeps the domain stable across protocol and framework changes.
+
+### Reducer-Backed State
+
+State transitions in `useChat`, `useAgentSession`, and `usePermission` use typed reducers in `hooks/state/`. This ensures deterministic updates and makes state logic testable without React.
+
+## Development Workflow
+
+1. **Format**: `npm run format`
+2. **Lint**: `npm run lint` (and `npm run lint:fix` if needed)
+3. **Test**: `npm run test`
+4. **Typecheck**: `npm run typecheck`
+5. **Build**: `npm run build`
+
+### Running Tests
+
+```bash
+npm run test                          # All tests
+npm run test:coverage                 # With coverage gates
+npx vitest run -t "should render"     # By test name
+npx vitest run test/chat.reducer.test.ts  # By file
+```
+
+### Debugging
+
+1. Enable **Debug Mode** in Obsius settings
+2. Open DevTools (Ctrl+Shift+I / Cmd+Option+I)
+3. Filter console by: `[AcpAdapter]`, `[useChat]`, `[NoteMentionService]`
 
 ## Code Style
 
-### Formatting Configuration
+| Rule | Value |
+|------|-------|
+| Indentation | Tabs, width 4 |
+| Quotes | Double quotes |
+| Trailing commas | Yes |
+| Line endings | LF |
+| Formatter | Biome (`npm run format`) |
+| Linter | ESLint + Biome + architecture guards (`npm run lint`) |
 
-| Setting        | Value         |
-| -------------- | ------------- |
-| Indentation    | Tabs (width 4)|
-| Semicolons     | Yes           |
-| Quotes         | Double        |
-| Trailing comma | All           |
-| Print width    | 80            |
-| End of line    | LF            |
+## Adding Features
 
-### Linting
+### New Hook
+1. Create `src/hooks/useFeature.ts`
+2. Wire into `useChatController.ts`
+3. Access in components via controller return value
 
-We use Biome for fast formatting/baseline linting and ESLint (`eslint-plugin-obsidianmd`, `typescript-eslint`) for Obsidian- and TypeScript-specific rules.
+### New Component
+1. Create `src/components/chat/MyComponent.tsx`
+2. Accept props from `useChatController` return
+3. Style in `styles.css`
 
-### Obsidian Plugin Guidelines
+### New Agent Type
+1. Implement `IAgentClient` in `src/adapters/myagent/`
+2. Domain port isolates the protocol
 
-1. **No innerHTML/outerHTML** — Use `createEl`, `createDiv`, `createSpan`
-2. **Don't detach leaves in onunload** — This is an anti-pattern
-3. **Styles in CSS only** — No JS style manipulation
-4. **Use Platform API** — Don't use `process.platform`
-5. **Minimize `any`** — Use proper types
+### New ACP Event
+1. Add `SessionUpdate` variant in `domain/models/session-update.ts`
+2. Map in `adapters/acp/update-routing.ts`
+3. Handle in `useChat.handleSessionUpdate()`
 
-### File Naming Conventions
+## Project Structure
 
-- **Ports**: `*.port.ts`
-- **Adapters**: `*.adapter.ts`
-- **Hooks**: `use*.ts`
-- **Components**: `PascalCase.tsx`
-- **Utils/Models**: `kebab-case.ts`
+See [AGENTS.md](AGENTS.md) for the full directory tree and detailed architecture guide. Subdirectory guides:
 
-## Branch Naming
-
-```
-{username}/{type}/{description}
-```
-
-**Types:**
-
-- `feature/` — New feature
-- `fix/` — Bug fix
-- `refactor/` — Refactoring
-- `docs/` — Documentation
-- `hotfix/` — Urgent fix
-
-**Examples:**
-
-- `yourname/feature/add-export`
-- `yourname/fix/message-rendering`
-
-## Commit Messages
-
-We recommend [Conventional Commits](https://www.conventionalcommits.org/) style:
-
-```
-<type>: <description>
-
-<optional body>
-```
-
-**Types:**
-
-- `feat:` — New feature
-- `fix:` — Bug fix
-- `refactor:` — Refactoring
-- `docs:` — Documentation
-- `chore:` — Build/dependencies
-- `style:` — Formatting (no functional changes)
-
-## Pull Request Process
-
-### Workflow
-
-1. Create a branch from `master`
-   - `master` is the stable branch, `dev` is for development
-   - Feature PRs typically target `dev`, hotfixes target `master`
-2. Make your changes and commit
-3. Create a pull request
-4. Ensure CI passes (lint, build)
-5. Wait for review
-
-### PR Checklist
-
-Before submitting, please verify:
-
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
-- [ ] Tested in Obsidian
-- [ ] Existing functionality still works
-- [ ] Documentation updated if needed
-
-### CI
-
-Pull requests automatically run:
-
-- Typecheck (`npm run typecheck`)
-- Lint (`npm run lint`)
-- Tests (`npm run test:coverage`)
-- Build (`npm run build`)
-- Docs build (`npm run docs:build`)
-
-Please ensure these pass locally before submitting.
-
-**Note:** "Use sentence case for UI text" lint errors are acceptable for brand names and proper nouns (e.g., "Claude Code", "OpenCode", "Gemini CLI").
-
-## Architecture Overview
-
-```
-src/
-├── domain/         # Pure domain models + ports (interfaces)
-│   ├── models/     # agent-config, chat-message, session-update, etc.
-│   └── ports/      # IAgentClient, ISettingsAccess, IVaultAccess
-├── adapters/       # Interface implementations
-│   ├── acp/        # ACP protocol implementation
-│   └── obsidian/   # Obsidian-specific implementations
-├── hooks/          # React custom hooks (state + logic)
-├── components/     # UI components
-└── shared/         # Utility functions
-```
-
-### Architecture Principles
-
-1. **Hooks for state and logic** — No ViewModel or Use Case classes
-2. **Pure functions in shared/** — Non-React business logic
-3. **Ports absorb protocol changes** — IAgentClient interface provides isolation
-4. **Domain has zero dependencies** — No `obsidian` or `@agentclientprotocol/sdk` imports
-
-For more details, see `CLAUDE.md`.
-
-## ACP Notes
-
-- Prioritize implementations that conform to the official (stable) ACP specification
-- If implementing draft/experimental specs, please discuss in an issue first
-- Implementations should work with official ACP-compatible agents (e.g., `@zed-industries/claude-agent-acp`)
-
-## Questions?
-
-Open an issue if you have any questions!
+- [`src/hooks/AGENTS.md`](src/hooks/AGENTS.md) — Hook composition, race conditions
+- [`src/components/chat/AGENTS.md`](src/components/chat/AGENTS.md) — Component tree, rendering
+- [`src/adapters/acp/AGENTS.md`](src/adapters/acp/AGENTS.md) — ACP protocol, process lifecycle
+- [`src/shared/AGENTS.md`](src/shared/AGENTS.md) — Utility catalog
+- [`src/domain/AGENTS.md`](src/domain/AGENTS.md) — Domain models, ports

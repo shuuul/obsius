@@ -14,6 +14,16 @@
 
 import type { ChatInputState } from "../models/chat-input-state";
 
+export interface ChatViewContextReference {
+	type: "selection" | "file" | "folder";
+	notePath: string;
+	noteName: string;
+	selection?: {
+		from: { line: number; ch: number };
+		to: { line: number; ch: number };
+	};
+}
+
 /**
  * Type of chat view container.
  * Used for filtering and type-specific behavior.
@@ -75,6 +85,12 @@ export interface IChatViewContainer {
 	 * Used to copy prompt from one view to another.
 	 */
 	setInputState(state: ChatInputState): void;
+
+	/**
+	 * Append a structured context reference to input text atomically.
+	 * Returns false when the same reference already exists.
+	 */
+	addContextReference(reference: ChatViewContextReference): boolean;
 
 	/**
 	 * Check if this view is ready to send a message.

@@ -8,29 +8,31 @@ Pure types and interfaces — **ZERO external dependencies**. No `obsidian`, no 
 domain/
 ├── models/          # Data types (8 files, ~1042 lines)
 │   ├── chat-message.ts      # ChatMessage, MessageContent union, Role, ToolCallStatus, ToolKind (~203 lines)
-│   ├── session-update.ts    # SessionUpdate union (13 types) — agent → UI event stream (~167 lines)
-│   ├── chat-session.ts      # ChatSession state, SessionState, SlashCommand, AuthenticationMethod (~266 lines)
+│   ├── session-update.ts    # SessionUpdate union (8 routed types) — agent → UI event stream (~167 lines)
+│   ├── chat-session.ts      # ChatSession state, SessionState, SlashCommand, AuthenticationMethod, modes, models (~266 lines)
 │   ├── agent-config.ts      # BaseAgentSettings, ClaudeAgentSettings, GeminiAgentSettings, CodexAgentSettings, OpenCodeAgentSettings, CustomAgentSettings (~100 lines)
-│   ├── agent-error.ts       # AcpErrorCode enum, ErrorInfo, AcpError, ProcessError (~122 lines)
-│   ├── session-info.ts      # SessionInfo, ListSessionsResult, LoadSessionResult, ResumeSessionResult, ForkSessionResult (~92 lines)
+│   ├── agent-error.ts       # AcpErrorCode constants, ErrorInfo, AcpError, ProcessError, ProcessErrorType (~122 lines)
+│   ├── session-info.ts      # SessionInfo, ListSessionsResult, LoadSessionResult, ResumeSessionResult, ForkSessionResult, SavedSessionInfo (~92 lines)
 │   ├── prompt-content.ts    # PromptContent union (text, image, resource), ResourceAnnotations (~72 lines)
 │   └── chat-input-state.ts  # ChatInputState, AttachedImage (for broadcast) (~20 lines)
 └── ports/           # Interface contracts (4 files, ~749 lines)
     ├── agent-client.port.ts    # IAgentClient — 423 lines, full agent communication contract
     ├── vault-access.port.ts    # IVaultAccess — note search, read, active file tracking (~94 lines)
     ├── settings-access.port.ts # ISettingsAccess — settings CRUD + session persistence (~131 lines)
-    └── chat-view-container.port.ts # IChatViewContainer — view registration, focus, broadcast (~101 lines)
+    └── chat-view-container.port.ts # IChatViewContainer + ChatViewContextReference — view registration, focus, broadcast, context (~101 lines)
 ```
 
 ## Critical Types
 
-**SessionUpdate** (`session-update.ts`): Discriminated union of 13 event types — the backbone of agent -> UI communication:
-`agent_message_chunk` | `agent_thought_chunk` | `user_message_chunk` | `tool_call` | `tool_call_update` | `end_turn` | `plan_update` | `plan_completed` | `available_commands_update` | `current_mode_update` | `current_model_update` | `session_title_update` | `agent_capabilities_update`
+**SessionUpdate** (`session-update.ts`): Discriminated union — the backbone of agent -> UI communication:
+`agent_message_chunk` | `agent_thought_chunk` | `user_message_chunk` | `tool_call` | `tool_call_update` | `plan` | `available_commands_update` | `current_mode_update`
 
 **MessageContent** (`chat-message.ts`): Union of content types within a `ChatMessage`:
-`text` | `text_with_context` | `image` | `tool_call` | `thought` | `plan`
+`text` | `text_with_context` | `image` | `tool_call` | `agent_thought` | `plan` | `permission_request` | `terminal`
 
-**ChatSession** (`chat-session.ts`): Full session state including `SessionState`, available modes/models, agent capabilities, slash commands.
+**ChatSession** (`chat-session.ts`): Full session state including `SessionState`, available modes/models (`SessionModeState`, `SessionModelState`), agent capabilities, slash commands.
+
+**ChatViewContextReference** (`chat-view-container.port.ts`): Context reference types (`selection` | `file` | `folder`) for editor context menu integration.
 
 ## Ports -> Implementations
 
@@ -38,7 +40,7 @@ domain/
 |------|---------|
 | `IAgentClient` | `adapters/acp/acp.adapter.ts` -> `AcpAdapter` |
 | `IVaultAccess` | `adapters/obsidian/vault.adapter.ts` -> `ObsidianVaultAdapter` |
-| `ISettingsAccess` | `adapters/obsidian/settings-store.ts` -> `SettingsStore` |
+| `ISettingsAccess` | `adapters/obsidian/settings-store.adapter.ts` -> `SettingsStore` |
 | `IChatViewContainer` | `components/chat/ChatView.tsx` |
 
 ## Zero-Dep Rule Enforcement

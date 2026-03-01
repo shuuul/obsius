@@ -12,18 +12,20 @@ Pure utility modules with no React dependencies. Business logic extracted from h
 | `message-service/types.ts` | 53 | Message-service shared types | `useChat` |
 | `terminal-manager.ts` | 277 | Spawn terminal processes, poll output, platform shell wrapping | `AcpAdapter` |
 | `chat-view-registry.ts` | 214 | Multi-view management: register/unregister/focus/broadcast/navigate | `plugin.ts` |
+| `chat-context-token.ts` | ~150 | Context reference token parsing, creation, extraction, badge formatting | `ChatInput`, `TextWithMentions`, `editor-context` |
 | `acp-error-utils.ts` | 205 | ACP JSON-RPC error extraction, user-friendly `ErrorInfo` generation | `useChat`, `useAgentSession` |
 | `settings-schema.ts` | 198 | Zod-based settings validation with schema versioning (v4) | `SettingsStore` |
 | `tool-icons.ts` | 221 | Tool title/kind -> Obsidian Lucide icon name mapping | `ToolCallRenderer` |
 | `settings-utils.ts` | 164 | `sanitizeArgs`, `normalizeEnvVars`, `toAgentConfig` conversion | `useAgentSession`, `AgentClientSettingTab` |
 | `mention-utils.ts` | 138 | `detectMention`, `replaceMention`, `extractMentionedNotes` parsing | `useMentions`, `message-service` |
+| `completion-sound.ts` | ~20 | `playCompletionSound` — two-tone chime via Web Audio API | `useChatController` |
 | `windows-env.ts` | 129 | `getFullWindowsPath`, `getEnhancedWindowsEnv` — registry PATH query | `AcpAdapter`, `TerminalManager` |
 | `wsl-utils.ts` | ~98 | `convertWindowsPathToWsl`, `wrapCommandForWsl` | `AcpAdapter`, `message-service` |
 | `path-utils.ts` | ~63 | `resolveCommandDirectory`, `toRelativePath`, `buildFileUri` | `AcpAdapter`, `ToolCallRenderer` |
 | `session-capability-utils.ts` | ~42 | `getSessionCapabilityFlags` — boolean flags from `AgentCapabilities` | `useSessionHistory` |
-| `shell-utils.ts` | ~36 | `escapeShellArgWindows`, `getLoginShell` | `AcpAdapter`, `TerminalManager` |
+| `shell-utils.ts` | ~36 | `escapeShellArgWindows`, `getLoginShell`, `resolveCommandFromShell` | `AcpAdapter`, `TerminalManager` |
 | `display-settings.ts` | ~36 | `parseChatFontSize` — clamped integer parse (10-30) | `plugin.ts` |
-| `plugin-notice.ts` | 10 | `pluginNotice` — prefixed `Notice` wrapper (template literal bypasses sentence-case lint) | hooks, plugin, components |
+| `plugin-notice.ts` | 10 | `pluginNotice` — prefixed `Notice` wrapper | hooks, plugin, components |
 | `logger.ts` | 44 | `Logger` class + `getLogger` singleton — debug-mode gated logging | everywhere |
 
 ## Key Patterns
@@ -33,6 +35,12 @@ Pure utility modules with no React dependencies. Business logic extracted from h
 - Supports `embeddedContext` capability: attaches note content as `resource` type instead of text
 - Auth retry: catches `AUTHENTICATION_REQUIRED` error, invokes `authenticate()`, retries once
 - WSL mode: converts Windows paths to `/mnt/c/...` format when `convertToWsl` flag set
+
+**chat-context-token.ts**:
+- Encodes `ChatContextReference` (selection, file, folder) as inline tokens in message text
+- `extractChatContextTokensFromMessage()` separates tokens from user text before sending
+- `formatChatContextBadgeLabel()` / `formatChatContextTooltip()` for UI display
+- Used by `editor-context.ts` to inject context and by `TextWithMentions` to render badges
 
 **settings-schema.ts**:
 - Zod schemas validate persisted settings on load (migration safety net)

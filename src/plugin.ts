@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf, Notice } from "obsidian";
+import { Plugin, WorkspaceLeaf, Notice, addIcon, type IconName } from "obsidian";
 import { ChatView, VIEW_TYPE_CHAT } from "./components/chat/ChatView";
 import { ChatViewRegistry } from "./shared/chat-view-registry";
 import {
@@ -33,8 +33,14 @@ import {
 	registerBroadcastCommands,
 	registerPermissionCommands,
 } from "./plugin/agent-ops";
+import {
+	addContextToCurrentChat,
+	openContextReferenceInEditor,
+	registerEditorContextMenus,
+} from "./plugin/editor-context";
 import { checkForUpdates } from "./plugin/update-check";
 import { createNewChatLeaf, focusChatTextarea } from "./plugin/view-helpers";
+import type { ChatContextReference } from "./shared/chat-context-token";
 
 // Re-export for backward compatibility
 export type { AgentEnvVar, CustomAgentSettings };
@@ -86,6 +92,7 @@ export interface AgentClientPluginSettings {
 		maxNoteLength: number;
 		maxSelectionLength: number;
 		fontSize: number | null;
+		completionSound: boolean;
 	};
 	// Locally saved session metadata (for agents without session/list support)
 	savedSessions: SavedSessionInfo[];
@@ -128,14 +135,32 @@ export default class AgentClientPlugin extends Plugin {
 
 		initializeLogger(this.settings);
 
+		addIcon(
+			"obsius-o",
+			`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+				<defs>
+					<mask id="obsius-o-cutout">
+						<rect width="100" height="100" fill="black" />
+						<g transform="rotate(18 50 50)">
+							<ellipse cx="50" cy="50" rx="41" ry="34" fill="white" />
+						</g>
+						<g transform="rotate(-23 47 54)">
+							<ellipse cx="47" cy="54" rx="18" ry="13" fill="black" />
+						</g>
+					</mask>
+				</defs>
+				<rect width="100" height="100" fill="#6F6F6F" mask="url(#obsius-o-cutout)" />
+			</svg>`,
+		);
+
 		// Initialize settings store
 		this.settingsStore = createSettingsStore(this.settings, this);
 
 		this.registerView(VIEW_TYPE_CHAT, (leaf) => new ChatView(leaf, this));
 
 		const ribbonIconEl = this.addRibbonIcon(
-			"bot-message-square",
-			"Open agent client",
+			"obsius-o" as IconName,
+			"Open Obsius",
 			(_evt: MouseEvent) => {
 				void this.activateView();
 			},
@@ -144,7 +169,8 @@ export default class AgentClientPlugin extends Plugin {
 
 		this.addCommand({
 			id: "open-chat-view",
-			name: "Open agent chat",
+			// eslint-disable-next-line obsidianmd/commands/no-plugin-name-in-command-name
+			name: "Open Obsius",
 			callback: () => {
 				void this.activateView();
 			},
@@ -178,6 +204,7 @@ export default class AgentClientPlugin extends Plugin {
 		this.registerAgentCommands();
 		this.registerPermissionCommands();
 		this.registerBroadcastCommands();
+		registerEditorContextMenus(this);
 
 		this.addSettingTab(new AgentClientSettingTab(this.app, this));
 
@@ -363,6 +390,16 @@ export default class AgentClientPlugin extends Plugin {
 	 */
 	private registerBroadcastCommands(): void {
 		registerBroadcastCommands(this);
+	}
+
+	async addContextReferenceToCurrentChat(
+		reference: ChatContextReference,
+	): Promise<boolean> {
+		return await addContextToCurrentChat(this, reference);
+	}
+
+	async openContextReference(reference: ChatContextReference): Promise<void> {
+		await openContextReferenceInEditor(this.app, reference);
 	}
 
 	/**

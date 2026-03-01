@@ -6,10 +6,15 @@ interface HeaderButtonProps {
 	iconName: string;
 	tooltip: string;
 	onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+	className?: string;
+	ariaExpanded?: boolean;
 }
 
 export const HeaderButton = forwardRef<HTMLButtonElement, HeaderButtonProps>(
-	function HeaderButton({ iconName, tooltip, onClick }, ref) {
+	function HeaderButton(
+		{ iconName, tooltip, onClick, className, ariaExpanded },
+		ref,
+	) {
 		const buttonRef = useRef<HTMLButtonElement>(null);
 
 		// Expose the button ref to parent components
@@ -26,7 +31,8 @@ export const HeaderButton = forwardRef<HTMLButtonElement, HeaderButtonProps>(
 				ref={buttonRef}
 				title={tooltip}
 				onClick={onClick}
-				className="obsius-header-button"
+				className={`obsius-header-button${className ? ` ${className}` : ""}`}
+				aria-expanded={ariaExpanded}
 			/>
 		);
 	},

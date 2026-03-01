@@ -6,6 +6,11 @@ import type { NoteMetadata } from "../../../domain/ports/vault-access.port";
 import type { UseMentionsReturn } from "../../../hooks/useMentions";
 import type { UseSlashCommandsReturn } from "../../../hooks/useSlashCommands";
 import type { Logger } from "../../../shared/logger";
+import {
+	buildMessageWithContextTokens,
+	createChatContextToken,
+	extractChatContextTokensFromMessage,
+} from "../../../shared/chat-context-token";
 import type { RichTextareaHandle } from "./RichTextarea";
 
 interface UseChatInputBehaviorParams {
@@ -58,7 +63,14 @@ export function useChatInputBehavior({
 
 	const handleSelectSlashCommand = useCallback(
 		(command: SlashCommand) => {
-			const newText = slashCommands.selectSuggestion(inputValue, command);
+			const { contexts } = extractChatContextTokensFromMessage(inputValue);
+			const commandOnlyText = slashCommands.selectSuggestion(inputValue, command);
+			const newText = buildMessageWithContextTokens(
+				commandOnlyText.trim(),
+				contexts.map((ctx) => {
+					return createChatContextToken(ctx);
+				}),
+			);
 			onInputChange(newText);
 			richTextareaRef.current?.setContent(newText);
 
@@ -183,7 +195,9 @@ export function useChatInputBehavior({
 			onInputChange(text);
 			if (hintText) {
 				const expectedText = commandText + hintText;
-				if (text !== expectedText) {
+				const { messageWithoutContextTokens } =
+					extractChatContextTokensFromMessage(text);
+				if (messageWithoutContextTokens !== expectedText) {
 					setHintText(null);
 					setCommandText("");
 				}

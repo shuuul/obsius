@@ -1,17 +1,18 @@
 # Obsius - LLM Developer Guide
 
-**Generated:** 2026-03-01 | **Commit:** 6606e3c | **Branch:** master
+**Generated:** 2026-03-01 | **Commit:** efe6dc3 | **Branch:** master
 
 ## Overview
-Obsidian desktop plugin for AI agent chat (Claude Code, OpenCode, Codex, Gemini CLI, custom agents). React 19 + TypeScript, communicating via Agent Client Protocol (ACP) over JSON-RPC stdin/stdout. Multi-tab chat sessions in a sidebar view.
+Obsidian desktop plugin for AI chat (OpenCode, Claude Code, Codex, Gemini CLI, custom agents). React 19 + TypeScript, communicating via Agent Client Protocol (ACP) over JSON-RPC stdin/stdout. Multi-tab chat sessions in a sidebar view.
 
 ## Structure
 ```
 src/
 ├── main.ts                   # Re-exports plugin.ts
-├── plugin.ts                 # Obsidian plugin lifecycle composition root (~420 lines)
+├── plugin.ts                 # Obsidian plugin lifecycle composition root (~457 lines)
 ├── plugin/                   # Extracted plugin modules
-│   ├── agent-ops.ts          # Agent CRUD commands (add/edit/delete/duplicate) (~238 lines)
+│   ├── agent-ops.ts          # Agent CRUD commands + broadcast helpers (~238 lines)
+│   ├── editor-context.ts     # Editor/file context menus + context reference handling (~344 lines)
 │   ├── update-check.ts       # GitHub release version check (~56 lines)
 │   └── view-helpers.ts       # View creation/focus helpers (~66 lines)
 ├── domain/                   # Pure types + interfaces — ZERO external deps
@@ -20,15 +21,15 @@ src/
 ├── adapters/
 │   ├── acp/                  # ACP protocol modules: lifecycle, runtime ops, routing, terminal, permissions (10 files)
 │   └── obsidian/             # VaultAdapter, SettingsStore, MentionService (3 files)
-├── hooks/                    # React custom hooks (12 hooks + 5 state modules + 6 extracted modules)
+├── hooks/                    # React custom hooks (12 hooks + 5 state modules + 5 extracted modules)
 │   ├── state/                # Pure reducer/action modules for deterministic state transitions
-│   ├── chat-controller/      # Extracted coordinator helpers
+│   ├── chat-controller/      # Extracted coordinator helpers (types + session-history-handlers)
 │   ├── agent-session/        # Session normalization helpers
 │   └── session-history/      # History list/load/restore/fork helpers
 ├── components/
-│   ├── chat/                 # ChatView + 27 sub-components (16 top-level + 11 in chat-input/)
+│   ├── chat/                 # ChatView + 30 sub-components (19 top-level + 11 in chat-input/)
 │   └── settings/             # Thin tab coordinator + 3 section renderers
-└── shared/                   # Pure utility functions (18 files)
+└── shared/                   # Pure utility functions (21 files)
 ```
 
 ## Where To Look
@@ -42,6 +43,7 @@ src/
 | Settings changes | `plugin.ts` (interface) + `components/settings/sections/` (UI sections) | `AgentClientSettingTab.ts` is thin coordinator |
 | Add input UI element | `components/chat/chat-input/` | 11 files: RichTextarea, InputActions, SelectorButton, etc. |
 | Tab management | `hooks/useTabs.ts` + `components/chat/TabBar.tsx` + `TabContent.tsx` | Multi-tab chat sessions |
+| Editor context menus | `plugin/editor-context.ts` | Selection, file, folder context references |
 | Debug | Settings → Debug Mode ON → DevTools → filter `[AcpAdapter]`, `[useChat]`, `[NoteMentionService]` | |
 
 ## Architecture: Hook Composition Pattern
@@ -76,6 +78,10 @@ Agent response → AcpAdapter.sessionUpdate() → onSessionUpdate callback
     → useChat.handleSessionUpdate() (message chunks, tool calls, plans)
     → useAgentSession (available_commands_update, current_mode_update)
   → setMessages() → React re-render
+
+Context references → editor-context.ts → addContextToCurrentChat()
+  → ChatViewRegistry.toFocused() → IChatViewContainer.addContextReference()
+    → chat-context-token.ts → inline tokens in message text
 ```
 
 ## Conventions
@@ -137,20 +143,21 @@ npm run docs:build       # VitePress build
 ```
 
 ## Notes
-- **Tests exist**: Vitest with coverage gates for reducer/routing/schema modules (test/ directory, 6 files)
+- **Tests exist**: Vitest with coverage gates for reducer/routing/schema modules (test/ directory, 7 files including setup)
 - **CI**: PR workflow enforces typecheck, lint, tests with coverage, plugin build, and docs build
 - **Multi-session**: `ChatViewRegistry` manages sidebar views with independent ACP sessions
 - **Multi-tab**: `useTabs` hook supports up to 4 concurrent chat tabs per view, each with its own agent/session
 - **Session history**: Agent-side (`listSessions`) + local persistence (`sessions/{id}.json`)
 - **Settings validation**: `settings-schema.ts` uses Zod for runtime validation with schema versioning (v4)
+- **Context references**: Editor context menus (selection, file, folder) inject `ChatContextReference` tokens into chat input via `chat-context-token.ts`
 - **Current decomposition state**:
-  - `src/plugin.ts` (~420 LOC) is thin orchestrator; command/update/view helpers in `src/plugin/`
+  - `src/plugin.ts` (~457 LOC) is thin orchestrator; command/update/view/context helpers in `src/plugin/`
   - `src/adapters/acp/acp.adapter.ts` (~505 LOC) is composition root; concern modules under `src/adapters/acp/`
-  - `ChatView.tsx` (~509 LOC), `ChatInput.tsx` (~353 LOC) — input logic extracted to `chat-input/` (11 files)
-  - `SessionHistoryContent.tsx` (~499 LOC) — largest React component
+  - `ChatView.tsx` (~538 LOC), `ChatInput.tsx` (~399 LOC) — input logic extracted to `chat-input/` (11 files)
+  - `SessionHistoryContent.tsx` (~498 LOC) — largest React component
 - **Undocumented API**: `vault.adapter.ts` uses `editor.cm` (CodeMirror 6 internal) for selection tracking
 - **ACP SDK**: `@agentclientprotocol/sdk ^0.14.1` — protocol may evolve
-- **External deps**: `react ^19.1.1`, `diff ^8.0.2`, `semver ^7.7.3`, `zod`, `@codemirror/state`, `@codemirror/view`
+- **External deps**: `react ^19.2.0`, `diff ^8.0.2`, `semver ^7.7.3`, `zod`, `@codemirror/state`, `@codemirror/view`
 - **Provider logos**: `ProviderLogo.tsx` loads SVGs from `@lobehub/icons-static-svg` CDN via CSS mask-image
 
 ## Subdirectory Guides

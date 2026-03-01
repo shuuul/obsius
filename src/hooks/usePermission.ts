@@ -131,7 +131,7 @@ function selectOption(
  * - Provides methods to approve/reject permissions
  * - Handles hotkey-triggered approve/reject actions
  *
- * @param agentClient - Agent client for permission responses
+ * @param agentClient - ACP client for permission responses
  * @param messages - Chat messages (from useChat) to scan for active permissions
  */
 export function usePermission(

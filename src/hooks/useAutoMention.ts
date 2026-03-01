@@ -38,6 +38,13 @@ export function useAutoMention(
 	const [activeNote, setActiveNote] = useState<NoteMetadata | null>(null);
 	const [isDisabled, setIsDisabled] = useState(false);
 
+	const buildNoteKey = useCallback((note: NoteMetadata | null): string => {
+		if (!note) return "none";
+		if (!note.selection) return `${note.path}:file`;
+		const { from, to } = note.selection;
+		return `${note.path}:${from.line}:${from.ch}-${to.line}:${to.ch}`;
+	}, []);
+
 	const toggle = useCallback((disabled?: boolean) => {
 		if (disabled === undefined) {
 			// Toggle current state
@@ -50,8 +57,15 @@ export function useAutoMention(
 
 	const updateActiveNote = useCallback(async () => {
 		const note = await vaultAccess.getActiveNote();
-		setActiveNote(note);
-	}, [vaultAccess]);
+		setActiveNote((prev) => {
+			const prevKey = buildNoteKey(prev);
+			const nextKey = buildNoteKey(note);
+			if (prevKey !== nextKey) {
+				setIsDisabled(false);
+			}
+			return note;
+		});
+	}, [vaultAccess, buildNoteKey]);
 
 	return {
 		activeNote,

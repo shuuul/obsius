@@ -1,7 +1,7 @@
 /**
  * Domain Models for Agent Errors
  *
- * This module defines error types for the Agent Client plugin:
+ * This module defines error types for the Obsius plugin:
  * - AcpError: ACP protocol errors (JSON-RPC based)
  * - ProcessError: Node.js process-level errors
  *

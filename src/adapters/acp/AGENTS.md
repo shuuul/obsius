@@ -35,11 +35,14 @@ Adds ACP-specific operations beyond domain `IAgentClient`:
 - `cancelAllOperations()` — abort in-flight requests
 - `resetCurrentMessage()` — clear streaming message state
 - `terminalOutput(params)` — poll terminal output for `TerminalRenderer`
+- `setUpdateMessageCallback(cb)` — wire message update function from `useChat`
 
 ### Platform Handling
 
 - Process command wrapping and environment logic live in `process-lifecycle.ts`
 - WSL cwd conversion for session operations lives in `session-ops.ts`
+- Login shell resolution on macOS/Linux via `shell-utils.ts`
+- Windows PATH enhancement via `windows-env.ts`
 
 ## AcpTypeConverter
 

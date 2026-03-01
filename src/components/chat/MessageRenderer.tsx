@@ -69,24 +69,26 @@ export function MessageRenderer({
 				if (group.type === "images") {
 					// Render images in horizontal scroll container
 					return (
-						<div key={idx} className="obsius-message-images-strip">
-							{group.items.map((content, imgIdx) => (
-								<MessageContentRenderer
-									key={imgIdx}
-									content={content}
-									plugin={plugin}
-									messageId={message.id}
-									messageRole={message.role}
-									acpClient={acpClient}
-									onApprovePermission={onApprovePermission}
-								/>
-							))}
+						<div key={idx} className="obsius-message-content-item">
+							<div className="obsius-message-images-strip">
+								{group.items.map((content, imgIdx) => (
+									<MessageContentRenderer
+										key={imgIdx}
+										content={content}
+										plugin={plugin}
+										messageId={message.id}
+										messageRole={message.role}
+										acpClient={acpClient}
+										onApprovePermission={onApprovePermission}
+									/>
+								))}
+							</div>
 						</div>
 					);
 				} else {
 					// Render single non-image content
 					return (
-						<div key={idx}>
+						<div key={idx} className="obsius-message-content-item">
 							<MessageContentRenderer
 								content={group.item}
 								plugin={plugin}

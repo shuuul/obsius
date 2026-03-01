@@ -84,19 +84,6 @@ function renderMentionsSection(
 	new Setting(containerEl).setName("Mentions").setHeading();
 
 	new Setting(containerEl)
-		.setName("Auto-mention active note")
-		.setDesc(
-			"Include the current note in your messages automatically. The agent will have access to its content without typing @notename.",
-		)
-		.addToggle((toggle) =>
-			toggle
-				.setValue(plugin.settings.autoMentionActiveNote)
-				.onChange(async (value) => {
-					await store.updateSettings({ autoMentionActiveNote: value });
-				}),
-		);
-
-	new Setting(containerEl)
 		.setName("Max note length")
 		.setDesc(
 			"Maximum characters per mentioned note. Notes longer than this will be truncated.",
@@ -237,6 +224,24 @@ function renderDisplaySection(
 				text.setValue("");
 			});
 		});
+
+	new Setting(containerEl)
+		.setName("Completion sound")
+		.setDesc(
+			"Play a short chime when an agent finishes responding.",
+		)
+		.addToggle((toggle) =>
+			toggle
+				.setValue(plugin.settings.displaySettings.completionSound)
+				.onChange(async (value) => {
+					await store.updateSettings({
+						displaySettings: {
+							...plugin.settings.displaySettings,
+							completionSound: value,
+						},
+					});
+				}),
+		);
 
 	new Setting(containerEl)
 		.setName("Auto-collapse long diffs")

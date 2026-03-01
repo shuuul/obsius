@@ -5,10 +5,13 @@ const { useRef, useEffect } = React;
 import type { IAcpClient } from "../../adapters/acp/acp.adapter";
 import type { ChatInputState } from "../../domain/models/chat-input-state";
 import type { ImagePromptContent } from "../../domain/models/prompt-content";
+import type { ChatViewContextReference } from "../../domain/ports/chat-view-container.port";
 import { useChatController } from "../../hooks/useChatController";
 import type AgentClientPlugin from "../../plugin";
+import { appendChatContextToken } from "../../shared/chat-context-token";
 import { ChatInput } from "./ChatInput";
 import { ChatMessages } from "./ChatMessages";
+import { SessionHistoryPopover } from "./SessionHistoryPopover";
 import type { ChatView } from "./ChatView";
 
 export interface TabContentActions {
@@ -25,6 +28,7 @@ export interface TabContentActions {
 	sendMessage: () => Promise<boolean>;
 	canSend: () => boolean;
 	cancel: () => Promise<void>;
+	addContextReference: (reference: ChatViewContextReference) => boolean;
 }
 
 export function TabContent({
@@ -34,6 +38,7 @@ export function TabContent({
 	agentId,
 	isActive,
 	onActionsReady,
+	onSendComplete,
 }: {
 	plugin: AgentClientPlugin;
 	view: ChatView;
@@ -42,6 +47,7 @@ export function TabContent({
 	isActive: boolean;
 	viewId: string;
 	onActionsReady: (tabId: string, actions: TabContentActions | null) => void;
+	onSendComplete?: (tabId: string) => void;
 }) {
 	const controller = useChatController({
 		plugin,
@@ -51,6 +57,7 @@ export function TabContent({
 
 	const {
 		acpAdapter,
+		vaultPath,
 		settings,
 		session,
 		isSessionReady,
@@ -67,7 +74,14 @@ export function TabContent({
 		handleStopGeneration,
 		handleNewChat,
 		handleClearError,
+		handleRestoreSession,
+		handleForkSession,
+		handleDeleteSession,
+		handleLoadMore,
+		handleFetchSessions,
 		handleOpenHistory,
+		handleCloseHistory,
+		isHistoryPopoverOpen,
 		filteredModels,
 		handleSetMode,
 		handleSetModel,
@@ -78,6 +92,15 @@ export function TabContent({
 		restoredMessage,
 		handleRestoredMessageConsumed,
 	} = controller;
+
+	const prevIsSendingRef = useRef(false);
+	useEffect(() => {
+		const wasSending = prevIsSendingRef.current;
+		prevIsSendingRef.current = isSending;
+		if (wasSending && !isSending && messages.length > 0) {
+			onSendComplete?.(tabId);
+		}
+	}, [isSending, messages.length, tabId, onSendComplete]);
 
 	const acpClientRef = useRef<IAcpClient>(acpAdapter);
 	const agentIdRef = useRef(agentId);
@@ -104,6 +127,15 @@ export function TabContent({
 		setInputState: (state) => {
 			setInputValue(state.text);
 			setAttachedImages(state.images);
+		},
+		addContextReference: (reference) => {
+			let added = false;
+			setInputValue((prev) => {
+				const next = appendChatContextToken(prev, reference);
+				added = next !== prev;
+				return next;
+			});
+			return added;
 		},
 		sendMessage: async () => {
 			const hasContent = inputValue.trim() !== "" || attachedImages.length > 0;
@@ -162,6 +194,30 @@ export function TabContent({
 				...chatFontSizeStyle,
 			}}
 		>
+			{isHistoryPopoverOpen && (
+					<SessionHistoryPopover
+						sessions={sessionHistory.sessions}
+						loading={sessionHistory.loading}
+						error={sessionHistory.error}
+						hasMore={sessionHistory.hasMore}
+						currentCwd={vaultPath}
+						currentSessionId={session.sessionId}
+						canList={sessionHistory.canList}
+						canRestore={sessionHistory.canRestore}
+						canFork={sessionHistory.canFork}
+					isUsingLocalSessions={sessionHistory.isUsingLocalSessions}
+					localSessionIds={sessionHistory.localSessionIds}
+					isAgentReady={isSessionReady}
+					debugMode={settings.debugMode}
+					onRestoreSession={handleRestoreSession}
+					onForkSession={handleForkSession}
+					onDeleteSession={handleDeleteSession}
+					onLoadMore={handleLoadMore}
+					onFetchSessions={handleFetchSessions}
+					onClose={handleCloseHistory}
+				/>
+			)}
+
 			<ChatMessages
 				messages={messages}
 				isSending={isSending}
@@ -180,7 +236,6 @@ export function TabContent({
 				isRestoringSession={sessionHistory.loading}
 				agentLabel={activeAgentLabel}
 				availableCommands={session.availableCommands || []}
-				autoMentionEnabled={settings.autoMentionActiveNote}
 				restoredMessage={restoredMessage}
 				mentions={mentions}
 				slashCommands={slashCommands}

@@ -1,43 +1,48 @@
 # Obsius Development Plan
 
-## Settings Persistence Strategy
+## Roadmap
 
-### Current Approach: Clean Break (Pre-1.0.0)
+### Session File Restoration
 
-Prior to version 1.0.0, Obsius follows a **clean break** strategy for settings:
+Track files changed during a session and offer restoration on session load. When the agent edits files, record the original content so users can revert changes if they restore a previous session.
 
-- **Schema version mismatch**: Settings are reset to defaults
-- **Validation failure**: Settings are reset to defaults
-- **No field-level migrations**: Only schema version tracking
+- [ ] Track file paths modified by tool calls during a session
+- [ ] Store original file content (or diff) alongside session messages
+- [ ] On session restore, prompt user to revert changed files to pre-session state
+- [ ] Handle conflicts when files have been modified outside the session
 
-This approach keeps the codebase simple during rapid iteration. Users who update the plugin may need to reconfigure their settings after schema changes.
+### Inline AI Editing
 
-### Rationale
+Allow users to invoke AI editing directly in the Obsidian editor, without switching to the chat sidebar. Select text, trigger a command, and get inline suggestions.
 
-1. **Simplicity**: No migration code to maintain or test
-2. **Rapid iteration**: Schema changes are cheap (just bump version + update defaults)
-3. **Low risk**: Pre-1.0.0 users expect breaking changes
-4. **Minimal user impact**: Settings are simple enough that reconfiguration is trivial
+- [ ] Add editor command for inline AI edit (selection-based)
+- [ ] Design inline suggestion UI (diff preview in editor)
+- [ ] Route inline edit requests through existing ACP session
+- [ ] Accept/reject inline changes with undo support
 
-### Post-1.0.0 Migration Strategy
+### New Mention Panel
 
-After reaching version 1.0.0, we will implement proper migration strategies:
+Replace the current `SuggestionDropdown` for `@` mentions with a richer panel that supports searching, filtering, and previewing note content before attaching.
 
-1. **Version-to-version migrations**: Incremental transforms (vN → vN+1)
-2. **Field-level migrations**: Preserve user settings across schema changes
-3. **Migration testing**: Automated tests for each migration path
-4. **Graceful degradation**: Attempt partial migration even if full migration fails
+- [ ] Design panel layout (search bar, file tree, preview pane)
+- [ ] Support filtering by folder, tag, or file type
+- [ ] Show note preview on hover/select
+- [ ] Support multi-select for attaching multiple notes at once
 
-### Implementation Plan
+### New Command / MCP / Skills Panel
 
-When 1.0.0 approaches:
+Add a unified panel for slash commands, MCP tools, and agent skills. Replace the current `SuggestionDropdown` for `/` commands with a categorized, searchable panel.
 
-1. Audit current settings schema and predict likely evolution
-2. Design migration framework (e.g., registry of version transformers)
-3. Implement migrations for each major schema change
-4. Add migration tests
-5. Document migration strategy for contributors
+- [ ] Design unified panel with categories (commands, MCP tools, skills)
+- [ ] Support search/filter across all categories
+- [ ] Show tool descriptions and parameter hints
+- [ ] Integrate MCP tool discovery from connected servers
 
----
+### Settings Migration (Post-1.0.0)
 
-*This document will be updated as the project approaches 1.0.0.*
+Pre-1.0.0: clean break on schema mismatch (settings reset to defaults). Post-1.0.0: proper field-level migrations.
+
+- [ ] Design migration framework (registry of version transformers)
+- [ ] Implement version-to-version migrations (vN -> vN+1)
+- [ ] Add migration tests for each schema change
+- [ ] Graceful degradation on partial migration failure

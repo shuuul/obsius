@@ -1,14 +1,10 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useState } from "react";
 import { App } from "obsidian";
-import type * as React from "react";
 
 import { ConfirmDeleteModal } from "../../components/chat/ConfirmDeleteModal";
 import { pluginNotice } from "../../shared/plugin-notice";
-import { SessionHistoryModal } from "../../components/chat/SessionHistoryModal";
 import type { SessionInfo } from "../../domain/models/session-info";
 import type { Logger } from "../../shared/logger";
-
-import { buildHistoryModalProps } from "./history-modal";
 
 interface SessionHistoryControllerState {
 	sessions: SessionInfo[];
@@ -32,25 +28,15 @@ interface UseSessionHistoryHandlersParams {
 	sessionHistory: SessionHistoryControllerState;
 	logger: Logger;
 	vaultPath: string;
-	isSessionReady: boolean;
-	debugMode: boolean;
 	clearMessages: () => void;
-	historyModalRef: React.RefObject<SessionHistoryModal | null>;
 }
 
 export function useSessionHistoryHandlers(
 	params: UseSessionHistoryHandlersParams,
 ) {
-	const {
-		app,
-		sessionHistory,
-		logger,
-		vaultPath,
-		isSessionReady,
-		debugMode,
-		clearMessages,
-		historyModalRef,
-	} = params;
+	const { app, sessionHistory, logger, vaultPath, clearMessages } = params;
+
+	const [isHistoryPopoverOpen, setIsHistoryPopoverOpen] = useState(false);
 
 	const handleRestoreSession = useCallback(
 		async (sessionId: string, cwd: string) => {
@@ -119,66 +105,28 @@ export function useSessionHistoryHandlers(
 		[sessionHistory],
 	);
 
-	const historyModalProps = useMemo(
-		() =>
-			buildHistoryModalProps({
-				sessions: sessionHistory.sessions,
-				loading: sessionHistory.loading,
-				error: sessionHistory.error,
-				hasMore: sessionHistory.hasMore,
-				currentCwd: vaultPath,
-				canList: sessionHistory.canList,
-				canRestore: sessionHistory.canRestore,
-				canFork: sessionHistory.canFork,
-				isUsingLocalSessions: sessionHistory.isUsingLocalSessions,
-				localSessionIds: sessionHistory.localSessionIds,
-				isAgentReady: isSessionReady,
-				debugMode,
-				onRestoreSession: handleRestoreSession,
-				onForkSession: handleForkSession,
-				onDeleteSession: handleDeleteSession,
-				onLoadMore: handleLoadMore,
-				onFetchSessions: handleFetchSessions,
-			}),
-		[
-			sessionHistory.sessions,
-			sessionHistory.loading,
-			sessionHistory.error,
-			sessionHistory.hasMore,
-			sessionHistory.canList,
-			sessionHistory.canRestore,
-			sessionHistory.canFork,
-			sessionHistory.isUsingLocalSessions,
-			sessionHistory.localSessionIds,
-			vaultPath,
-			isSessionReady,
-			debugMode,
-			handleRestoreSession,
-			handleForkSession,
-			handleDeleteSession,
-			handleLoadMore,
-			handleFetchSessions,
-		],
-	);
-
 	const handleOpenHistory = useCallback(() => {
-		if (!historyModalRef.current) {
-			historyModalRef.current = new SessionHistoryModal(app, historyModalProps);
-		}
-		historyModalRef.current.open();
-		void sessionHistory.fetchSessions(vaultPath);
-	}, [app, historyModalProps, historyModalRef, sessionHistory, vaultPath]);
+		setIsHistoryPopoverOpen((prev) => {
+			const next = !prev;
+			if (next) {
+				void sessionHistory.fetchSessions(vaultPath);
+			}
+			return next;
+		});
+	}, [sessionHistory, vaultPath]);
 
-	useEffect(() => {
-		if (historyModalRef.current) {
-			historyModalRef.current.updateProps(historyModalProps);
-		}
-	}, [historyModalProps, historyModalRef]);
+	const handleCloseHistory = useCallback(() => {
+		setIsHistoryPopoverOpen(false);
+	}, []);
 
 	return {
 		handleRestoreSession,
 		handleForkSession,
 		handleDeleteSession,
+		handleLoadMore,
+		handleFetchSessions,
 		handleOpenHistory,
+		handleCloseHistory,
+		isHistoryPopoverOpen,
 	};
 }

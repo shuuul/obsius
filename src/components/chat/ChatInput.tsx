@@ -28,7 +28,8 @@ import { useInputHistory } from "../../hooks/useInputHistory";
 import { getLogger } from "../../shared/logger";
 import type { ErrorInfo } from "../../domain/models/agent-error";
 import { useSettings } from "../../hooks/useSettings";
-import { ObsidianIcon } from "./ObsidianIcon";
+import type { ChatContextReference } from "../../shared/chat-context-token";
+import { ContextBadgeStrip, type ContextBadgeItem } from "./ContextBadgeStrip";
 
 export interface ChatInputProps {
 	isSending: boolean;
@@ -36,7 +37,6 @@ export interface ChatInputProps {
 	isRestoringSession: boolean;
 	agentLabel: string;
 	availableCommands: SlashCommand[];
-	autoMentionEnabled: boolean;
 	restoredMessage: string | null;
 	mentions: UseMentionsReturn;
 	slashCommands: UseSlashCommandsReturn;
@@ -70,7 +70,6 @@ export function ChatInput({
 	isRestoringSession,
 	agentLabel,
 	availableCommands,
-	autoMentionEnabled,
 	restoredMessage,
 	mentions,
 	slashCommands,
@@ -240,12 +239,73 @@ export function ChatInput({
 		}
 	}, [restoredMessage, onRestoredMessageConsumed, inputValue, onInputChange]);
 
+	useEffect(() => {
+		const editor = richTextareaRef.current;
+		if (!editor) return;
+
+		const currentText = editor.getContentAndCursor().text;
+		if (currentText !== inputValue) {
+			editor.setContent(inputValue);
+		}
+	}, [inputValue]);
+
 	const showAutoMention =
-		autoMentionEnabled &&
-		autoMention.activeNote !== null &&
-		!autoMention.isDisabled;
+		autoMention.activeNote !== null && !autoMention.isDisabled;
 
 	const placeholder = `Message ${agentLabel} - @ to mention notes${availableCommands.length > 0 ? ", / for commands" : ""}`;
+
+	const handleContextBadgeClick = useCallback(
+		(reference: ChatContextReference) => {
+			void plugin.openContextReference(reference);
+		},
+		[plugin],
+	);
+
+	const contextBadgeItems = React.useMemo<ContextBadgeItem[]>(() => {
+		const items: ContextBadgeItem[] = [];
+
+		if (showAutoMention && autoMention.activeNote) {
+			const note = autoMention.activeNote;
+			items.push({
+				id: `auto:${note.path}:${note.selection?.from.line ?? -1}:${note.selection?.from.ch ?? -1}:${note.selection?.to.line ?? -1}:${note.selection?.to.ch ?? -1}`,
+				iconName: note.selection ? "list" : "file",
+				label: note.selection
+					? `${note.name} ${note.selection.from.line + 1}:${note.selection.from.ch + 1}-${note.selection.to.line + 1}:${note.selection.to.ch + 1}`
+					: note.name,
+				title: note.selection
+					? `Selection ${note.selection.from.line + 1}:${note.selection.from.ch + 1}-${note.selection.to.line + 1}:${note.selection.to.ch + 1}\n${note.path}`
+					: `Full file\n${note.path}`,
+				onClick: () =>
+					handleContextBadgeClick({
+						type: note.selection ? "selection" : "file",
+						notePath: note.path,
+						noteName: note.name,
+						selection: note.selection,
+					}),
+				onRemove: () => autoMention.toggle(true),
+			});
+		}
+
+		for (let i = 0; i < attachedImages.length; i++) {
+			const img = attachedImages[i];
+			items.push({
+				id: img.id,
+				iconName: "image",
+				label: `Image ${i + 1}`,
+				title: `Image context ${i + 1}`,
+				onRemove: () => removeImage(img.id),
+			});
+		}
+
+		return items;
+	}, [
+		showAutoMention,
+		autoMention.activeNote,
+		autoMention,
+		attachedImages,
+		removeImage,
+		handleContextBadgeClick,
+	]);
 
 	return (
 		<div className="obsius-chat-input-container">
@@ -288,28 +348,9 @@ export function ChatInput({
 				onDragLeave={handleDragLeave}
 				onDrop={(e) => void handleDrop(e)}
 			>
+				<ContextBadgeStrip items={contextBadgeItems} />
+
 				<div className="obsius-textarea-wrapper">
-					{showAutoMention && (
-						<span
-							className="obsius-auto-mention-fixed"
-							onClick={() => {
-								void plugin.app.workspace.openLinkText(
-									autoMention.activeNote!.name,
-									"",
-								);
-							}}
-							title={`Auto-mention: ${autoMention.activeNote!.name}`}
-						>
-							<ObsidianIcon
-								name="pin"
-								className="obsius-auto-mention-pin"
-								size={12}
-							/>
-							<span className="obsius-auto-mention-name">
-								{autoMention.activeNote!.name}
-							</span>
-						</span>
-					)}
 					<RichTextarea
 						ref={richTextareaRef}
 						onContentChange={handleRichInput}
@@ -319,8 +360,9 @@ export function ChatInput({
 								e as unknown as React.ClipboardEvent<HTMLTextAreaElement>,
 							)
 						}
-						placeholder={showAutoMention ? undefined : placeholder}
+						placeholder={placeholder}
 						spellCheck={obsidianSpellcheck}
+						onContextBadgeClick={handleContextBadgeClick}
 					/>
 					{hintText && (
 						<div className="obsius-hint-overlay" aria-hidden="true">

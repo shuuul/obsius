@@ -42,6 +42,7 @@ const displaySettingsSchema = z.object({
 	maxNoteLength: z.number().int().min(1),
 	maxSelectionLength: z.number().int().min(1),
 	fontSize: z.number().int().min(10).max(30).nullable(),
+	completionSound: z.boolean(),
 });
 
 const savedSessionSchema = z.object({
@@ -139,7 +140,7 @@ export const createDefaultSettings = (): AgentClientPluginSettings => ({
 		env: [],
 	},
 	customAgents: [],
-	defaultAgentId: "claude-code-acp",
+	defaultAgentId: "opencode",
 	autoAllowPermissions: false,
 	autoMentionActiveNote: true,
 	debugMode: false,
@@ -154,6 +155,7 @@ export const createDefaultSettings = (): AgentClientPluginSettings => ({
 		maxNoteLength: 10000,
 		maxSelectionLength: 10000,
 		fontSize: null,
+		completionSound: true,
 	},
 	savedSessions: [],
 	lastUsedModels: {},
@@ -182,6 +184,17 @@ export function parseStoredSettings(raw: unknown): {
 			settings: createDefaultSettings(),
 			resetReason: `schema version mismatch (expected ${SETTINGS_SCHEMA_VERSION})`,
 		};
+	}
+
+	// Back-fill defaults for fields added within the current schema version
+	if (
+		candidate.displaySettings &&
+		typeof candidate.displaySettings === "object"
+	) {
+		const ds = candidate.displaySettings as Record<string, unknown>;
+		if (ds.completionSound === undefined) {
+			ds.completionSound = true;
+		}
 	}
 
 	const parsed = settingsSchema.safeParse(candidate);

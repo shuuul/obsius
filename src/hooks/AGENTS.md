@@ -8,9 +8,9 @@ State transitions are reducer-backed in `src/hooks/state/` for deterministic upd
 
 | Hook | Lines | State Owned | Key Deps |
 |------|-------|-------------|----------|
-| `useChatController` | 633 | Combines all below | All hooks + adapters |
+| `useChatController` | 624 | Combines all below | All hooks + adapters |
 | `useAgentSession` | 628 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
-| `useChat` | 550 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
+| `useChat` | 552 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
 | `useSessionHistory` | 577 | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` |
 | `usePermission` | 234 | `activePermission`, approval queue | `IAgentClient` |
 | `useMentions` | 130 | Suggestions dropdown state | `IVaultAccess`, `mention-utils` |
@@ -36,14 +36,14 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
   ├── useMentions(vaultAccess, plugin)
   ├── useSlashCommands(session.availableCommands, autoMention.toggle)
   ├── useAutoMention(vaultAccess)
-  └── useSessionHistory(acpAdapter, session, settingsAccess, cwd, callbacks)
+  ├── useSessionHistory(acpAdapter, session, settingsAccess, cwd, callbacks)
+  └── useSessionHistoryHandlers(app, sessionHistory, logger, vaultPath, clearMessages)
 ```
 
 ## Extracted Hook Modules
 
 - `chat-controller/types.ts` (82): exported `UseChatController` interfaces to keep the coordinator lean
-- `chat-controller/history-modal.ts` (43): pure modal-props builder for `SessionHistoryModal`
-- `chat-controller/session-history-handlers.ts` (184): isolated history restore/fork/delete/open handler orchestration
+- `chat-controller/session-history-handlers.ts` (184): isolated history restore/fork/delete/open handler orchestration (popover state)
 - `agent-session/helpers.ts` (141) + `agent-session/types.ts` (39): normalization and shared type contracts
 - `session-history/session-history-ops.ts` (221): pure history list/load/restore/fork helpers
 

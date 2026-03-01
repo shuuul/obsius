@@ -1,7 +1,6 @@
 import type * as React from "react";
 import type AgentClientPlugin from "../../plugin";
 import type { AttachedImage } from "../../components/chat/ImagePreviewStrip";
-import type { SessionHistoryModal } from "../../components/chat/SessionHistoryModal";
 import type { ImagePromptContent } from "../../domain/models/prompt-content";
 import type { SessionModelState } from "../../domain/models/chat-session";
 import { useSettings } from "../useSettings";
@@ -68,15 +67,18 @@ export interface UseChatControllerReturn {
 	handleRestoreSession: (sessionId: string, cwd: string) => Promise<void>;
 	handleForkSession: (sessionId: string, cwd: string) => Promise<void>;
 	handleDeleteSession: (sessionId: string) => void;
+	handleLoadMore: () => void;
+	handleFetchSessions: (cwd?: string) => void;
 	handleOpenHistory: () => void;
+	handleCloseHistory: () => void;
+	isHistoryPopoverOpen: boolean;
 	filteredModels?: SessionModelState;
 	handleSetMode: (modeId: string) => Promise<void>;
 	handleSetModel: (modelId: string) => Promise<void>;
 	inputValue: string;
-	setInputValue: (value: string) => void;
+	setInputValue: React.Dispatch<React.SetStateAction<string>>;
 	attachedImages: AttachedImage[];
-	setAttachedImages: (images: AttachedImage[]) => void;
+	setAttachedImages: React.Dispatch<React.SetStateAction<AttachedImage[]>>;
 	restoredMessage: string | null;
 	handleRestoredMessageConsumed: () => void;
-	historyModalRef: React.RefObject<SessionHistoryModal | null>;
 }

@@ -89,12 +89,12 @@ export const getAgentOptions = (
 
 	const options: { id: string; label: string }[] = [
 		toOption(
-			plugin.settings.claude.id,
-			plugin.settings.claude.displayName || plugin.settings.claude.id,
-		),
-		toOption(
 			plugin.settings.opencode.id,
 			plugin.settings.opencode.displayName || plugin.settings.opencode.id,
+		),
+		toOption(
+			plugin.settings.claude.id,
+			plugin.settings.claude.displayName || plugin.settings.claude.id,
 		),
 		toOption(
 			plugin.settings.codex.id,
@@ -131,8 +131,8 @@ export const renderBuiltInAgentSettings = (
 	containerEl: HTMLElement,
 	plugin: AgentClientPlugin,
 ): void => {
-	renderClaudeSettings(containerEl, plugin);
 	renderOpenCodeSettings(containerEl, plugin);
+	renderClaudeSettings(containerEl, plugin);
 	renderCodexSettings(containerEl, plugin);
 	renderGeminiSettings(containerEl, plugin);
 };

@@ -439,18 +439,20 @@ export function useChat(
 				mentionService,
 			);
 
+			const originalInputText = content;
+
 			const userMessageContent: MessageContent[] = [];
 
 			if (prepared.autoMentionContext) {
 				userMessageContent.push({
 					type: "text_with_context",
-					text: content,
+					text: originalInputText,
 					autoMentionContext: prepared.autoMentionContext,
 				});
 			} else {
 				userMessageContent.push({
 					type: "text",
-					text: content,
+					text: originalInputText,
 				});
 			}
 

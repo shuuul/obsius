@@ -25,9 +25,12 @@ export function MessageContentRenderer({
 	messageRole,
 	acpClient,
 	onApprovePermission,
-}: MessageContentRendererProps) {
+}: MessageContentRendererProps): React.ReactElement | null {
 	switch (content.type) {
 		case "text":
+			if (messageRole === "assistant" && content.text.trim().length === 0) {
+				return null;
+			}
 			// User messages: render with mention support
 			// Assistant messages: render as markdown
 			if (messageRole === "user") {
@@ -37,6 +40,13 @@ export function MessageContentRenderer({
 
 		case "text_with_context":
 			// User messages with auto-mention context
+			if (
+				messageRole === "assistant" &&
+				content.text.trim().length === 0 &&
+				!content.autoMentionContext
+			) {
+				return null;
+			}
 			return (
 				<TextWithMentions
 					text={content.text}

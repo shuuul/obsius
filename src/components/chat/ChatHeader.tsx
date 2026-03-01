@@ -23,6 +23,7 @@ export interface ChatHeaderProps {
 	onOpenHistory?: () => void;
 	tabs: TabItem[];
 	activeTabId: string;
+	completedTabIds: ReadonlySet<string>;
 	canAddTab: boolean;
 	canCloseTab: boolean;
 	onTabClick: (tabId: string) => void;
@@ -41,6 +42,7 @@ export function ChatHeader({
 	onOpenHistory,
 	tabs,
 	activeTabId,
+	completedTabIds,
 	canAddTab,
 	canCloseTab,
 	onTabClick,
@@ -138,6 +140,7 @@ export function ChatHeader({
 			<TabBar
 				tabs={tabs}
 				activeTabId={activeTabId}
+				completedTabIds={completedTabIds}
 				onTabClick={onTabClick}
 				onTabClose={onTabClose}
 				canCloseTab={canCloseTab}
@@ -165,6 +168,7 @@ export function ChatHeader({
 						iconName="history"
 						tooltip="Session history"
 						onClick={onOpenHistory}
+						className="obsius-history-anchor"
 					/>
 				)}
 				<HeaderButton

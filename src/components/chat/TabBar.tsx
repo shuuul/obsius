@@ -10,6 +10,7 @@ export interface TabItem {
 interface TabBarProps {
 	tabs: TabItem[];
 	activeTabId: string;
+	completedTabIds: ReadonlySet<string>;
 	onTabClick: (tabId: string) => void;
 	onTabClose: (tabId: string) => void;
 	canCloseTab: boolean;
@@ -18,6 +19,7 @@ interface TabBarProps {
 export function TabBar({
 	tabs,
 	activeTabId,
+	completedTabIds,
 	onTabClick,
 	onTabClose,
 	canCloseTab,
@@ -41,7 +43,7 @@ export function TabBar({
 					aria-label={tab.label}
 					title={tab.label}
 					aria-selected={tab.id === activeTabId}
-					className={`obsius-tab-badge${tab.id === activeTabId ? " obsius-tab-badge--active" : ""}`}
+					className={`obsius-tab-badge${tab.id === activeTabId ? " obsius-tab-badge--active" : ""}${completedTabIds.has(tab.id) ? " obsius-tab-badge--completed" : ""}`}
 					onClick={() => onTabClick(tab.id)}
 					onContextMenu={(e) => handleContextMenu(e, tab.id)}
 					onKeyDown={(e) => {
