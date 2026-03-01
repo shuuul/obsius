@@ -793,6 +793,7 @@ If your plugin does not need CSS, delete this file.
 .obsius-chat-input-container {
 	flex-shrink: 0;
 	position: relative;
+	margin-bottom: 24px;
 }
 
 /* Input box - outer container with border and background */
@@ -814,85 +815,14 @@ If your plugin does not need CSS, delete this file.
 	background-color: var(--background-secondary);
 }
 
-/* Auto-mention inline display */
-.obsius-auto-mention-inline {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 4px;
-	padding: 6px 12px;
-	border-bottom: 1px solid var(--background-modifier-border);
-	background-color: transparent;
-}
 
-.obsius-mention-badge {
-	background-color: transparent;
-	color: var(--interactive-accent-hover);
-	border-radius: 3px;
-	font-size: var(--font-text-size);
-	font-weight: 500;
-	line-height: var(--line-height-normal);
-	cursor: default;
-	user-select: none;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	max-width: calc(100% - 24px);
-}
-
-.obsius-mention-badge.obsius-disabled {
-	color: var(--text-faint);
-	text-decoration: line-through;
-}
-
-.obsius-auto-mention-toggle-btn {
-	background: none;
-	background-color: transparent !important;
-	border: none !important;
-	color: var(--text-muted);
-	cursor: pointer;
-	padding: 0 !important;
-	margin: 0 !important;
-	pointer-events: auto;
-	transition: color 0.2s;
-	outline: none !important;
-	appearance: none;
-	box-shadow: none !important;
-	width: 16px;
-	height: 16px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-}
-
-.obsius-auto-mention-toggle-btn svg {
-	width: 14px;
-	height: 14px;
-	color: inherit;
-}
-
-.obsius-auto-mention-toggle-btn:hover {
-	background: none;
-	box-shadow: none;
-	color: var(--interactive-accent);
-}
-
-.obsius-auto-mention-toggle-btn:active,
-.obsius-auto-mention-toggle-btn:focus {
-	background: none;
-	box-shadow: none;
-	outline: none;
-}
-
-.obsius-chat-input-textarea {
-	width: 100%;
+/* Rich contenteditable textarea */
+.obsius-rich-textarea {
 	padding: 12px;
 	border: none;
 	background-color: transparent;
 	color: var(--text-normal);
-	resize: none;
-	min-height: 80px;
+	min-height: 60px;
 	max-height: 300px;
 	font-family: inherit;
 	font-size: var(--ac-chat-font-size);
@@ -902,33 +832,102 @@ If your plugin does not need CSS, delete this file.
 	overflow-y: auto;
 	scrollbar-width: none;
 	-ms-overflow-style: none;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	cursor: text;
 }
 
-.obsius-chat-input-textarea::-webkit-scrollbar {
+.obsius-rich-textarea::-webkit-scrollbar {
 	display: none;
 }
 
-.obsius-chat-input-textarea:hover {
-	border: none !important;
-	background-color: transparent !important;
+.obsius-rich-textarea-empty::before {
+	content: attr(data-placeholder);
+	color: var(--text-faint);
+	pointer-events: none;
+	position: absolute;
 }
 
-.obsius-chat-input-textarea:focus {
-	border: none !important;
-	outline: none !important;
-	box-shadow: none !important;
+/* Inline mention badge (inside contenteditable) */
+.obsius-inline-mention-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	padding: 1px 6px;
+	border-radius: var(--radius-s);
+	background-color: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-size: 0.88em;
+	vertical-align: baseline;
+	cursor: default;
+	line-height: inherit;
+	user-select: none;
 }
 
-/* Dynamic textarea height management */
-.obsius-chat-input-textarea.obsius-textarea-auto-height {
-	height: auto;
+.obsius-inline-mention-badge:hover {
+	background-color: var(--background-modifier-border);
+	color: var(--text-normal);
 }
 
-.obsius-chat-input-textarea.obsius-textarea-expanded {
-	height: var(--textarea-height, auto);
+.obsius-inline-mention-icon {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
 }
 
-/* Textarea wrapper for hint overlay */
+.obsius-inline-mention-icon svg {
+	width: 12px;
+	height: 12px;
+}
+
+.obsius-inline-mention-name {
+	white-space: nowrap;
+	max-width: 160px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Fixed auto-mention badge at the beginning of input */
+.obsius-auto-mention-fixed {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	padding: 1px 6px;
+	border-radius: var(--radius-s);
+	background-color: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+	color: var(--text-muted);
+	font-size: 0.88em;
+	line-height: var(--line-height-normal);
+	cursor: pointer;
+	user-select: none;
+	flex-shrink: 0;
+	margin: 12px 0 0 12px;
+}
+
+.obsius-auto-mention-fixed:hover {
+	background-color: color-mix(in srgb, var(--interactive-accent) 25%, transparent);
+	color: var(--text-normal);
+}
+
+.obsius-auto-mention-pin {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.obsius-auto-mention-pin svg {
+	width: 12px;
+	height: 12px;
+}
+
+.obsius-auto-mention-name {
+	white-space: nowrap;
+	max-width: 140px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Textarea wrapper */
 .obsius-textarea-wrapper {
 	position: relative;
 	flex: 1;
@@ -968,170 +967,299 @@ If your plugin does not need CSS, delete this file.
 .obsius-chat-input-actions {
 	display: flex;
 	align-items: center;
-	justify-content: flex-end;
+	justify-content: space-between;
 	gap: 8px;
 	padding: 4px 12px 8px 12px;
 }
 
-/* Mode Selector */
-.obsius-mode-selector {
-	display: inline-flex;
+/* Left group: mode + model selectors */
+.obsius-input-actions-left {
+	display: flex;
 	align-items: center;
-	padding: 0 4px;
-	border-radius: 4px;
-	cursor: pointer;
-	transition: background-color 0.1s ease;
-	height: 20px;
-	max-width: 120px;
+	gap: 2px;
+	min-width: 0;
 }
 
-.obsius-mode-selector:hover {
+/* Shared Selector Button */
+.obsius-selector-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 8px;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+	height: 24px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	user-select: none;
+}
+
+.obsius-selector-button:hover,
+.obsius-selector-button.obsius-selector-active {
+	background-color: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+/* Mode selector: darker mask by default, full-width label */
+.obsius-mode-selector.obsius-selector-button {
 	background-color: var(--background-modifier-hover);
 }
 
-.obsius-mode-selector-icon {
-	display: flex;
-	align-items: center;
-	pointer-events: none;
-	color: var(--text-faint);
-	margin-left: 2px;
-	order: 2;
+.obsius-mode-selector.obsius-selector-button:hover,
+.obsius-mode-selector.obsius-selector-button.obsius-selector-active {
+	background-color: var(--background-modifier-border);
 }
 
-.obsius-mode-selector-icon svg {
+.obsius-mode-selector .obsius-selector-label {
+	max-width: none;
+}
+
+.obsius-selector-icon {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.obsius-selector-icon svg,
+.obsius-selector-icon > span {
+	width: 14px;
+	height: 14px;
+}
+
+.obsius-selector-label {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 120px;
+	line-height: 1;
+}
+
+.obsius-selector-chevron {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	opacity: 0.5;
+}
+
+.obsius-selector-chevron svg {
+	width: 10px;
+	height: 10px;
+}
+
+/* Selector Popover (portal to body) */
+.obsius-selector-popover {
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+	padding: 4px;
+	min-width: 160px;
+	max-width: 280px;
+	max-height: 300px;
+	overflow-y: auto;
+	z-index: var(--layer-menu, 1000);
+	animation: obsius-popover-in 0.12s ease-out;
+}
+
+@keyframes obsius-popover-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.obsius-selector-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+	transition: background-color 0.1s ease;
+}
+
+.obsius-selector-option:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.obsius-selector-option.is-selected {
+	color: var(--text-normal);
+	font-weight: 500;
+}
+
+.obsius-selector-option-icon {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	color: var(--text-muted);
+}
+
+.obsius-selector-option-icon svg,
+.obsius-selector-option-icon > span {
+	width: 16px;
+	height: 16px;
+}
+
+.obsius-selector-option.is-selected .obsius-selector-option-icon {
+	color: var(--text-normal);
+}
+
+.obsius-selector-option-label {
+	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.obsius-selector-option-check {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	color: var(--interactive-accent);
+	margin-left: auto;
+}
+
+.obsius-selector-option-check svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Context Mention Badges */
+.obsius-mention-badge-strip {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 6px 12px 0;
+}
+
+.obsius-context-mention-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 4px 2px 6px;
+	border-radius: var(--radius-s);
+	background-color: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	max-width: 200px;
+	transition: background-color 0.1s ease;
+}
+
+.obsius-context-mention-badge:hover {
+	background-color: var(--background-modifier-border);
+}
+
+.obsius-context-mention-icon {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	color: var(--text-faint);
+}
+
+.obsius-context-mention-icon svg {
 	width: 12px;
 	height: 12px;
 }
 
-.obsius-mode-selector select.dropdown {
-	padding: 0 !important;
-	margin: 0 !important;
-	border: none !important;
-	border-radius: 0 !important;
-	background: none !important;
-	background-color: transparent !important;
-	background-image: none !important;
-	box-shadow: none !important;
-	color: var(--text-faint) !important;
-	font-size: 11px !important;
-	cursor: pointer !important;
-	outline: none !important;
-	appearance: none !important;
-	-webkit-appearance: none !important;
-	-moz-appearance: none !important;
-	order: 1;
-	max-width: 100px;
+.obsius-context-mention-name {
+	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	white-space: nowrap;
+	line-height: 1;
 }
 
-.obsius-mode-selector select.dropdown:hover,
-.obsius-mode-selector select.dropdown:focus {
-	color: var(--text-faint) !important;
-	background-color: transparent !important;
-	box-shadow: none !important;
-}
-
-/* Model Selector (experimental) */
-.obsius-model-selector {
-	display: inline-flex;
-	align-items: center;
-	padding: 0 4px;
-	border-radius: 4px;
+.obsius-context-mention-link {
 	cursor: pointer;
-	transition: background-color 0.1s ease;
-	height: 20px;
-	max-width: 120px;
 }
 
-.obsius-model-selector:hover {
-	background-color: var(--background-modifier-hover);
+.obsius-context-mention-link:hover {
+	text-decoration: underline;
+	color: var(--text-normal);
 }
 
-.obsius-model-selector-icon {
+.obsius-context-mention-remove {
 	display: flex;
 	align-items: center;
-	pointer-events: none;
+	flex-shrink: 0;
+	cursor: pointer;
 	color: var(--text-faint);
-	margin-left: 2px;
-	order: 2;
+	opacity: 0.6;
+	transition: opacity 0.1s ease, color 0.1s ease;
+	padding: 1px;
+	border-radius: 2px;
 }
 
-.obsius-model-selector-icon svg {
+.obsius-context-mention-remove:hover {
+	opacity: 1;
+	color: var(--text-muted);
+}
+
+.obsius-context-mention-remove svg {
 	width: 12px;
 	height: 12px;
 }
 
-.obsius-model-selector select.dropdown {
-	padding: 0 !important;
-	margin: 0 !important;
-	border: none !important;
-	border-radius: 0 !important;
-	background: none !important;
-	background-color: transparent !important;
-	background-image: none !important;
-	box-shadow: none !important;
-	color: var(--text-faint) !important;
-	font-size: 11px !important;
-	cursor: pointer !important;
-	outline: none !important;
-	appearance: none !important;
-	-webkit-appearance: none !important;
-	-moz-appearance: none !important;
-	order: 1;
-	max-width: 100px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.obsius-model-selector select.dropdown:hover,
-.obsius-model-selector select.dropdown:focus {
-	color: var(--text-faint) !important;
-	background-color: transparent !important;
-	box-shadow: none !important;
-}
-
-/* Send button */
+/* Send button — three visual states */
 .obsius-chat-send-button {
-	width: 20px;
-	height: 20px;
+	width: 28px;
+	height: 28px;
 	padding: 0 !important;
 	margin: 0 !important;
+	margin-left: auto !important;
 	border: none !important;
-	border-radius: 0 !important;
-	background-color: transparent !important;
+	border-radius: 50% !important;
 	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 16px;
 	outline: none !important;
 	appearance: none;
 	box-shadow: none !important;
-	transition: all 0.2s ease;
+	flex-shrink: 0;
+	transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
-.obsius-chat-send-button.obsius-disabled {
-	cursor: not-allowed !important;
-}
-
-/* Send button icon states */
 .obsius-chat-send-button svg {
-	transition: color 0.2s ease;
+	width: 16px;
+	height: 16px;
 }
 
-.obsius-chat-send-button svg.obsius-icon-sending {
-	color: var(--color-red);
+/* State 1: Disabled — no content or not connected */
+.obsius-chat-send-button.obsius-send-disabled {
+	background-color: transparent !important;
+	color: var(--text-faint);
+	cursor: default;
+	opacity: 0.5;
 }
 
-.obsius-chat-send-button svg.obsius-icon-active {
-	color: var(--interactive-accent);
+/* State 2: Ready — has content, can send */
+.obsius-chat-send-button.obsius-send-ready {
+	background-color: var(--interactive-accent) !important;
+	color: var(--text-on-accent);
+	opacity: 1;
 }
 
-.obsius-chat-send-button svg.obsius-icon-inactive {
+.obsius-chat-send-button.obsius-send-ready:hover {
+	background-color: var(--interactive-accent-hover) !important;
+}
+
+/* State 3: Sending — agent processing, click to stop */
+.obsius-chat-send-button.obsius-send-sending {
+	background-color: var(--background-modifier-hover) !important;
 	color: var(--text-muted);
+	opacity: 1;
+}
+
+.obsius-chat-send-button.obsius-send-sending:hover {
+	background-color: var(--background-modifier-border) !important;
+	color: var(--text-normal);
 }
 
 /* Mention Dropdown */
@@ -1962,6 +2090,12 @@ If your plugin does not need CSS, delete this file.
 	margin-bottom: 4px;
 }
 
+.obsius-mode-model-group {
+	padding-left: 16px;
+	border-left: 2px solid var(--background-modifier-border);
+	margin-left: 12px;
+}
+
 .obsius-model-chips {
 	display: flex;
 	flex-wrap: wrap;
@@ -2093,4 +2227,55 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-faint);
 	font-style: italic;
 	text-align: center;
+}
+
+/* Provider row in two-step picker */
+.obsius-model-picker-provider {
+	font-weight: 500;
+}
+
+.obsius-model-picker-provider-icon {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	margin-top: 2px;
+	color: var(--text-faint);
+	display: flex;
+	align-items: center;
+}
+
+.obsius-model-picker-provider-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* Back button in model sub-list */
+.obsius-model-picker-back {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 10px;
+	cursor: pointer;
+	border-bottom: 1px solid var(--background-modifier-border);
+	font-size: var(--font-ui-small);
+	font-weight: 500;
+	color: var(--text-muted);
+}
+
+.obsius-model-picker-back:hover {
+	background-color: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.obsius-model-picker-back-icon {
+	flex-shrink: 0;
+	width: 14px;
+	height: 14px;
+	display: flex;
+	align-items: center;
+}
+
+.obsius-model-picker-back-icon svg {
+	width: 14px;
+	height: 14px;
 }

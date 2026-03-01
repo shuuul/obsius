@@ -61,6 +61,8 @@ npm run test
 
 - [obsidian-agent-client](https://github.com/RAIT-09/obsidian-agent-client) — This project is forked from it
 - [Claudian](https://github.com/YishenTu/claudian) — Design inspiration
+- [cursor.com](https://cursor.com) — Design inspiration
+- [@lobehub/icons](https://github.com/lobehub/lobe-icons) — AI brand icons
 
 ## License
 

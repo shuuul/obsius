@@ -1,18 +1,22 @@
 import * as React from "react";
-import { setIcon } from "obsidian";
 
 import type {
 	SessionModeState,
 	SessionModelState,
 } from "../../../domain/models/chat-session";
+import { SelectorButton, type SelectorOption } from "./SelectorButton";
+import { getModeIcon, parseModelDisplay } from "./mode-icons";
+import { ProviderLogo } from "./ProviderLogo";
+
+export type SendButtonState = "sending" | "ready" | "disabled";
 
 interface InputActionsProps {
 	modes?: SessionModeState;
 	models?: SessionModelState;
-	modeDropdownRef: React.RefObject<HTMLDivElement | null>;
-	modelDropdownRef: React.RefObject<HTMLDivElement | null>;
+	onModeChange?: (modeId: string) => void;
+	onModelChange?: (modelId: string) => void;
 	sendButtonRef: React.RefObject<HTMLButtonElement | null>;
-	isSending: boolean;
+	sendButtonState: SendButtonState;
 	isButtonDisabled: boolean;
 	buttonTitle: string;
 	onSendOrStop: () => void;
@@ -21,50 +25,72 @@ interface InputActionsProps {
 export function InputActions({
 	modes,
 	models,
-	modeDropdownRef,
-	modelDropdownRef,
+	onModeChange,
+	onModelChange,
 	sendButtonRef,
-	isSending,
+	sendButtonState,
 	isButtonDisabled,
 	buttonTitle,
 	onSendOrStop,
 }: InputActionsProps) {
+	const modeOptions: SelectorOption[] | undefined =
+		modes?.availableModes.map((mode, index) => ({
+			id: mode.id,
+			label: mode.name,
+			description: mode.description,
+			icon: getModeIcon(mode.id, index),
+		}));
+
+	const modelOptions: SelectorOption[] | undefined =
+		models?.availableModels.map((model) => {
+			const parsed = parseModelDisplay(model.modelId, model.name);
+			return {
+				id: model.modelId,
+				label: parsed.modelName,
+				description: model.description,
+				iconElement: parsed.providerSlug ? (
+					<ProviderLogo slug={parsed.providerSlug} />
+				) : undefined,
+				icon: parsed.providerSlug ? undefined : parsed.fallbackIcon,
+			};
+		});
+
+	const showModes =
+		modeOptions && modeOptions.length > 1 && modes && onModeChange;
+	const showModels =
+		modelOptions && modelOptions.length > 1 && models && onModelChange;
+
 	return (
 		<div className="obsius-chat-input-actions">
-			{modes && modes.availableModes.length > 1 && (
-				<div
-					className="obsius-mode-selector"
-					title={
-						modes.availableModes.find((m) => m.id === modes.currentModeId)
-							?.description ?? "Select mode"
-					}
-				>
-					<div ref={modeDropdownRef} />
-					<span
-						className="obsius-mode-selector-icon"
-						ref={(el) => {
-							if (el) setIcon(el, "chevron-down");
-						}}
-					/>
-				</div>
-			)}
-
-			{models && models.availableModels.length > 1 && (
-				<div
-					className="obsius-model-selector"
-					title={
-						models.availableModels.find(
-							(m) => m.modelId === models.currentModelId,
-						)?.description ?? "Select model"
-					}
-				>
-					<div ref={modelDropdownRef} />
-					<span
-						className="obsius-model-selector-icon"
-						ref={(el) => {
-							if (el) setIcon(el, "chevron-down");
-						}}
-					/>
+			{(showModes || showModels) && (
+				<div className="obsius-input-actions-left">
+					{showModes && (
+						<SelectorButton
+							options={modeOptions}
+							currentValue={modes.currentModeId}
+							onChange={onModeChange}
+							className="obsius-mode-selector"
+							title={
+								modes.availableModes.find(
+									(m) => m.id === modes.currentModeId,
+								)?.description ?? "Select mode"
+							}
+						/>
+					)}
+					{showModels && (
+						<SelectorButton
+							options={modelOptions}
+							currentValue={models.currentModelId}
+							onChange={onModelChange}
+							className="obsius-model-selector"
+							title={
+								models.availableModels.find(
+									(m) =>
+										m.modelId === models.currentModelId,
+								)?.description ?? "Select model"
+							}
+						/>
+					)}
 				</div>
 			)}
 
@@ -72,7 +98,7 @@ export function InputActions({
 				ref={sendButtonRef}
 				onClick={onSendOrStop}
 				disabled={isButtonDisabled}
-				className={`obsius-chat-send-button ${isSending ? "sending" : ""} ${isButtonDisabled ? "obsius-disabled" : ""}`}
+				className={`obsius-chat-send-button obsius-send-${sendButtonState}`}
 				title={buttonTitle}
 			></button>
 		</div>

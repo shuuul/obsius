@@ -205,7 +205,10 @@ export function useChatController(
 			});
 
 			if (isFirstMessage && session.sessionId) {
-				await sessionHistory.saveSessionLocally(session.sessionId, content);
+				await sessionHistory.saveSessionLocally(
+					session.sessionId,
+					content,
+				);
 				logger.log(
 					`[useChatController] Session saved locally: ${session.sessionId}`,
 				);
@@ -237,7 +240,9 @@ export function useChatController(
 			const isAgentSwitch =
 				requestedAgentId && requestedAgentId !== session.agentId;
 
-			if (messages.length === 0 && !isAgentSwitch) {
+			const hasInput = inputValue.trim() !== "" || attachedImages.length > 0;
+
+			if (messages.length === 0 && !isAgentSwitch && !hasInput) {
 				pluginNotice("Already a new session");
 				return;
 			}
@@ -251,6 +256,8 @@ export function useChatController(
 			);
 
 			autoMention.toggle(false);
+			setInputValue("");
+			setAttachedImages([]);
 			chat.clearMessages();
 
 			const newAgentId = isAgentSwitch ? requestedAgentId : session.agentId;
@@ -266,6 +273,8 @@ export function useChatController(
 			chat,
 			agentSession,
 			sessionHistory,
+			inputValue,
+			attachedImages,
 		],
 	);
 

@@ -6,16 +6,17 @@ import type { NoteMetadata } from "../../../domain/ports/vault-access.port";
 import type { UseMentionsReturn } from "../../../hooks/useMentions";
 import type { UseSlashCommandsReturn } from "../../../hooks/useSlashCommands";
 import type { Logger } from "../../../shared/logger";
+import type { RichTextareaHandle } from "./RichTextarea";
 
 interface UseChatInputBehaviorParams {
 	mentions: UseMentionsReturn;
 	slashCommands: UseSlashCommandsReturn;
 	inputValue: string;
 	onInputChange: (value: string) => void;
-	textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+	richTextareaRef: React.RefObject<RichTextareaHandle | null>;
 	handleHistoryKeyDown: (
 		e: React.KeyboardEvent,
-		textarea: HTMLTextAreaElement | null,
+		textareaEl: HTMLTextAreaElement | null,
 	) => boolean;
 	sendMessageShortcut: "enter" | "cmd-enter";
 	isSending: boolean;
@@ -29,7 +30,7 @@ export function useChatInputBehavior({
 	slashCommands,
 	inputValue,
 	onInputChange,
-	textareaRef,
+	richTextareaRef,
 	handleHistoryKeyDown,
 	sendMessageShortcut,
 	isSending,
@@ -40,34 +41,26 @@ export function useChatInputBehavior({
 	const [hintText, setHintText] = useState<string | null>(null);
 	const [commandText, setCommandText] = useState<string>("");
 
-	const setTextAndFocus = useCallback(
-		(newText: string) => {
-			onInputChange(newText);
-			window.setTimeout(() => {
-				const textarea = textareaRef.current;
-				if (textarea) {
-					const cursorPos = newText.length;
-					textarea.selectionStart = cursorPos;
-					textarea.selectionEnd = cursorPos;
-					textarea.focus();
-				}
-			}, 0);
-		},
-		[onInputChange, textareaRef],
-	);
-
 	const selectMention = useCallback(
 		(suggestion: NoteMetadata) => {
-			const newText = mentions.selectSuggestion(inputValue, suggestion);
-			setTextAndFocus(newText);
+			const ctx = mentions.context;
+			if (!ctx) return;
+
+			richTextareaRef.current?.insertMentionAtContext(
+				suggestion.name,
+				ctx.start,
+				ctx.end,
+			);
+			mentions.close();
 		},
-		[mentions, inputValue, setTextAndFocus],
+		[mentions, richTextareaRef],
 	);
 
 	const handleSelectSlashCommand = useCallback(
 		(command: SlashCommand) => {
 			const newText = slashCommands.selectSuggestion(inputValue, command);
 			onInputChange(newText);
+			richTextareaRef.current?.setContent(newText);
 
 			if (command.hint) {
 				const cmdText = `/${command.name} `;
@@ -79,18 +72,10 @@ export function useChatInputBehavior({
 			}
 
 			window.setTimeout(() => {
-				const textarea = textareaRef.current;
-				if (textarea) {
-					const cursorPos = command.hint
-						? `/${command.name} `.length
-						: newText.length;
-					textarea.selectionStart = cursorPos;
-					textarea.selectionEnd = cursorPos;
-					textarea.focus();
-				}
+				richTextareaRef.current?.focus();
 			}, 0);
 		},
-		[slashCommands, inputValue, onInputChange, textareaRef],
+		[slashCommands, inputValue, onInputChange, richTextareaRef],
 	);
 
 	const handleDropdownKeyPress = useCallback(
@@ -164,7 +149,7 @@ export function useChatInputBehavior({
 				return;
 			}
 
-			if (handleHistoryKeyDown(e, textareaRef.current)) {
+			if (handleHistoryKeyDown(e, null)) {
 				return;
 			}
 
@@ -184,7 +169,6 @@ export function useChatInputBehavior({
 		[
 			handleDropdownKeyPress,
 			handleHistoryKeyDown,
-			textareaRef,
 			sendMessageShortcut,
 			isButtonDisabled,
 			isSending,
@@ -192,23 +176,21 @@ export function useChatInputBehavior({
 		],
 	);
 
-	const handleInputChange = useCallback(
-		(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-			const newValue = e.target.value;
-			const cursorPosition = e.target.selectionStart || 0;
-			logger.log("[DEBUG] Input changed:", newValue, "cursor:", cursorPosition);
+	const handleRichInput = useCallback(
+		(text: string, cursorPos: number) => {
+			logger.log("[DEBUG] Rich input changed:", text, "cursor:", cursorPos);
 
-			onInputChange(newValue);
+			onInputChange(text);
 			if (hintText) {
 				const expectedText = commandText + hintText;
-				if (newValue !== expectedText) {
+				if (text !== expectedText) {
 					setHintText(null);
 					setCommandText("");
 				}
 			}
 
-			void mentions.updateSuggestions(newValue, cursorPosition);
-			slashCommands.updateSuggestions(newValue, cursorPosition);
+			void mentions.updateSuggestions(text, cursorPos);
+			slashCommands.updateSuggestions(text, cursorPos);
 		},
 		[logger, onInputChange, hintText, commandText, mentions, slashCommands],
 	);
@@ -216,7 +198,7 @@ export function useChatInputBehavior({
 	return {
 		hintText,
 		commandText,
-		handleInputChange,
+		handleRichInput,
 		handleKeyDown,
 		handleSelectSlashCommand,
 		selectMention,

@@ -24,18 +24,18 @@ export interface UseInputHistoryReturn {
  * - Continued ArrowUp/ArrowDown navigates through history.
  * - If the user edits a restored message, history navigation resets.
  * - ArrowDown from the most recent entry returns to empty input.
+ *
+ * When textareaEl is null (contenteditable mode), uses currentInputValue
+ * for value checks and skips cursor positioning (handled externally).
  */
 export function useInputHistory(
 	messages: ChatMessage[],
 	onInputChange: (value: string) => void,
+	currentInputValue?: string,
 ): UseInputHistoryReturn {
-	// -1 = no history selected, 0 = most recent user message, 1 = second most recent, ...
 	const historyIndexRef = useRef(-1);
-	// The exact text placed into the input via history navigation.
-	// Used to detect if the user has edited it (which exits history mode).
 	const restoredTextRef = useRef<string | null>(null);
 
-	// Extract user message texts in chronological order
 	const userMessages = useMemo(() => {
 		return messages
 			.filter((m) => m.role === "user")
@@ -53,17 +53,17 @@ export function useInputHistory(
 			e: React.KeyboardEvent,
 			textareaEl: HTMLTextAreaElement | null,
 		): boolean => {
-			if (!textareaEl) return false;
 			if (e.nativeEvent.isComposing) return false;
 			if (userMessages.length === 0) return false;
 
-			// Exit history mode if user edited text or moved cursor
+			const currentValue = textareaEl?.value ?? currentInputValue ?? "";
+
 			if (historyIndexRef.current !== -1) {
 				if (
 					e.key === "ArrowLeft" ||
 					e.key === "ArrowRight" ||
 					(restoredTextRef.current !== null &&
-						textareaEl.value !== restoredTextRef.current)
+						currentValue !== restoredTextRef.current)
 				) {
 					historyIndexRef.current = -1;
 					restoredTextRef.current = null;
@@ -72,8 +72,7 @@ export function useInputHistory(
 			}
 
 			if (e.key === "ArrowUp") {
-				// Allow when input is empty OR already navigating history
-				if (textareaEl.value.trim() !== "" && historyIndexRef.current === -1)
+				if (currentValue.trim() !== "" && historyIndexRef.current === -1)
 					return false;
 
 				e.preventDefault();
@@ -88,10 +87,12 @@ export function useInputHistory(
 				restoredTextRef.current = messageText;
 				onInputChange(messageText);
 
-				window.setTimeout(() => {
-					textareaEl.selectionStart = messageText.length;
-					textareaEl.selectionEnd = messageText.length;
-				}, 0);
+				if (textareaEl) {
+					window.setTimeout(() => {
+						textareaEl.selectionStart = messageText.length;
+						textareaEl.selectionEnd = messageText.length;
+					}, 0);
+				}
 
 				return true;
 			}
@@ -113,10 +114,12 @@ export function useInputHistory(
 					restoredTextRef.current = messageText;
 					onInputChange(messageText);
 
-					window.setTimeout(() => {
-						textareaEl.selectionStart = messageText.length;
-						textareaEl.selectionEnd = messageText.length;
-					}, 0);
+					if (textareaEl) {
+						window.setTimeout(() => {
+							textareaEl.selectionStart = messageText.length;
+							textareaEl.selectionEnd = messageText.length;
+						}, 0);
+					}
 				}
 
 				return true;
@@ -124,7 +127,7 @@ export function useInputHistory(
 
 			return false;
 		},
-		[userMessages, onInputChange],
+		[userMessages, onInputChange, currentInputValue],
 	);
 
 	const resetHistory = useCallback(() => {

@@ -152,6 +152,39 @@ function destroyPicker(picker: HTMLElement): void {
 	picker.remove();
 }
 
+interface ProviderGroup {
+	provider: string;
+	models: CachedModel[];
+}
+
+function groupModelsByProvider(models: CachedModel[]): ProviderGroup[] {
+	const groups = new Map<string, CachedModel[]>();
+
+	for (const model of models) {
+		const slashIdx = model.name.indexOf("/");
+		const provider =
+			slashIdx !== -1 ? model.name.substring(0, slashIdx).trim() : "Other";
+		const list = groups.get(provider) ?? [];
+		list.push(model);
+		groups.set(provider, list);
+	}
+
+	const result: ProviderGroup[] = [];
+	for (const [provider, providerModels] of groups) {
+		if (provider !== "Other") {
+			result.push({ provider, models: providerModels });
+		}
+	}
+	result.sort((a, b) => a.provider.localeCompare(b.provider));
+
+	const other = groups.get("Other");
+	if (other) {
+		result.push({ provider: "Other", models: other });
+	}
+
+	return result;
+}
+
 function togglePicker(
 	wrapper: HTMLElement,
 	plugin: AgentClientPlugin,
@@ -168,38 +201,72 @@ function togglePicker(
 	}
 
 	const picker = wrapper.createDiv({ cls: "obsius-model-picker" });
-
-	const searchEl = picker.createEl("input", {
-		type: "text",
-		placeholder: "Filter models...",
-		cls: "obsius-model-picker-search",
-	});
-
 	const listEl = picker.createDiv({ cls: "obsius-model-picker-list" });
+	const groups = groupModelsByProvider(models);
 
-	const renderList = (query: string) => {
+	const renderProviders = () => {
 		listEl.empty();
-		const lowerQuery = query.toLowerCase();
-		const currentCandidates = plugin.settings.candidateModels?.[agentId] ?? [];
 
-		const filtered = models.filter((m) => {
-			if (query.length === 0) return true;
-			return (
-				m.modelId.toLowerCase().includes(lowerQuery) ||
-				m.name.toLowerCase().includes(lowerQuery) ||
-				(m.description?.toLowerCase().includes(lowerQuery) ?? false)
-			);
-		});
-
-		if (filtered.length === 0) {
-			listEl.createDiv({
-				text: "No matching models.",
-				cls: "obsius-model-picker-empty",
-			});
+		if (groups.length <= 1) {
+			renderModels(models, null);
 			return;
 		}
 
-		for (const model of filtered) {
+		for (const group of groups) {
+			const currentCandidates =
+				plugin.settings.candidateModels?.[agentId] ?? [];
+			const selectedCount = group.models.filter((m) =>
+				currentCandidates.includes(m.modelId),
+			).length;
+
+			const item = listEl.createDiv({
+				cls: "obsius-model-picker-item obsius-model-picker-provider",
+			});
+
+			const iconEl = item.createSpan({
+				cls: "obsius-model-picker-provider-icon",
+			});
+			setIcon(iconEl, "chevron-right");
+
+			const textEl = item.createDiv({
+				cls: "obsius-model-picker-item-text",
+			});
+			textEl.createSpan({
+				text: group.provider,
+				cls: "obsius-model-picker-item-name",
+			});
+			textEl.createSpan({
+				text: `${group.models.length} model${group.models.length !== 1 ? "s" : ""}${selectedCount > 0 ? ` \u00b7 ${selectedCount} selected` : ""}`,
+				cls: "obsius-model-picker-item-desc",
+			});
+
+			item.addEventListener("click", () => {
+				renderModels(group.models, group.provider);
+			});
+		}
+	};
+
+	const renderModels = (
+		modelList: CachedModel[],
+		providerName: string | null,
+	) => {
+		listEl.empty();
+
+		if (providerName !== null && groups.length > 1) {
+			const backItem = listEl.createDiv({
+				cls: "obsius-model-picker-back",
+			});
+			const backIcon = backItem.createSpan({
+				cls: "obsius-model-picker-back-icon",
+			});
+			setIcon(backIcon, "arrow-left");
+			backItem.createSpan({ text: providerName });
+			backItem.addEventListener("click", renderProviders);
+		}
+
+		const currentCandidates = plugin.settings.candidateModels?.[agentId] ?? [];
+
+		for (const model of modelList) {
 			const isSelected = currentCandidates.includes(model.modelId);
 			const item = listEl.createDiv({
 				cls: `obsius-model-picker-item${isSelected ? " is-selected" : ""}`,
@@ -212,11 +279,17 @@ function togglePicker(
 				setIcon(checkEl, "check");
 			}
 
+			const slashIdx = model.name.indexOf("/");
+			const displayName =
+				slashIdx !== -1
+					? model.name.substring(slashIdx + 1).trim()
+					: model.name;
+
 			const textEl = item.createDiv({
 				cls: "obsius-model-picker-item-text",
 			});
 			textEl.createSpan({
-				text: model.name,
+				text: displayName,
 				cls: "obsius-model-picker-item-name",
 			});
 			if (model.description) {
@@ -237,15 +310,11 @@ function togglePicker(
 						[agentId]: next,
 					},
 				});
-				renderList(searchEl.value.trim());
+				renderModels(modelList, providerName);
 				onUpdate();
 			});
 		}
 	};
-
-	searchEl.addEventListener("input", () => {
-		renderList(searchEl.value.trim());
-	});
 
 	const onClickOutside = (e: MouseEvent) => {
 		if (!picker.contains(e.target as Node)) {
@@ -257,8 +326,7 @@ function togglePicker(
 		document.removeEventListener("mousedown", onClickOutside, true);
 	});
 
-	renderList("");
-	searchEl.focus();
+	renderProviders();
 }
 
 // ============================================================================
@@ -270,7 +338,7 @@ function renderModeModelMapping(
 	plugin: AgentClientPlugin,
 	agentId: string,
 	modes: CachedMode[],
-	models: CachedModel[],
+	allModels: CachedModel[],
 ): void {
 	new Setting(containerEl)
 		.setName("Model per mode")
@@ -279,14 +347,23 @@ function renderModeModelMapping(
 		);
 
 	const defaults = plugin.settings.modeModelDefaults?.[agentId] ?? {};
+	const candidates = plugin.settings.candidateModels?.[agentId] ?? [];
+	const dropdownModels =
+		candidates.length > 0
+			? allModels.filter((m) => candidates.includes(m.modelId))
+			: allModels;
+
+	const modeGroup = containerEl.createDiv({
+		cls: "obsius-mode-model-group",
+	});
 
 	for (const mode of modes) {
-		new Setting(containerEl)
+		new Setting(modeGroup)
 			.setName(mode.name)
 			.setDesc(mode.description ?? "")
 			.addDropdown((dropdown) => {
 				dropdown.addOption("", "(auto)");
-				for (const model of models) {
+				for (const model of dropdownModels) {
 					dropdown.addOption(model.modelId, model.name);
 				}
 				dropdown.setValue(defaults[mode.id] ?? "");
