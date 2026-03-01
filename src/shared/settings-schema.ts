@@ -164,26 +164,6 @@ export const createDefaultSettings = (): AgentClientPluginSettings => ({
 	lastModeModels: {},
 });
 
-function migrateV2ToV3(candidate: Record<string, unknown>): void {
-	if (candidate.schemaVersion !== 2) return;
-	const defaults = createDefaultSettings();
-	if (!candidate.opencode) {
-		candidate.opencode = { ...defaults.opencode };
-	}
-	candidate.schemaVersion = 3;
-}
-
-function migrateV3ToV4(candidate: Record<string, unknown>): void {
-	if (candidate.schemaVersion !== 3) return;
-	delete candidate.exportSettings;
-	delete candidate.showFloatingButton;
-	delete candidate.floatingButtonImage;
-	delete candidate.floatingWindowSize;
-	delete candidate.floatingWindowPosition;
-	delete candidate.floatingButtonPosition;
-	candidate.schemaVersion = SETTINGS_SCHEMA_VERSION;
-}
-
 export function parseStoredSettings(raw: unknown): {
 	settings: AgentClientPluginSettings;
 	resetReason?: string;
@@ -196,10 +176,6 @@ export function parseStoredSettings(raw: unknown): {
 	}
 
 	const candidate = raw as Record<string, unknown>;
-
-	// Run migrations before version check
-	migrateV2ToV3(candidate);
-	migrateV3ToV4(candidate);
 
 	if (candidate.schemaVersion !== SETTINGS_SCHEMA_VERSION) {
 		return {
