@@ -76,12 +76,10 @@ export class AgentClientSettingTab extends PluginSettingTab {
 				this.populateAgentDropdown(dropdown);
 				dropdown.setValue(this.plugin.settings.defaultAgentId);
 				dropdown.onChange(async (value) => {
-					const nextSettings = {
-						...this.plugin.settings,
+					await this.plugin.settingsStore.updateSettings({
 						defaultAgentId: value,
-					};
+					});
 					this.plugin.ensureDefaultAgentId();
-					await this.plugin.saveSettingsAndNotify(nextSettings);
 				});
 			});
 	}

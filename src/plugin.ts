@@ -85,7 +85,6 @@ export interface AgentClientPluginSettings {
 		diffCollapseThreshold: number;
 		maxNoteLength: number;
 		maxSelectionLength: number;
-		showEmojis: boolean;
 		fontSize: number | null;
 	};
 	// Locally saved session metadata (for agents without session/list support)
@@ -404,15 +403,6 @@ export default class AgentClientPlugin extends Plugin {
 	async saveSettings() {
 		this.settings.schemaVersion = SETTINGS_SCHEMA_VERSION;
 		await this.saveData(this.settings);
-	}
-
-	async saveSettingsAndNotify(nextSettings: AgentClientPluginSettings) {
-		this.settings = {
-			...nextSettings,
-			schemaVersion: SETTINGS_SCHEMA_VERSION,
-		};
-		await this.saveData(this.settings);
-		this.settingsStore.set(this.settings);
 	}
 
 	/**

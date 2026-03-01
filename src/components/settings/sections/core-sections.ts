@@ -13,6 +13,8 @@ export const renderCoreSections = (
 	plugin: AgentClientPlugin,
 	redisplay: () => void,
 ): void => {
+	const store = plugin.settingsStore;
+
 	let nodeTextRef: { setValue: (v: string) => unknown } | null = null;
 	const nodeSetting = new Setting(containerEl)
 		.setName("Node.js path")
@@ -25,8 +27,7 @@ export const renderCoreSections = (
 				.setPlaceholder("Absolute path to node")
 				.setValue(plugin.settings.nodePath)
 				.onChange(async (value) => {
-					plugin.settings.nodePath = value.trim();
-					await plugin.saveSettings();
+					await store.updateSettings({ nodePath: value.trim() });
 				});
 		});
 	nodeSetting.addExtraButton((button) => {
@@ -39,8 +40,7 @@ export const renderCoreSections = (
 					const resolved = await resolveCommandFromShell("node");
 					if (resolved) {
 						nodeTextRef?.setValue(resolved);
-						plugin.settings.nodePath = resolved;
-						await plugin.saveSettings();
+						await store.updateSettings({ nodePath: resolved });
 						new Notice(`Found: ${resolved}`);
 					} else {
 						new Notice('"node" not found in shell PATH.'); // eslint-disable-line obsidianmd/ui/sentence-case
@@ -62,8 +62,9 @@ export const renderCoreSections = (
 				.addOption("cmd-enter", "Cmd/Ctrl+Enter to send, Enter for newline")
 				.setValue(plugin.settings.sendMessageShortcut)
 				.onChange(async (value) => {
-					plugin.settings.sendMessageShortcut = value as "enter" | "cmd-enter";
-					await plugin.saveSettings();
+					await store.updateSettings({
+						sendMessageShortcut: value as "enter" | "cmd-enter",
+					});
 				}),
 		);
 
@@ -78,6 +79,8 @@ function renderMentionsSection(
 	containerEl: HTMLElement,
 	plugin: AgentClientPlugin,
 ): void {
+	const store = plugin.settingsStore;
+
 	new Setting(containerEl).setName("Mentions").setHeading();
 
 	new Setting(containerEl)
@@ -89,8 +92,7 @@ function renderMentionsSection(
 			toggle
 				.setValue(plugin.settings.autoMentionActiveNote)
 				.onChange(async (value) => {
-					plugin.settings.autoMentionActiveNote = value;
-					await plugin.saveSettings();
+					await store.updateSettings({ autoMentionActiveNote: value });
 				}),
 		);
 
@@ -106,8 +108,12 @@ function renderMentionsSection(
 				.onChange(async (value) => {
 					const num = parseInt(value, 10);
 					if (!isNaN(num) && num >= 1) {
-						plugin.settings.displaySettings.maxNoteLength = num;
-						await plugin.saveSettings();
+						await store.updateSettings({
+							displaySettings: {
+								...plugin.settings.displaySettings,
+								maxNoteLength: num,
+							},
+						});
 					}
 				}),
 		);
@@ -124,8 +130,12 @@ function renderMentionsSection(
 				.onChange(async (value) => {
 					const num = parseInt(value, 10);
 					if (!isNaN(num) && num >= 1) {
-						plugin.settings.displaySettings.maxSelectionLength = num;
-						await plugin.saveSettings();
+						await store.updateSettings({
+							displaySettings: {
+								...plugin.settings.displaySettings,
+								maxSelectionLength: num,
+							},
+						});
 					}
 				}),
 		);
@@ -136,6 +146,8 @@ function renderDisplaySection(
 	plugin: AgentClientPlugin,
 	redisplay: () => void,
 ): void {
+	const store = plugin.settingsStore;
+
 	new Setting(containerEl).setName("Display").setHeading();
 
 	new Setting(containerEl)
@@ -149,8 +161,9 @@ function renderDisplaySection(
 				.addOption("editor-split", "Editor area (split)")
 				.setValue(plugin.settings.chatViewLocation)
 				.onChange(async (value) => {
-					plugin.settings.chatViewLocation = value as ChatViewLocation;
-					await plugin.saveSettings();
+					await store.updateSettings({
+						chatViewLocation: value as ChatViewLocation,
+					});
 				}),
 		);
 
@@ -171,14 +184,12 @@ function renderDisplaySection(
 				if (plugin.settings.displaySettings.fontSize === fontSize) {
 					return;
 				}
-				const nextSettings = {
-					...plugin.settings,
+				await store.updateSettings({
 					displaySettings: {
 						...plugin.settings.displaySettings,
 						fontSize,
 					},
-				};
-				await plugin.saveSettingsAndNotify(nextSettings);
+				});
 			};
 
 			text
@@ -228,28 +239,18 @@ function renderDisplaySection(
 		});
 
 	new Setting(containerEl)
-		.setName("Show emojis")
-		.setDesc(
-			"Display emoji icons in tool calls, thoughts, plans, and terminal blocks.",
-		)
-		.addToggle((toggle) =>
-			toggle
-				.setValue(plugin.settings.displaySettings.showEmojis)
-				.onChange(async (value) => {
-					plugin.settings.displaySettings.showEmojis = value;
-					await plugin.saveSettings();
-				}),
-		);
-
-	new Setting(containerEl)
 		.setName("Auto-collapse long diffs")
 		.setDesc("Automatically collapse diffs that exceed the line threshold.")
 		.addToggle((toggle) =>
 			toggle
 				.setValue(plugin.settings.displaySettings.autoCollapseDiffs)
 				.onChange(async (value) => {
-					plugin.settings.displaySettings.autoCollapseDiffs = value;
-					await plugin.saveSettings();
+					await store.updateSettings({
+						displaySettings: {
+							...plugin.settings.displaySettings,
+							autoCollapseDiffs: value,
+						},
+					});
 					redisplay();
 				}),
 		);
@@ -267,8 +268,12 @@ function renderDisplaySection(
 					.onChange(async (value) => {
 						const num = parseInt(value, 10);
 						if (!isNaN(num) && num > 0) {
-							plugin.settings.displaySettings.diffCollapseThreshold = num;
-							await plugin.saveSettings();
+							await store.updateSettings({
+								displaySettings: {
+									...plugin.settings.displaySettings,
+									diffCollapseThreshold: num,
+								},
+							});
 						}
 					}),
 			);
@@ -289,8 +294,9 @@ function renderPermissionSection(
 			toggle
 				.setValue(plugin.settings.autoAllowPermissions)
 				.onChange(async (value) => {
-					plugin.settings.autoAllowPermissions = value;
-					await plugin.saveSettings();
+					await plugin.settingsStore.updateSettings({
+						autoAllowPermissions: value,
+					});
 				}),
 		);
 }
@@ -304,6 +310,8 @@ function renderWindowsSection(
 		return;
 	}
 
+	const store = plugin.settingsStore;
+
 	// eslint-disable-next-line obsidianmd/ui/sentence-case
 	new Setting(containerEl).setName("Windows Subsystem for Linux").setHeading();
 
@@ -316,8 +324,7 @@ function renderWindowsSection(
 			toggle
 				.setValue(plugin.settings.windowsWslMode)
 				.onChange(async (value) => {
-					plugin.settings.windowsWslMode = value;
-					await plugin.saveSettings();
+					await store.updateSettings({ windowsWslMode: value });
 					redisplay();
 				}),
 		);
@@ -333,8 +340,9 @@ function renderWindowsSection(
 					.setPlaceholder("Leave empty for default")
 					.setValue(plugin.settings.windowsWslDistribution || "")
 					.onChange(async (value) => {
-						plugin.settings.windowsWslDistribution = value.trim() || undefined;
-						await plugin.saveSettings();
+						await store.updateSettings({
+							windowsWslDistribution: value.trim() || undefined,
+						});
 					}),
 			);
 	}
@@ -352,8 +360,7 @@ function renderDeveloperSection(
 		)
 		.addToggle((toggle) =>
 			toggle.setValue(plugin.settings.debugMode).onChange(async (value) => {
-				plugin.settings.debugMode = value;
-				await plugin.saveSettings();
+				await plugin.settingsStore.updateSettings({ debugMode: value });
 			}),
 		);
 }

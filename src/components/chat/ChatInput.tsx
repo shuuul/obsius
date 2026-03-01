@@ -140,7 +140,6 @@ export function ChatInput({
 }: ChatInputProps) {
 	const logger = getLogger();
 	const settings = useSettings(plugin);
-	const showEmojis = plugin.settings.displaySettings.showEmojis;
 
 	// Unofficial Obsidian API: app.vault.getConfig() is not in the public type definitions
 	// but is widely used by the plugin community for accessing editor settings.
@@ -399,7 +398,6 @@ export function ChatInput({
 				<ErrorOverlay
 					errorInfo={errorInfo}
 					onClose={onClearError}
-					showEmojis={showEmojis}
 					view={view}
 				/>
 			)}

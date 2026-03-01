@@ -9,8 +9,6 @@ export interface ErrorOverlayProps {
 	errorInfo: ErrorInfo;
 	/** Callback to close/clear the error */
 	onClose: () => void;
-	/** Whether to show emojis */
-	showEmojis: boolean;
 	/** View instance for event registration */
 	view: IChatViewHost;
 }
@@ -27,7 +25,6 @@ export interface ErrorOverlayProps {
 export function ErrorOverlay({
 	errorInfo,
 	onClose,
-	showEmojis,
 	view,
 }: ErrorOverlayProps) {
 	const overlayRef = useRef<HTMLDivElement>(null);
@@ -77,7 +74,6 @@ export function ErrorOverlay({
 			<p className="agent-client-error-overlay-message">{errorInfo.message}</p>
 			{errorInfo.suggestion && (
 				<p className="agent-client-error-overlay-suggestion">
-					{showEmojis && "💡 "}
 					{errorInfo.suggestion}
 				</p>
 			)}

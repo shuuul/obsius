@@ -59,28 +59,14 @@ export function MessageContentRenderer({
 			);
 
 		case "plan": {
-			const showEmojis = plugin.settings.displaySettings.showEmojis;
 			return (
 				<div className="agent-client-message-plan">
-					<div className="agent-client-message-plan-title">
-						{showEmojis && "📋 "}Plan
-					</div>
+					<div className="agent-client-message-plan-title">Plan</div>
 					{content.entries.map((entry, idx) => (
 						<div
 							key={idx}
 							className={`agent-client-message-plan-entry agent-client-plan-status-${entry.status}`}
 						>
-							{showEmojis && (
-								<span
-									className={`agent-client-message-plan-entry-icon agent-client-status-${entry.status}`}
-								>
-									{entry.status === "completed"
-										? "✓"
-										: entry.status === "in_progress"
-											? "⏳"
-											: "⭕"}
-								</span>
-							)}{" "}
 							{entry.content}
 						</div>
 					))}

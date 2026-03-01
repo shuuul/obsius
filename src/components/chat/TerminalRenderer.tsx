@@ -3,6 +3,7 @@ const { useState, useRef, useEffect } = React;
 import type { IAcpClient } from "../../adapters/acp/acp.adapter";
 import { getLogger } from "../../shared/logger";
 import type AgentClientPlugin from "../../plugin";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 interface TerminalRendererProps {
 	terminalId: string;
@@ -62,7 +63,6 @@ export function TerminalRenderer({
 					`[TerminalRenderer] Polling error for terminal ${terminalId}: ${errorMessage}`,
 				);
 
-				// If terminal not found and no exit status was captured, it was likely cancelled
 				if (errorMessage.includes("not found") && !exitStatus) {
 					setIsCancelled(true);
 				}
@@ -75,10 +75,8 @@ export function TerminalRenderer({
 			}
 		};
 
-		// Start polling immediately
 		void pollOutput();
 
-		// Set up polling interval with shorter interval to catch fast commands
 		intervalRef.current = window.setInterval(() => {
 			void pollOutput();
 		}, 100);
@@ -89,9 +87,8 @@ export function TerminalRenderer({
 				intervalRef.current = null;
 			}
 		};
-	}, [terminalId, acpClient, logger]); // Include acpClient and logger in dependencies
+	}, [terminalId, acpClient, logger]);
 
-	// Separate effect to stop polling when no longer running
 	useEffect(() => {
 		if (!isRunning && intervalRef.current) {
 			window.clearInterval(intervalRef.current);
@@ -99,39 +96,48 @@ export function TerminalRenderer({
 		}
 	}, [isRunning]);
 
-	const showEmojis = plugin.settings.displaySettings.showEmojis;
+	const statusLabel = isRunning
+		? "running"
+		: isCancelled
+			? "cancelled"
+			: "finished";
+	const statusClass = isRunning
+		? "ac-status--running"
+		: isCancelled
+			? "ac-status--error"
+			: "ac-status--completed";
+
+	const header = (
+		<>
+			<span className="ac-row__title">Terminal {terminalId.slice(0, 8)}</span>
+			{exitStatus?.exitCode != null && (
+				<span className="ac-row__summary">exit {exitStatus.exitCode}</span>
+			)}
+			<span className={`ac-status ${statusClass}`}>{statusLabel}</span>
+		</>
+	);
 
 	return (
-		<div className="agent-client-terminal-renderer">
-			<div className="agent-client-terminal-renderer-header">
-				{showEmojis && "🖥️ "}Terminal {terminalId.slice(0, 8)}
-				{isRunning ? (
-					<span className="agent-client-terminal-status agent-client-running">
-						● RUNNING
-					</span>
-				) : isCancelled ? (
-					<span className="agent-client-terminal-status agent-client-cancelled">
-						● CANCELLED
-					</span>
-				) : (
-					<span className="agent-client-terminal-status agent-client-finished">
-						● FINISHED
-					</span>
-				)}
+		<CollapsibleSection
+			className="ac-terminal"
+			defaultExpanded={false}
+			header={header}
+		>
+			<div className="ac-tree__item">
+				<pre className="ac-terminal__output">
+					{output || (isRunning ? "Waiting for output..." : "No output")}
+				</pre>
 			</div>
-
-			<div className="agent-client-terminal-renderer-output">
-				{output || (isRunning ? "Waiting for output..." : "No output")}
-			</div>
-
 			{exitStatus && (
-				<div
-					className={`agent-client-terminal-renderer-exit ${exitStatus.exitCode === 0 ? "agent-client-success" : "agent-client-error"}`}
-				>
-					Exit Code: {exitStatus.exitCode}
-					{exitStatus.signal && ` | Signal: ${exitStatus.signal}`}
+				<div className="ac-tree__item">
+					<span
+						className={`ac-terminal__exit ${exitStatus.exitCode === 0 ? "ac-terminal__exit--ok" : "ac-terminal__exit--err"}`}
+					>
+						Exit Code: {exitStatus.exitCode}
+						{exitStatus.signal && ` | Signal: ${exitStatus.signal}`}
+					</span>
 				</div>
 			)}
-		</div>
+		</CollapsibleSection>
 	);
 }

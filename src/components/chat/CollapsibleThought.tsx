@@ -1,7 +1,7 @@
 import * as React from "react";
-const { useState } = React;
 import type AgentClientPlugin from "../../plugin";
 import { MarkdownTextRenderer } from "./MarkdownTextRenderer";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 interface CollapsibleThoughtProps {
 	text: string;
@@ -9,25 +9,15 @@ interface CollapsibleThoughtProps {
 }
 
 export function CollapsibleThought({ text, plugin }: CollapsibleThoughtProps) {
-	const [isExpanded, setIsExpanded] = useState(false);
-	const showEmojis = plugin.settings.displaySettings.showEmojis;
-
 	return (
-		<div
-			className="agent-client-collapsible-thought"
-			onClick={() => setIsExpanded(!isExpanded)}
+		<CollapsibleSection
+			className="ac-thought"
+			defaultExpanded={false}
+			header={<span className="ac-row__title ac-thought__label">Thinking</span>}
 		>
-			<div className="agent-client-collapsible-thought-header">
-				{showEmojis && "💡"}Thinking
-				<span className="agent-client-collapsible-thought-icon">
-					{isExpanded ? "▼" : "▶"}
-				</span>
+			<div className="ac-tree__item">
+				<MarkdownTextRenderer text={text} plugin={plugin} />
 			</div>
-			{isExpanded && (
-				<div className="agent-client-collapsible-thought-content">
-					<MarkdownTextRenderer text={text} plugin={plugin} />
-				</div>
-			)}
-		</div>
+		</CollapsibleSection>
 	);
 }

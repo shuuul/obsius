@@ -25,7 +25,6 @@ export function PermissionRequestSection({
 	onOptionSelected,
 }: PermissionRequestSectionProps) {
 	const logger = getLogger();
-	const showEmojis = plugin.settings.displaySettings.showEmojis;
 
 	const isSelected = permissionRequest.selectedOptionId !== undefined;
 	const isCancelled = permissionRequest.isCancelled === true;
@@ -68,12 +67,12 @@ export function PermissionRequestSection({
 			)}
 			{isSelected && selectedOption && (
 				<div className="agent-client-message-permission-request-result agent-client-selected">
-					{showEmojis && "✓ "}Selected: {selectedOption.name}
+					Selected: {selectedOption.name}
 				</div>
 			)}
 			{isCancelled && (
 				<div className="agent-client-message-permission-request-result agent-client-cancelled">
-					{showEmojis && "⚠ "}Cancelled: Permission request was cancelled
+					Cancelled: Permission request was cancelled
 				</div>
 			)}
 		</div>

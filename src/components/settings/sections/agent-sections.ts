@@ -142,6 +142,7 @@ function renderGeminiSettings(
 	plugin: AgentClientPlugin,
 ): void {
 	const gemini = plugin.settings.gemini;
+	const store = plugin.settingsStore;
 
 	new Setting(sectionEl)
 		.setName(gemini.displayName || "Gemini CLI")
@@ -157,8 +158,9 @@ function renderGeminiSettings(
 				.setPlaceholder("Enter your Gemini API key")
 				.setValue(gemini.apiKey)
 				.onChange(async (value) => {
-					plugin.settings.gemini.apiKey = value.trim();
-					await plugin.saveSettings();
+					await store.updateSettings({
+						gemini: { ...plugin.settings.gemini, apiKey: value.trim() },
+					});
 				});
 			text.inputEl.type = "password";
 		});
@@ -167,8 +169,9 @@ function renderGeminiSettings(
 		agentId: gemini.id,
 		getValue: () => plugin.settings.gemini.command,
 		setValue: async (value) => {
-			plugin.settings.gemini.command = value;
-			await plugin.saveSettings();
+			await store.updateSettings({
+				gemini: { ...plugin.settings.gemini, command: value },
+			});
 		},
 	});
 
@@ -182,8 +185,9 @@ function renderGeminiSettings(
 				.setPlaceholder("")
 				.setValue(formatArgs(gemini.args))
 				.onChange(async (value) => {
-					plugin.settings.gemini.args = parseArgs(value);
-					await plugin.saveSettings();
+					await store.updateSettings({
+						gemini: { ...plugin.settings.gemini, args: parseArgs(value) },
+					});
 				});
 			text.inputEl.rows = 3;
 		});
@@ -198,8 +202,9 @@ function renderGeminiSettings(
 				.setPlaceholder("GOOGLE_CLOUD_PROJECT=...") // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(formatEnv(gemini.env))
 				.onChange(async (value) => {
-					plugin.settings.gemini.env = parseEnv(value);
-					await plugin.saveSettings();
+					await store.updateSettings({
+						gemini: { ...plugin.settings.gemini, env: parseEnv(value) },
+					});
 				});
 			text.inputEl.rows = 3;
 		});
@@ -212,6 +217,7 @@ function renderClaudeSettings(
 	plugin: AgentClientPlugin,
 ): void {
 	const claude = plugin.settings.claude;
+	const store = plugin.settingsStore;
 
 	new Setting(sectionEl)
 		.setName(claude.displayName || "Claude Code (ACP)")
@@ -227,8 +233,9 @@ function renderClaudeSettings(
 				.setPlaceholder("Enter your Anthropic API key")
 				.setValue(claude.apiKey)
 				.onChange(async (value) => {
-					plugin.settings.claude.apiKey = value.trim();
-					await plugin.saveSettings();
+					await store.updateSettings({
+						claude: { ...plugin.settings.claude, apiKey: value.trim() },
+					});
 				});
 			text.inputEl.type = "password";
 		});
@@ -237,8 +244,9 @@ function renderClaudeSettings(
 		agentId: claude.id,
 		getValue: () => plugin.settings.claude.command,
 		setValue: async (value) => {
-			plugin.settings.claude.command = value;
-			await plugin.saveSettings();
+			await store.updateSettings({
+				claude: { ...plugin.settings.claude, command: value },
+			});
 		},
 	});
 
@@ -252,8 +260,9 @@ function renderClaudeSettings(
 				.setPlaceholder("")
 				.setValue(formatArgs(claude.args))
 				.onChange(async (value) => {
-					plugin.settings.claude.args = parseArgs(value);
-					await plugin.saveSettings();
+					await store.updateSettings({
+						claude: { ...plugin.settings.claude, args: parseArgs(value) },
+					});
 				});
 			text.inputEl.rows = 3;
 		});
@@ -268,8 +277,9 @@ function renderClaudeSettings(
 				.setPlaceholder("")
 				.setValue(formatEnv(claude.env))
 				.onChange(async (value) => {
-					plugin.settings.claude.env = parseEnv(value);
-					await plugin.saveSettings();
+					await store.updateSettings({
+						claude: { ...plugin.settings.claude, env: parseEnv(value) },
+					});
 				});
 			text.inputEl.rows = 3;
 		});
@@ -282,6 +292,7 @@ function renderOpenCodeSettings(
 	plugin: AgentClientPlugin,
 ): void {
 	const opencode = plugin.settings.opencode;
+	const store = plugin.settingsStore;
 
 	new Setting(sectionEl)
 		.setName(opencode.displayName || "OpenCode")
@@ -291,8 +302,9 @@ function renderOpenCodeSettings(
 		agentId: opencode.id,
 		getValue: () => plugin.settings.opencode.command,
 		setValue: async (value) => {
-			plugin.settings.opencode.command = value;
-			await plugin.saveSettings();
+			await store.updateSettings({
+				opencode: { ...plugin.settings.opencode, command: value },
+			});
 		},
 	});
 
@@ -306,8 +318,12 @@ function renderOpenCodeSettings(
 				.setPlaceholder("")
 				.setValue(formatArgs(opencode.args))
 				.onChange(async (value) => {
-					plugin.settings.opencode.args = parseArgs(value);
-					await plugin.saveSettings();
+					await store.updateSettings({
+						opencode: {
+							...plugin.settings.opencode,
+							args: parseArgs(value),
+						},
+					});
 				});
 			text.inputEl.rows = 3;
 		});
@@ -322,8 +338,12 @@ function renderOpenCodeSettings(
 				.setPlaceholder("")
 				.setValue(formatEnv(opencode.env))
 				.onChange(async (value) => {
-					plugin.settings.opencode.env = parseEnv(value);
-					await plugin.saveSettings();
+					await store.updateSettings({
+						opencode: {
+							...plugin.settings.opencode,
+							env: parseEnv(value),
+						},
+					});
 				});
 			text.inputEl.rows = 3;
 		});
@@ -336,6 +356,7 @@ function renderCodexSettings(
 	plugin: AgentClientPlugin,
 ): void {
 	const codex = plugin.settings.codex;
+	const store = plugin.settingsStore;
 
 	new Setting(sectionEl).setName(codex.displayName || "Codex").setHeading();
 
@@ -349,8 +370,9 @@ function renderCodexSettings(
 				.setPlaceholder("Enter your OpenAI API key")
 				.setValue(codex.apiKey)
 				.onChange(async (value) => {
-					plugin.settings.codex.apiKey = value.trim();
-					await plugin.saveSettings();
+					await store.updateSettings({
+						codex: { ...plugin.settings.codex, apiKey: value.trim() },
+					});
 				});
 			text.inputEl.type = "password";
 		});
@@ -359,8 +381,9 @@ function renderCodexSettings(
 		agentId: codex.id,
 		getValue: () => plugin.settings.codex.command,
 		setValue: async (value) => {
-			plugin.settings.codex.command = value;
-			await plugin.saveSettings();
+			await store.updateSettings({
+				codex: { ...plugin.settings.codex, command: value },
+			});
 		},
 	});
 
@@ -374,8 +397,9 @@ function renderCodexSettings(
 				.setPlaceholder("")
 				.setValue(formatArgs(codex.args))
 				.onChange(async (value) => {
-					plugin.settings.codex.args = parseArgs(value);
-					await plugin.saveSettings();
+					await store.updateSettings({
+						codex: { ...plugin.settings.codex, args: parseArgs(value) },
+					});
 				});
 			text.inputEl.rows = 3;
 		});
@@ -390,8 +414,9 @@ function renderCodexSettings(
 				.setPlaceholder("")
 				.setValue(formatEnv(codex.env))
 				.onChange(async (value) => {
-					plugin.settings.codex.env = parseEnv(value);
-					await plugin.saveSettings();
+					await store.updateSettings({
+						codex: { ...plugin.settings.codex, env: parseEnv(value) },
+					});
 				});
 			text.inputEl.rows = 3;
 		});
@@ -424,15 +449,19 @@ export const renderCustomAgents = (
 			.onClick(async () => {
 				const newId = generateCustomAgentId(plugin);
 				const newDisplayName = generateCustomAgentDisplayName(plugin);
-				plugin.settings.customAgents.push({
-					id: newId,
-					displayName: newDisplayName,
-					command: "",
-					args: [],
-					env: [],
+				await plugin.settingsStore.updateSettings({
+					customAgents: [
+						...plugin.settings.customAgents,
+						{
+							id: newId,
+							displayName: newDisplayName,
+							command: "",
+							args: [],
+							env: [],
+						},
+					],
 				});
 				plugin.ensureDefaultAgentId();
-				await plugin.saveSettings();
 				options.onRedisplay();
 			});
 	});
@@ -491,6 +520,17 @@ function renderPathSettingWithDetect(
 	}
 }
 
+function updateCustomAgent(
+	plugin: AgentClientPlugin,
+	index: number,
+	patch: Partial<CustomAgentSettings>,
+): Promise<void> {
+	const agents = plugin.settings.customAgents.map((a, i) =>
+		i === index ? { ...a, ...patch } : a,
+	);
+	return plugin.settingsStore.updateSettings({ customAgents: agents });
+}
+
 function renderCustomAgent(
 	containerEl: HTMLElement,
 	plugin: AgentClientPlugin,
@@ -498,6 +538,7 @@ function renderCustomAgent(
 	index: number,
 	options: { onRefreshDropdown: () => void; onRedisplay: () => void },
 ): void {
+	const store = plugin.settingsStore;
 	const blockEl = containerEl.createDiv({
 		cls: "agent-client-custom-agent",
 	});
@@ -517,12 +558,19 @@ function renderCustomAgent(
 						nextId = generateCustomAgentId(plugin);
 						text.setValue(nextId);
 					}
-					plugin.settings.customAgents[index].id = nextId;
+					const updates: Partial<CustomAgentSettings> = { id: nextId };
+					const defaultUpdate: Partial<Record<string, unknown>> = {};
 					if (plugin.settings.defaultAgentId === previousId) {
-						plugin.settings.defaultAgentId = nextId;
+						defaultUpdate.defaultAgentId = nextId;
 					}
+					const agents = plugin.settings.customAgents.map((a, i) =>
+						i === index ? { ...a, ...updates } : a,
+					);
+					await store.updateSettings({
+						customAgents: agents,
+						...defaultUpdate,
+					});
 					plugin.ensureDefaultAgentId();
-					await plugin.saveSettings();
 					options.onRefreshDropdown();
 				});
 		});
@@ -532,9 +580,11 @@ function renderCustomAgent(
 			.setIcon("trash")
 			.setTooltip("Delete this agent")
 			.onClick(async () => {
-				plugin.settings.customAgents.splice(index, 1);
+				const agents = plugin.settings.customAgents.filter(
+					(_, i) => i !== index,
+				);
+				await store.updateSettings({ customAgents: agents });
 				plugin.ensureDefaultAgentId();
-				await plugin.saveSettings();
 				options.onRedisplay();
 			});
 	});
@@ -548,11 +598,11 @@ function renderCustomAgent(
 				.setValue(agent.displayName || agent.id)
 				.onChange(async (value) => {
 					const trimmed = value.trim();
-					plugin.settings.customAgents[index].displayName =
+					const displayName =
 						trimmed.length > 0
 							? trimmed
 							: plugin.settings.customAgents[index].id;
-					await plugin.saveSettings();
+					await updateCustomAgent(plugin, index, { displayName });
 					options.onRefreshDropdown();
 				});
 		});
@@ -565,8 +615,9 @@ function renderCustomAgent(
 				.setPlaceholder("Command name or path")
 				.setValue(agent.command)
 				.onChange(async (value) => {
-					plugin.settings.customAgents[index].command = value.trim();
-					await plugin.saveSettings();
+					await updateCustomAgent(plugin, index, {
+						command: value.trim(),
+					});
 				});
 		});
 
@@ -580,8 +631,9 @@ function renderCustomAgent(
 				.setPlaceholder("--flag\n--another=value")
 				.setValue(formatArgs(agent.args))
 				.onChange(async (value) => {
-					plugin.settings.customAgents[index].args = parseArgs(value);
-					await plugin.saveSettings();
+					await updateCustomAgent(plugin, index, {
+						args: parseArgs(value),
+					});
 				});
 			text.inputEl.rows = 3;
 		});
@@ -594,8 +646,7 @@ function renderCustomAgent(
 				.setPlaceholder("TOKEN=...") // eslint-disable-line obsidianmd/ui/sentence-case
 				.setValue(formatEnv(agent.env))
 				.onChange(async (value) => {
-					plugin.settings.customAgents[index].env = parseEnv(value);
-					await plugin.saveSettings();
+					await updateCustomAgent(plugin, index, { env: parseEnv(value) });
 				});
 			text.inputEl.rows = 3;
 		});

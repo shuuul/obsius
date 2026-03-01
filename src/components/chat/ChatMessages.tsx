@@ -126,21 +126,13 @@ export function ChatMessages({
 							onApprovePermission={onApprovePermission}
 						/>
 					))}
-					<div
-						className={`agent-client-loading-indicator ${!isSending ? "agent-client-hidden" : ""}`}
-					>
-						<div className="agent-client-loading-dots">
-							<div className="agent-client-loading-dot"></div>
-							<div className="agent-client-loading-dot"></div>
-							<div className="agent-client-loading-dot"></div>
-							<div className="agent-client-loading-dot"></div>
-							<div className="agent-client-loading-dot"></div>
-							<div className="agent-client-loading-dot"></div>
-							<div className="agent-client-loading-dot"></div>
-							<div className="agent-client-loading-dot"></div>
-							<div className="agent-client-loading-dot"></div>
+					{isSending && (
+						<div className="ac-loading">
+							<span className="ac-loading__dot" />
+							<span className="ac-loading__dot" />
+							<span className="ac-loading__dot" />
 						</div>
-					</div>
+					)}
 					{!isAtBottom && (
 						<button
 							className="agent-client-scroll-to-bottom"

@@ -124,20 +124,6 @@ export class SettingsStore implements ISettingsAccess {
 		return () => this.listeners.delete(listener);
 	};
 
-	/**
-	 * Set entire settings object (legacy method).
-	 *
-	 * For backward compatibility with existing code.
-	 * Delegates to updateSettings() for async persistence.
-	 *
-	 * @param next - New settings object
-	 */
-	set(next: AgentClientPluginSettings): void {
-		// Delegate to async updateSettings
-		// Note: Fire-and-forget - callers don't expect this to be async
-		void this.updateSettings(next);
-	}
-
 	// ============================================================
 	// Session Storage Methods
 	// ============================================================

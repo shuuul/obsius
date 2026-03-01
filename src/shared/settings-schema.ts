@@ -41,7 +41,6 @@ const displaySettingsSchema = z.object({
 	diffCollapseThreshold: z.number().int().positive(),
 	maxNoteLength: z.number().int().min(1),
 	maxSelectionLength: z.number().int().min(1),
-	showEmojis: z.boolean(),
 	fontSize: z.number().int().min(10).max(30).nullable(),
 });
 
@@ -154,7 +153,6 @@ export const createDefaultSettings = (): AgentClientPluginSettings => ({
 		diffCollapseThreshold: 10,
 		maxNoteLength: 10000,
 		maxSelectionLength: 10000,
-		showEmojis: true,
 		fontSize: null,
 	},
 	savedSessions: [],
