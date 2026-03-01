@@ -47,7 +47,5 @@ export function MarkdownTextRenderer({
 		};
 	}, [text, plugin]);
 
-	return (
-		<div ref={containerRef} className="obsius-markdown-text-renderer" />
-	);
+	return <div ref={containerRef} className="obsius-markdown-text-renderer" />;
 }

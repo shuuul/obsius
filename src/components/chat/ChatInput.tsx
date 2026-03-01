@@ -252,9 +252,7 @@ export function ChatInput({
 				const hasContent =
 					inputValue.trim() !== "" || attachedImages.length > 0;
 				svg.classList.add(
-					hasContent
-						? "obsius-icon-active"
-						: "obsius-icon-inactive",
+					hasContent ? "obsius-icon-active" : "obsius-icon-inactive",
 				);
 			}
 		},

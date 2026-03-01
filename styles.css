@@ -181,6 +181,15 @@ If your plugin does not need CSS, delete this file.
 	display: none;
 }
 
+.ac-row__summary--link {
+	cursor: pointer;
+	color: var(--text-accent);
+}
+
+.ac-row__summary--link:hover {
+	text-decoration: underline;
+}
+
 /* Tool icon in header */
 .ac-tool-icon {
 	display: flex;
@@ -424,9 +433,7 @@ If your plugin does not need CSS, delete this file.
 	cursor: not-allowed !important;
 }
 
-.obsius-permission-option.obsius-disabled:not(
-		.obsius-selected
-	) {
+.obsius-permission-option.obsius-disabled:not(.obsius-selected) {
 	opacity: 0.5;
 }
 
@@ -456,11 +463,11 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Normal option button hover (no kind specified) */
-.obsius-permission-option:not(
-		.obsius-permission-kind-allow_always
-	):not(.obsius-permission-kind-reject_once):not(
-		.obsius-permission-kind-allow_once
-	):not(.obsius-disabled):not(.obsius-selected):hover {
+.obsius-permission-option:not(.obsius-permission-kind-allow_always):not(
+		.obsius-permission-kind-reject_once
+	):not(.obsius-permission-kind-allow_once):not(.obsius-disabled):not(
+		.obsius-selected
+	):hover {
 	background-color: var(--background-modifier-hover) !important;
 }
 
@@ -1257,11 +1264,39 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-diff-line-info {
+	display: flex;
+	align-items: center;
+	gap: 6px;
 	padding: 4px 12px;
 	background-color: var(--background-secondary);
 	color: var(--text-muted);
-	font-size: 11px;
+	font-family: var(--font-monospace);
+	font-size: 12px;
+}
+
+.obsius-diff-file-name {
+	font-style: normal;
+	font-weight: 500;
+	color: var(--text-normal);
+}
+
+.obsius-diff-file-name--link {
+	cursor: pointer;
+	color: var(--text-accent);
+}
+
+.obsius-diff-file-name--link:hover {
+	text-decoration: underline;
+}
+
+.obsius-diff-new-badge {
+	font-size: 10px;
 	font-style: italic;
+	color: var(--color-green);
+	padding: 0 4px;
+	border: 1px solid var(--color-green);
+	border-radius: 3px;
+	line-height: 1.4;
 }
 
 .obsius-diff-line {
@@ -1280,6 +1315,15 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-muted);
 	user-select: none;
 	font-size: 11px;
+}
+
+.obsius-diff-line-number--clickable {
+	cursor: pointer;
+}
+
+.obsius-diff-line-number--clickable:hover {
+	color: var(--text-accent);
+	text-decoration: underline;
 }
 
 .obsius-diff-line-number-old {

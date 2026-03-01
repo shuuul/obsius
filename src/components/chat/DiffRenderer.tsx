@@ -1,7 +1,9 @@
 import * as React from "react";
-const { useState, useMemo } = React;
+const { useState, useMemo, useCallback } = React;
 import * as Diff from "diff";
+import { FileSystemAdapter } from "obsidian";
 import type AgentClientPlugin from "../../plugin";
+import { toRelativePath } from "../../shared/path-utils";
 
 interface DiffRendererProps {
 	diff: {
@@ -15,14 +17,6 @@ interface DiffRendererProps {
 	collapseThreshold?: number;
 }
 
-/**
- * Represents a single line in a diff view
- * @property type - The type of change: added, removed, or unchanged context
- * @property oldLineNumber - Line number in the old file (undefined for added lines)
- * @property newLineNumber - Line number in the new file (undefined for removed lines)
- * @property content - The text content of the line
- * @property wordDiff - Optional word-level diff for lines that were modified (adjacent removed+added pairs)
- */
 interface DiffLine {
 	type: "added" | "removed" | "context";
 	oldLineNumber?: number;
@@ -35,6 +29,12 @@ function isNewFile(diff: DiffRendererProps["diff"]): boolean {
 	return (
 		diff.oldText === null || diff.oldText === undefined || diff.oldText === ""
 	);
+}
+
+function fileNameOnly(filePath: string): string {
+	if (!filePath) return "";
+	const normalized = filePath.replace(/\\/g, "/");
+	return normalized.split("/").pop() ?? normalized;
 }
 
 function mapDiffParts(
@@ -86,9 +86,65 @@ const CONTEXT_LINES = 3;
 
 export function DiffRenderer({
 	diff,
+	plugin,
 	autoCollapse = false,
 	collapseThreshold = 10,
 }: DiffRendererProps) {
+	const vaultPath = useMemo(() => {
+		const adapter = plugin.app.vault.adapter;
+		if (adapter instanceof FileSystemAdapter) {
+			return adapter.getBasePath();
+		}
+		return "";
+	}, [plugin]);
+
+	const relativePath = useMemo(
+		() => toRelativePath(diff.path, vaultPath),
+		[diff.path, vaultPath],
+	);
+
+	const fileName = useMemo(() => fileNameOnly(diff.path), [diff.path]);
+
+	const isVaultFile = diff.path !== relativePath || !diff.path.startsWith("/");
+
+	const handleFileClick = useCallback(() => {
+		if (isVaultFile) {
+			void plugin.app.workspace.openLinkText(relativePath, "", "tab");
+		}
+	}, [plugin, relativePath, isVaultFile]);
+
+	const handleLineClick = useCallback(
+		(lineNumber: number) => {
+			if (!isVaultFile) return;
+			const leaf = plugin.app.workspace.getLeaf("tab");
+			void leaf
+				.openFile(plugin.app.vault.getAbstractFileByPath(relativePath) as never)
+				.then(() => {
+					const view = leaf.view;
+					if (view && "editor" in view) {
+						const editor = (
+							view as {
+								editor: {
+									setCursor: (pos: { line: number; ch: number }) => void;
+									scrollIntoView: (
+										range: {
+											from: { line: number; ch: number };
+											to: { line: number; ch: number };
+										},
+										center: boolean,
+									) => void;
+								};
+							}
+						).editor;
+						const pos = { line: lineNumber - 1, ch: 0 };
+						editor.setCursor(pos);
+						editor.scrollIntoView({ from: pos, to: pos }, true);
+					}
+				});
+		},
+		[plugin, relativePath, isVaultFile],
+	);
+
 	const diffLines = useMemo(() => {
 		if (isNewFile(diff)) {
 			const lines = diff.newText.split("\n");
@@ -101,7 +157,6 @@ export function DiffRenderer({
 			);
 		}
 
-		// At this point, oldText is guaranteed to be a non-empty string (checked by isNewFile)
 		const oldText = diff.oldText || "";
 		const patch = Diff.structuredPatch(
 			"old",
@@ -195,12 +250,29 @@ export function DiffRenderer({
 			lineClass += " obsius-diff-line-context";
 		}
 
+		const targetLine = line.newLineNumber ?? line.oldLineNumber;
+		const isClickable = isVaultFile && targetLine != null;
+
 		return (
 			<div key={idx} className={lineClass}>
-				<span className="obsius-diff-line-number obsius-diff-line-number-old">
+				<span
+					className={`obsius-diff-line-number obsius-diff-line-number-old ${isClickable ? "obsius-diff-line-number--clickable" : ""}`}
+					onClick={
+						isClickable && line.oldLineNumber
+							? () => handleLineClick(line.oldLineNumber!)
+							: undefined
+					}
+				>
 					{line.oldLineNumber ?? ""}
 				</span>
-				<span className="obsius-diff-line-number obsius-diff-line-number-new">
+				<span
+					className={`obsius-diff-line-number obsius-diff-line-number-new ${isClickable ? "obsius-diff-line-number--clickable" : ""}`}
+					onClick={
+						isClickable && line.newLineNumber
+							? () => handleLineClick(line.newLineNumber!)
+							: undefined
+					}
+				>
 					{line.newLineNumber ?? ""}
 				</span>
 				<span className="obsius-diff-line-marker">{marker}</span>
@@ -222,9 +294,15 @@ export function DiffRenderer({
 
 	return (
 		<div className="obsius-tool-call-diff">
-			{isNewFile(diff) ? (
-				<div className="obsius-diff-line-info">New file</div>
-			) : null}
+			<div className="obsius-diff-line-info">
+				<span
+					className={`obsius-diff-file-name ${isVaultFile ? "obsius-diff-file-name--link" : ""}`}
+					onClick={isVaultFile ? handleFileClick : undefined}
+				>
+					{fileName || relativePath}
+				</span>
+				{isNewFile(diff) && <span className="obsius-diff-new-badge">new</span>}
+			</div>
 			<div className="obsius-tool-call-diff-content">
 				{visibleLines.map((line, idx) => renderLine(line, idx))}
 			</div>

@@ -91,10 +91,7 @@ export const openChatWithAgent = async (
 	agentId: string,
 ): Promise<void> => {
 	await host.activateView();
-	host.app.workspace.trigger(
-		"obsius:new-chat-requested" as "quit",
-		agentId,
-	);
+	host.app.workspace.trigger("obsius:new-chat-requested" as "quit", agentId);
 };
 
 export const registerAgentCommands = (host: AgentOpsHost): void => {

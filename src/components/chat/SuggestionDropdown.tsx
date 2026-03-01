@@ -111,12 +111,8 @@ export function SuggestionDropdown({
 						// Could update selected index on hover
 					}}
 				>
-					<div className="obsius-mention-dropdown-item-name">
-						{note.name}
-					</div>
-					<div className="obsius-mention-dropdown-item-path">
-						{note.path}
-					</div>
+					<div className="obsius-mention-dropdown-item-name">{note.name}</div>
+					<div className="obsius-mention-dropdown-item-path">{note.path}</div>
 				</div>
 			);
 		} else {

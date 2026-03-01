@@ -95,18 +95,60 @@ export function ToolCallRenderer({
 	const diffStats = useMemo(() => countDiffStats(toolContent), [toolContent]);
 
 	const handlePathClick = useCallback(
-		(path: string) => {
+		(path: string, e?: React.MouseEvent) => {
+			if (e) e.stopPropagation();
 			const relativePath = toRelativePath(path, vaultPath);
 			void plugin.app.workspace.openLinkText(relativePath, "", "tab");
 		},
 		[plugin, vaultPath],
 	);
 
+	const summaryIsFile = useMemo(() => {
+		if (!summary) return false;
+		if (kind === "execute" || kind === "think" || kind === "fetch")
+			return false;
+		if (rawInput) {
+			const filePath =
+				(rawInput.file_path as string) ||
+				(rawInput.path as string) ||
+				(rawInput.filePath as string) ||
+				"";
+			if (filePath) return true;
+		}
+		if (locations && locations.length > 0) return true;
+		return false;
+	}, [summary, kind, rawInput, locations]);
+
+	const summaryClickPath = useMemo(() => {
+		if (!summaryIsFile) return "";
+		if (rawInput) {
+			const filePath =
+				(rawInput.file_path as string) ||
+				(rawInput.path as string) ||
+				(rawInput.filePath as string) ||
+				"";
+			if (filePath) return filePath;
+		}
+		if (locations && locations.length > 0) return locations[0].path;
+		return "";
+	}, [summaryIsFile, rawInput, locations]);
+
 	const header = (
 		<>
 			<ObsidianIcon name={iconName} className="ac-tool-icon" />
 			<span className="ac-row__title">{displayName}</span>
-			{summary && <span className="ac-row__summary">{summary}</span>}
+			{summary && (
+				<span
+					className={`ac-row__summary ${summaryIsFile ? "ac-row__summary--link" : ""}`}
+					onClick={
+						summaryIsFile && summaryClickPath
+							? (e) => handlePathClick(summaryClickPath, e)
+							: undefined
+					}
+				>
+					{summary}
+				</span>
+			)}
 			{diffStats && (
 				<span className="ac-tool-diff-stats">
 					<span className="ac-tool-diff-added">+{diffStats.added}</span>
