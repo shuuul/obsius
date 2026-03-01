@@ -1,24 +1,25 @@
 # Hooks Layer Guide
 
-Central coordinator pattern: `useChatController` composes 8 specialized hooks + creates adapters via `useMemo`. View-level concerns extracted to `useWorkspaceEvents`.
+Central coordinator pattern: `useChatController` composes 9 specialized hooks + creates adapters via `useMemo`. View-level concerns extracted to `useWorkspaceEvents`.
 
-State transitions are now reducer-backed in `src/hooks/state/` for deterministic updates and easier test coverage.
+State transitions are reducer-backed in `src/hooks/state/` for deterministic updates and easier test coverage.
 
 ## Hook Inventory
 
-| Hook | State Owned | Key Deps |
-|------|-------------|----------|
-| `useChatController` | Combines all below | All hooks + adapters |
-| `useAgentSession` | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
-| `useChat` | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
-| `useSessionHistory` | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` |
-| `usePermission` | `activePermission`, approval queue | `IAgentClient` |
-| `useMentions` | Suggestions dropdown state | `IVaultAccess`, `mention-utils` |
-| `useSlashCommands` | Suggestions dropdown state | `SlashCommand[]` |
-| `useAutoMention` | `activeNote`, `isDisabled` | `IVaultAccess` |
-| `useInputHistory` | History index (ref-based) | `ChatMessage[]` |
-| `useSettings` | None — delegates to `useSyncExternalStore` | `plugin.settingsStore` |
-| `useWorkspaceEvents` | None (effect-only) | `Workspace` events |
+| Hook | Lines | State Owned | Key Deps |
+|------|-------|-------------|----------|
+| `useChatController` | 633 | Combines all below | All hooks + adapters |
+| `useAgentSession` | 628 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` |
+| `useChat` | 550 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` |
+| `useSessionHistory` | 577 | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` |
+| `usePermission` | 234 | `activePermission`, approval queue | `IAgentClient` |
+| `useMentions` | 130 | Suggestions dropdown state | `IVaultAccess`, `mention-utils` |
+| `useSlashCommands` | 140 | Suggestions dropdown state | `SlashCommand[]` |
+| `useAutoMention` | ~90 | `activeNote`, `isDisabled` | `IVaultAccess` |
+| `useInputHistory` | 139 | History index (ref-based) | `ChatMessage[]` |
+| `useTabs` | 114 | `tabs[]`, `activeTabId` (max 4) | `ChatTab`, agent info |
+| `useSettings` | ~30 | None — delegates to `useSyncExternalStore` | `plugin.settingsStore` |
+| `useWorkspaceEvents` | 127 | None (effect-only) | `Workspace` events |
 
 ## Composition Flow
 
@@ -28,6 +29,7 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
   ├── useMemo: ObsidianVaultAdapter
   ├── useMemo: NoteMentionService
   ├── useSettings(plugin)
+  ├── useTabs(initialAgentId, defaultAgentId, availableAgents, onTabClose)
   ├── useAgentSession(acpAdapter, settingsAccess, config)
   ├── useChat(acpAdapter, vaultAccess, mentionService, session)
   ├── usePermission(acpAdapter)
@@ -39,11 +41,21 @@ useChatController(plugin, viewId, workingDir, initialAgentId)
 
 ## Extracted Hook Modules
 
-- `chat-controller/types.ts`: exported `UseChatController` interfaces to keep the coordinator lean
-- `chat-controller/history-modal.ts`: pure modal-props builder for `SessionHistoryModal`
-- `chat-controller/session-history-handlers.ts`: isolated history restore/fork/delete/open handler orchestration
-- `agent-session/helpers.ts` + `agent-session/types.ts`: normalization and shared type contracts
-- `session-history/session-history-ops.ts`: pure history list/load/restore/fork helpers
+- `chat-controller/types.ts` (82): exported `UseChatController` interfaces to keep the coordinator lean
+- `chat-controller/history-modal.ts` (43): pure modal-props builder for `SessionHistoryModal`
+- `chat-controller/session-history-handlers.ts` (184): isolated history restore/fork/delete/open handler orchestration
+- `agent-session/helpers.ts` (141) + `agent-session/types.ts` (39): normalization and shared type contracts
+- `session-history/session-history-ops.ts` (221): pure history list/load/restore/fork helpers
+
+## State Modules (`hooks/state/`)
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `chat.reducer.ts` | 50 | Chat message state reducer (apply_messages, set_messages, clear) |
+| `chat.actions.ts` | 29 | Action creators for chat state transitions |
+| `session.reducer.ts` | 28 | Session state reducer |
+| `session.actions.ts` | 22 | Action creators for session state transitions |
+| `permission.reducer.ts` | 35 | Permission request queue reducer |
 
 ## View-Level Hooks (used directly by ChatView, not via useChatController)
 

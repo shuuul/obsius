@@ -6,15 +6,15 @@ ACP bridge modules implementing the Agent Client Protocol between domain ports a
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `acp.adapter.ts` | ~516 | `AcpAdapter` composition root implementing `IAgentClient` + `IAcpClient` |
-| `acp-type-converter.ts` | 80 | `AcpTypeConverter` — bidirectional type mapping (ACP SDK ↔ domain types) |
-| `process-lifecycle.ts` | ~303 | Spawn/bootstrap/initialize ACP connection and process lifecycle wiring |
-| `runtime-ops.ts` | ~310 | newSession/auth/sendPrompt/cancel/disconnect/set-mode/set-model operations |
-| `session-ops.ts` | ~199 | list/load/resume/fork session operations with WSL-aware cwd handling |
-| `permission-queue.ts` | ~224 | serialized permission queue and response/cancel flow |
-| `terminal-bridge.ts` | ~69 | terminal RPC bridge wrappers |
-| `update-routing.ts` | ~103 | Pure ACP session update → domain `SessionUpdate` mapping |
-| `error-diagnostics.ts` | ~54 | stderr hint extraction and startup diagnostics helpers |
+| `acp.adapter.ts` | 505 | `AcpAdapter` composition root implementing `IAgentClient` + `IAcpClient` |
+| `acp-type-converter.ts` | ~80 | `AcpTypeConverter` — bidirectional type mapping (ACP SDK <-> domain types) |
+| `process-lifecycle.ts` | 315 | Spawn/bootstrap/initialize ACP connection and process lifecycle wiring |
+| `runtime-ops.ts` | 309 | newSession/auth/sendPrompt/cancel/disconnect/set-mode/set-model operations |
+| `session-ops.ts` | 195 | list/load/resume/fork session operations with WSL-aware cwd handling |
+| `permission-queue.ts` | 219 | Serialized permission queue and response/cancel flow |
+| `update-routing.ts` | ~103 | Pure ACP session update -> domain `SessionUpdate` mapping |
+| `terminal-bridge.ts` | ~69 | Terminal RPC bridge wrappers |
+| `error-diagnostics.ts` | ~54 | Stderr hint extraction and startup diagnostics helpers |
 
 ## AcpAdapter Class
 
@@ -43,9 +43,9 @@ Adds ACP-specific operations beyond domain `IAgentClient`:
 
 ## AcpTypeConverter
 
-Static methods for SDK ↔ domain conversion:
-- `toToolCallContent(acp.ToolCallContent[])` → domain `ToolCallContent[]` — filters to `diff` + `terminal` only (ignores `content` type)
-- `toAcpContentBlock(PromptContent)` → `acp.ContentBlock` — handles text, image, resource
+Static methods for SDK <-> domain conversion:
+- `toToolCallContent(acp.ToolCallContent[])` -> domain `ToolCallContent[]` — filters to `diff` + `terminal` only (ignores `content` type)
+- `toAcpContentBlock(PromptContent)` -> `acp.ContentBlock` — handles text, image, resource
 
 ## When ACP Protocol Changes
 

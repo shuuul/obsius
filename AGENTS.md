@@ -1,28 +1,34 @@
 # Obsius - LLM Developer Guide
 
-**Generated:** 2026-03-01 | **Commit:** ee8e386 | **Branch:** master
+**Generated:** 2026-03-01 | **Commit:** 6606e3c | **Branch:** master
 
 ## Overview
-Obsidian desktop plugin for AI agent chat (Claude Code, OpenCode, Codex, Gemini CLI, custom agents). React 19 + TypeScript, communicating via Agent Client Protocol (ACP) over JSON-RPC stdin/stdout.
+Obsidian desktop plugin for AI agent chat (Claude Code, OpenCode, Codex, Gemini CLI, custom agents). React 19 + TypeScript, communicating via Agent Client Protocol (ACP) over JSON-RPC stdin/stdout. Multi-tab chat sessions in a sidebar view.
 
 ## Structure
 ```
 src/
 ├── main.ts                   # Re-exports plugin.ts
-├── plugin.ts                 # Obsidian plugin lifecycle composition root (~545 lines)
-├── plugin/                   # Extracted plugin modules (agent commands, update check, view helpers)
+├── plugin.ts                 # Obsidian plugin lifecycle composition root (~420 lines)
+├── plugin/                   # Extracted plugin modules
+│   ├── agent-ops.ts          # Agent CRUD commands (add/edit/delete/duplicate) (~238 lines)
+│   ├── update-check.ts       # GitHub release version check (~56 lines)
+│   └── view-helpers.ts       # View creation/focus helpers (~66 lines)
 ├── domain/                   # Pure types + interfaces — ZERO external deps
 │   ├── models/               # ChatMessage, SessionUpdate, AgentConfig, etc. (8 files)
 │   └── ports/                # IAgentClient, IVaultAccess, ISettingsAccess, IChatViewContainer (4 files)
 ├── adapters/
-│   ├── acp/                  # ACP protocol modules: lifecycle, runtime ops, routing, terminal, permissions
+│   ├── acp/                  # ACP protocol modules: lifecycle, runtime ops, routing, terminal, permissions (10 files)
 │   └── obsidian/             # VaultAdapter, SettingsStore, MentionService (3 files)
-├── hooks/                    # React custom hooks
-├── hooks/state/              # Pure reducer/action modules for deterministic state transitions
+├── hooks/                    # React custom hooks (12 hooks + 5 state modules + 6 extracted modules)
+│   ├── state/                # Pure reducer/action modules for deterministic state transitions
+│   ├── chat-controller/      # Extracted coordinator helpers
+│   ├── agent-session/        # Session normalization helpers
+│   └── session-history/      # History list/load/restore/fork helpers
 ├── components/
-│   ├── chat/                 # ChatView + 22 sub-components (23 files)
-│   └── settings/             # Thin tab coordinator + section renderers
-└── shared/                   # Pure utility functions, no React deps (15 files)
+│   ├── chat/                 # ChatView + 27 sub-components (16 top-level + 11 in chat-input/)
+│   └── settings/             # Thin tab coordinator + 3 section renderers
+└── shared/                   # Pure utility functions (18 files)
 ```
 
 ## Where To Look
@@ -33,7 +39,9 @@ src/
 | Modify message types | `domain/models/chat-message.ts` + `session-update.ts` | Then handle in `useChat.handleSessionUpdate()` |
 | Change ACP protocol | `adapters/acp/` modules + `acp.adapter.ts` composition | See `adapters/acp/AGENTS.md` |
 | UI changes | `components/chat/` | See `components/chat/AGENTS.md` |
-| Settings changes | `plugin.ts` (interface) + `components/settings/sections/` (UI sections) | `AgentClientSettingTab.ts` is now a thin coordinator |
+| Settings changes | `plugin.ts` (interface) + `components/settings/sections/` (UI sections) | `AgentClientSettingTab.ts` is thin coordinator |
+| Add input UI element | `components/chat/chat-input/` | 11 files: RichTextarea, InputActions, SelectorButton, etc. |
+| Tab management | `hooks/useTabs.ts` + `components/chat/TabBar.tsx` + `TabContent.tsx` | Multi-tab chat sessions |
 | Debug | Settings → Debug Mode ON → DevTools → filter `[AcpAdapter]`, `[useChat]`, `[NoteMentionService]` | |
 
 ## Architecture: Hook Composition Pattern
@@ -45,7 +53,7 @@ ChatView.tsx
             │   ├── AcpAdapter (from plugin registry)
             │   ├── ObsidianVaultAdapter
             │   └── NoteMentionService
-            └── Composes 8 hooks:
+            └── Composes 9 hooks:
                 ├── useSettings()          → useSyncExternalStore subscription
                 ├── useAgentSession()      → session lifecycle, agent switching
                 ├── useChat()              → messages, streaming, tool calls
@@ -53,7 +61,8 @@ ChatView.tsx
                 ├── useMentions()          → @[[note]] suggestions
                 ├── useSlashCommands()     → /command suggestions
                 ├── useAutoMention()       → active note tracking
-                └── useSessionHistory()    → session list, load, resume, fork
+                ├── useSessionHistory()    → session list, load, resume, fork
+                └── useTabs()             → multi-tab management (max 4 tabs)
 ```
 
 ## Data Flow
@@ -78,11 +87,12 @@ Agent response → AcpAdapter.sessionUpdate() → onSessionUpdate callback
 4. **Ports isolate protocol** — `IAgentClient` interface means ACP changes stay in `adapters/acp/`
 5. **Unified callbacks** — single `onSessionUpdate` for all agent events, not multiple callbacks
 6. **Upsert pattern** — functional `setMessages((prev) => ...)` to avoid race conditions with streaming tool_call_update events
+7. **Reducer-backed state** — `hooks/state/` modules for deterministic transitions in `useChat`/`useAgentSession`/`usePermission`
 
 ### Obsidian Plugin Rules (CRITICAL)
 1. **No innerHTML/outerHTML** — use `createEl`/`createDiv`/`createSpan`
 2. **NO detach leaves in onunload** — this is an antipattern
-3. **Styles in CSS only** — no JS style manipulation (except font size CSS var)
+3. **Styles in CSS only** — no JS style manipulation (except font size CSS var and ProviderLogo mask-image)
 4. **Use `Platform.isWin/isMacOS/isLinux`** — never `process.platform`
 5. **Minimize `any`** — use proper types
 6. **Desktop only** — `ChatView` throws if `!Platform.isDesktopApp`
@@ -92,9 +102,10 @@ Agent response → AcpAdapter.sessionUpdate() → onSessionUpdate callback
 |------|---------|---------|
 | Ports | `*.port.ts` | `agent-client.port.ts` |
 | Adapters | `*.adapter.ts` | `acp.adapter.ts` |
-| Hooks | `use*.ts` | `useChat.ts` |
+| Hooks | `use*.ts` (camelCase) | `useChat.ts` |
 | Components | `PascalCase.tsx` | `ChatView.tsx` |
 | Utils/Models | `kebab-case.ts` | `message-service.ts` |
+| Input hooks | `use-kebab-case.ts` | `use-chat-input-behavior.ts` |
 
 ### Formatting
 - Tabs (width 4), double quotes, trailing commas, LF line endings
@@ -107,6 +118,7 @@ Agent response → AcpAdapter.sessionUpdate() → onSessionUpdate callback
 - **Don't mutate messages directly** — always functional `setMessages((prev) => ...)`
 - **Don't detach leaves in `onunload`**
 - **Don't use `innerHTML`/`outerHTML`**
+- **Don't bypass reducers** — use typed actions in `hooks/state/` for state transitions
 
 ## Commands
 ```bash
@@ -116,7 +128,7 @@ npm run build            # typecheck + Vite production build
 npm run lint             # Biome + ESLint + architecture guardrails
 npm run lint:fix         # ESLint auto-fix
 npm run test             # Vitest
-npm run test:coverage    # Vitest + coverage gates
+npm run test:coverage    # Vitest + coverage gates (80% lines/functions, 70% branches)
 npm run format           # Biome write
 npm run format:check     # Biome check
 npm run version          # Bump manifest.json + versions.json
@@ -125,18 +137,21 @@ npm run docs:build       # VitePress build
 ```
 
 ## Notes
-- **Tests exist**: Vitest is configured with coverage gates for new reducer/routing/schema modules
+- **Tests exist**: Vitest with coverage gates for reducer/routing/schema modules (test/ directory, 6 files)
 - **CI**: PR workflow enforces typecheck, lint, tests with coverage, plugin build, and docs build
 - **Multi-session**: `ChatViewRegistry` manages sidebar views with independent ACP sessions
+- **Multi-tab**: `useTabs` hook supports up to 4 concurrent chat tabs per view, each with its own agent/session
 - **Session history**: Agent-side (`listSessions`) + local persistence (`sessions/{id}.json`)
+- **Settings validation**: `settings-schema.ts` uses Zod for runtime validation with schema versioning (v4)
 - **Current decomposition state**:
-  - `src/plugin.ts` is now a thin orchestrator; command/update/view helpers moved to `src/plugin/`
-  - `src/adapters/acp/acp.adapter.ts` is now a composition root; core logic moved to concern modules under `src/adapters/acp/`
-  - `ChatView.tsx` (~547 LOC), `ToolCallRenderer.tsx` (~173 LOC) — decomposed via extracted hooks (`useWorkspaceEvents`) and `DiffRenderer.tsx`
-- **TODOs in code**: `TODO(code-block)` markers for future code block chat view feature
-- **Undocumented API**: `vault.adapter.ts:211` uses `editor.cm` (CodeMirror 6 internal) for selection tracking
+  - `src/plugin.ts` (~420 LOC) is thin orchestrator; command/update/view helpers in `src/plugin/`
+  - `src/adapters/acp/acp.adapter.ts` (~505 LOC) is composition root; concern modules under `src/adapters/acp/`
+  - `ChatView.tsx` (~509 LOC), `ChatInput.tsx` (~353 LOC) — input logic extracted to `chat-input/` (11 files)
+  - `SessionHistoryContent.tsx` (~499 LOC) — largest React component
+- **Undocumented API**: `vault.adapter.ts` uses `editor.cm` (CodeMirror 6 internal) for selection tracking
 - **ACP SDK**: `@agentclientprotocol/sdk ^0.14.1` — protocol may evolve
-- **External deps**: `react ^19.1.1`, `diff ^8.0.2`, `semver ^7.7.3`, `@codemirror/state`, `@codemirror/view`
+- **External deps**: `react ^19.1.1`, `diff ^8.0.2`, `semver ^7.7.3`, `zod`, `@codemirror/state`, `@codemirror/view`
+- **Provider logos**: `ProviderLogo.tsx` loads SVGs from `@lobehub/icons-static-svg` CDN via CSS mask-image
 
 ## Subdirectory Guides
 - [`src/hooks/AGENTS.md`](src/hooks/AGENTS.md) — Hook composition, race condition patterns, data flow
