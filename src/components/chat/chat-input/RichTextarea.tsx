@@ -162,7 +162,12 @@ export const RichTextarea = forwardRef<RichTextareaHandle, RichTextareaProps>(
 				},
 				getElement: () => editorRef.current,
 			}),
-			[insertMentionAtContext, insertSlashCommandAtContext, fireContentChange, onContextBadgeClick],
+			[
+				insertMentionAtContext,
+				insertSlashCommandAtContext,
+				fireContentChange,
+				onContextBadgeClick,
+			],
 		);
 
 		const handleInput = useCallback(() => {

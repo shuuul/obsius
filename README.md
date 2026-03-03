@@ -11,8 +11,21 @@ Bring AI agents into your Obsidian vault with fine-grained context controls.
 
 - Obsidian `1.11.5` or later
 - Desktop only (not supported on mobile)
+- Tested only on macOS
+
+## Installation
+
+You can install this plugin with [Obsidian42 - BRAT](https://github.com/TfTHacker/obsidian42-brat):
+
+1. Install and enable `Obsidian42 - BRAT` in Obsidian.
+2. Open BRAT settings and choose `Add Beta plugin`.
+3. Paste this repository URL: `https://github.com/shuuul/obsius`
+4. Install the plugin from BRAT and enable `Obsius`.
 
 ## Secure API Keys
+
+<details>
+<summary>How Secure API Keys work</summary>
 
 Built-in agent API keys (Claude, Codex, Gemini) are stored in Obsidian secure storage, not in this plugin's settings JSON.
 
@@ -29,6 +42,7 @@ Built-in agent API keys (Claude, Codex, Gemini) are stored in Obsidian secure st
 - Keys are stored via Obsidian's secure storage on desktop.
 - Keys are device-local and are not synced through your vault files.
 - If you use multiple devices, enter the key once on each device.
+</details>
 
 ### Recommendation
 

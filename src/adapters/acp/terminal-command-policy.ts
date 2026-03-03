@@ -181,4 +181,3 @@ export function isDestructiveCommand(
 
 	return extractBaseCommands(command).some((base) => denied.has(base));
 }
-

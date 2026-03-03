@@ -1,4 +1,7 @@
-import type { AuthenticationMethod, ChatSession } from "../../domain/models/chat-session";
+import type {
+	AuthenticationMethod,
+	ChatSession,
+} from "../../domain/models/chat-session";
 import type { IAgentClient } from "../../domain/ports/agent-client.port";
 import type { ISettingsAccess } from "../../domain/ports/settings-access.port";
 import type { SessionErrorInfo } from "./types";
@@ -113,7 +116,8 @@ export async function createSessionLifecycle({
 		);
 
 		const needsInitialize =
-			!agentClient.isInitialized() || agentClient.getCurrentAgentId() !== agentId;
+			!agentClient.isInitialized() ||
+			agentClient.getCurrentAgentId() !== agentId;
 
 		let authMethods: AuthenticationMethod[] = [];
 		let promptCapabilities: PromptCapabilitiesSnapshot | undefined;
@@ -191,7 +195,10 @@ export async function createSessionLifecycle({
 				)
 			) {
 				try {
-					await agentClient.setSessionModel(sessionResult.sessionId, savedModelId);
+					await agentClient.setSessionModel(
+						sessionResult.sessionId,
+						savedModelId,
+					);
 					if (creationCounterRef.current !== creationId) return;
 					setSession((prev) => {
 						if (!prev.models) return prev;
@@ -294,7 +301,10 @@ export async function loadSessionLifecycle({
 			agentCapabilities = initResult.agentCapabilities;
 		}
 
-		const loadResult = await agentClient.loadSession(sessionId, workingDirectory);
+		const loadResult = await agentClient.loadSession(
+			sessionId,
+			workingDirectory,
+		);
 		if (creationCounterRef.current !== creationId) return;
 
 		{

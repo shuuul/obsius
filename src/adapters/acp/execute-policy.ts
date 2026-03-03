@@ -393,8 +393,7 @@ function handleSyntheticExecutePermissionOutcome(args: {
 		sessionUpdateCallback,
 	} = args;
 	const selectedOptionId =
-		response.outcome.outcome === "selected" &&
-		"optionId" in response.outcome
+		response.outcome.outcome === "selected" && "optionId" in response.outcome
 			? response.outcome.optionId
 			: null;
 	const isAllowed = selectedOptionId === `synthetic:${toolCallId}:allow_once`;
@@ -427,5 +426,7 @@ function handleSyntheticExecutePermissionOutcome(args: {
 }
 
 function isToolCallStatusFinal(status: string | null | undefined): boolean {
-	return status === "completed" || status === "failed" || status === "cancelled";
+	return (
+		status === "completed" || status === "failed" || status === "cancelled"
+	);
 }

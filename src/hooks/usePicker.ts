@@ -27,10 +27,7 @@ export interface UsePickerReturn {
 	setSelectedIndex: (index: number) => void;
 }
 
-export type PickerSortFn = (
-	items: PickerItem[],
-	query: string,
-) => PickerItem[];
+export type PickerSortFn = (items: PickerItem[], query: string) => PickerItem[];
 
 /**
  * @param providers  - search providers
@@ -86,15 +83,14 @@ export function usePicker(
 			if (q) return CATEGORY_LABELS[cat].toLowerCase().includes(q);
 			return searchItems.some((item) => item.category === cat);
 		});
-		const catItems: PickerItem[] = afterFilter
-			.map((cat) => ({
-				id: `__category__:${cat}`,
-				label: CATEGORY_LABELS[cat],
-				icon: CATEGORY_ICONS[cat],
-				category: cat,
-				isCategory: true,
-				data: null,
-			}));
+		const catItems: PickerItem[] = afterFilter.map((cat) => ({
+			id: `__category__:${cat}`,
+			label: CATEGORY_LABELS[cat],
+			icon: CATEGORY_ICONS[cat],
+			category: cat,
+			isCategory: true,
+			data: null,
+		}));
 
 		const combined = [...allItems, ...catItems];
 		const sorted = sortFnRef.current
@@ -113,9 +109,7 @@ export function usePicker(
 			merged.push(...result);
 		}
 
-		const sorted = sortFnRef.current
-			? sortFnRef.current(merged, q)
-			: merged;
+		const sorted = sortFnRef.current ? sortFnRef.current(merged, q) : merged;
 		setSearchItems(sorted);
 		setSelectedIndex(0);
 		setPreview(null);
@@ -233,8 +227,7 @@ export function usePicker(
 			for (const provider of providersRef.current) {
 				if (provider.category === item.category && provider.getPreview) {
 					const result = provider.getPreview(item);
-					const p =
-						result instanceof Promise ? await result : result;
+					const p = result instanceof Promise ? await result : result;
 					if (!cancelled) setPreview(p);
 					return;
 				}

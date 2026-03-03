@@ -25,18 +25,24 @@ import {
 } from "../../shared/tool-icons";
 
 const FILE_EDIT_TITLES = new Set([
-	"write", "edit", "notebookedit", "editnotebook", "multiedit",
-	"strreplace", "writefile", "createfile", "editfile", "writetofile",
-	"applydiff", "applypatch", "replaceinfile",
+	"write",
+	"edit",
+	"notebookedit",
+	"editnotebook",
+	"multiedit",
+	"strreplace",
+	"writefile",
+	"createfile",
+	"editfile",
+	"writetofile",
+	"applydiff",
+	"applypatch",
+	"replaceinfile",
 ]);
 
-const FILE_READ_TITLES = new Set([
-	"read", "readfile", "viewfile",
-]);
+const FILE_READ_TITLES = new Set(["read", "readfile", "viewfile"]);
 
-const SHELL_TITLES = new Set([
-	"bash", "shell", "runcommand", "executecommand",
-]);
+const SHELL_TITLES = new Set(["bash", "shell", "runcommand", "executecommand"]);
 
 interface ToolCallRendererProps {
 	content: Extract<MessageContent, { type: "tool_call" }>;
@@ -119,22 +125,28 @@ export function ToolCallRenderer({
 	const showSpinnerIcon = showLiveIndicator || isRunning;
 	const statusIcon = isRunning ? "" : getStatusIconName(status);
 
-	const hasDiffContent = toolContent?.some((item) => item.type === "diff") ?? false;
+	const hasDiffContent =
+		toolContent?.some((item) => item.type === "diff") ?? false;
 	const rawPatchText = useMemo(
 		() => (hasDiffContent ? null : extractRawPatchText(rawInput)),
 		[hasDiffContent, rawInput],
 	);
 
 	const diffStats = useMemo(
-		() => countDiffStats(toolContent) ?? (rawPatchText ? countRawPatchStats(rawPatchText) : null),
+		() =>
+			countDiffStats(toolContent) ??
+			(rawPatchText ? countRawPatchStats(rawPatchText) : null),
 		[toolContent, rawPatchText],
 	);
 
 	const normalizedTitle = (title ?? "").replace(/[\s_-]+/g, "").toLowerCase();
-	const isFileEditTool = kind === "edit" || FILE_EDIT_TITLES.has(normalizedTitle);
-	const isFileReadTool = kind === "read" || FILE_READ_TITLES.has(normalizedTitle);
+	const isFileEditTool =
+		kind === "edit" || FILE_EDIT_TITLES.has(normalizedTitle);
+	const isFileReadTool =
+		kind === "read" || FILE_READ_TITLES.has(normalizedTitle);
 	const isFileTool = isFileEditTool || isFileReadTool;
-	const isTodoTool = normalizedTitle === "todowrite" || normalizedTitle === "todoread";
+	const isTodoTool =
+		normalizedTitle === "todowrite" || normalizedTitle === "todoread";
 
 	const hasCommandDetails =
 		(kind === "execute" || SHELL_TITLES.has(normalizedTitle)) &&
@@ -142,8 +154,9 @@ export function ToolCallRenderer({
 		typeof rawInput.command === "string";
 	const hasLocationDetails = !isFileTool && !!locations && locations.length > 0;
 	const hasToolContentDetails =
-		toolContent?.some((item) => item.type === "terminal" || item.type === "diff") ??
-		false;
+		toolContent?.some(
+			(item) => item.type === "terminal" || item.type === "diff",
+		) ?? false;
 	const hasTodoPlanRendered = isTodoTool && hasPlanContent;
 	const hasRenderableDetails =
 		!hasTodoPlanRendered &&
@@ -170,8 +183,10 @@ export function ToolCallRenderer({
 				.getLeavesOfType("markdown")
 				.find((leaf) => {
 					if ("file" in leaf.view) {
-						return (leaf.view as { file: { path: string } | null }).file
-							?.path === relativePath;
+						return (
+							(leaf.view as { file: { path: string } | null }).file?.path ===
+							relativePath
+						);
 					}
 					return false;
 				});
@@ -218,7 +233,11 @@ export function ToolCallRenderer({
 		<>
 			{showSpinnerIcon ? (
 				<span className="ac-tool-icon ac-tool-icon--spinner" aria-hidden="true">
-					<svg className="ac-loading__spinner ac-loading__spinner--inline" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+					<svg
+						className="ac-loading__spinner ac-loading__spinner--inline"
+						viewBox="0 0 100 100"
+						xmlns="http://www.w3.org/2000/svg"
+					>
 						<line className="ac-sq-line-0" x1="15" y1="15" x2="85" y2="15" />
 						<line className="ac-sq-line-1" x1="85" y1="15" x2="85" y2="85" />
 						<line className="ac-sq-line-2" x1="85" y1="85" x2="15" y2="85" />
@@ -235,9 +254,7 @@ export function ToolCallRenderer({
 			{isFileTool ? (
 				<>
 					{isFileReadTool && (
-						<span className="ac-row__title ac-row__action-label">
-							Read
-						</span>
+						<span className="ac-row__title ac-row__action-label">Read</span>
 					)}
 					<span
 						className={`ac-row__title ac-row__title--file ${summaryIsFile ? "ac-row__title--file-link" : ""}`}
@@ -279,9 +296,7 @@ export function ToolCallRenderer({
 			<span
 				className={`ac-tool-status ${statusClass ? `ac-tool-status--${statusClass}` : ""}`}
 			>
-				{statusIcon && (
-					<ObsidianIcon name={statusIcon} size={14} />
-				)}
+				{statusIcon && <ObsidianIcon name={statusIcon} size={14} />}
 			</span>
 		</>
 	);
@@ -373,9 +388,7 @@ export function ToolCallRenderer({
 				<div className="ac-tree__item">
 					<RawPatchView
 						text={rawPatchText}
-						autoCollapse={
-							plugin.settings.displaySettings.autoCollapseDiffs
-						}
+						autoCollapse={plugin.settings.displaySettings.autoCollapseDiffs}
 						collapseThreshold={
 							plugin.settings.displaySettings.diffCollapseThreshold
 						}

@@ -76,7 +76,9 @@ export function getToolSummary(
 			titleLower === "enterplanmode" ||
 			titleLower === "exitplanmode"
 		) {
-			return (rawInput.target_mode_id as string) || (rawInput.mode as string) || "";
+			return (
+				(rawInput.target_mode_id as string) || (rawInput.mode as string) || ""
+			);
 		}
 
 		if (titleLower === "readlints") {

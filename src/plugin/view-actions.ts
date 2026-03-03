@@ -16,8 +16,9 @@ export async function activateChatView(
 		const focusedId = plugin.lastActiveChatViewId;
 		if (focusedId) {
 			leaf =
-				leaves.find((entry) => (entry.view as ChatView)?.viewId === focusedId) ||
-				leaves[0];
+				leaves.find(
+					(entry) => (entry.view as ChatView)?.viewId === focusedId,
+				) || leaves[0];
 		} else {
 			leaf = leaves[0];
 		}

@@ -1,10 +1,9 @@
-import type {
-	IVaultAccess,
-} from "../../../domain/ports/vault-access.port";
-import type {
-	PromptContent,
-} from "../../../domain/models/prompt-content";
-import { extractMentionedNotes, type IMentionService } from "../../../shared/mention-utils";
+import type { IVaultAccess } from "../../../domain/ports/vault-access.port";
+import type { PromptContent } from "../../../domain/models/prompt-content";
+import {
+	extractMentionedNotes,
+	type IMentionService,
+} from "../../../shared/mention-utils";
 import {
 	extractChatContextTokensFromMessage,
 	type ChatContextReference,

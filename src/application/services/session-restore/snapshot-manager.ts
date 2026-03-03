@@ -68,9 +68,7 @@ export class SnapshotManager {
 				}
 				if (!existing.fromDiff && file.firstOldText !== undefined) {
 					existing.content =
-						typeof file.firstOldText === "string"
-							? file.firstOldText
-							: null;
+						typeof file.firstOldText === "string" ? file.firstOldText : null;
 					existing.isNew = file.firstOldText === null;
 					existing.fromDiff = true;
 				}
@@ -128,10 +126,7 @@ export class SnapshotManager {
 		const changes: FileChange[] = [];
 
 		for (const [vaultPath, original] of this.originals) {
-			const current = await this.tryReadFile(
-				{ readFile } as FileIo,
-				vaultPath,
-			);
+			const current = await this.tryReadFile({ readFile } as FileIo, vaultPath);
 
 			const isDeleted = !original.isNew && current == null;
 
@@ -165,10 +160,7 @@ export class SnapshotManager {
 	 * Revert a file: restore original content or delete if the file was new.
 	 * Backs up current content first so {@link undoRevert} can restore it.
 	 */
-	async revertFile(
-		change: FileChange,
-		io: FileIo,
-	): Promise<RevertResult> {
+	async revertFile(change: FileChange, io: FileIo): Promise<RevertResult> {
 		const vaultPath = change.vaultPath;
 		if (!vaultPath) return { reverted: false, conflict: true };
 
@@ -224,7 +216,9 @@ export class SnapshotManager {
 		this.preRevertBackups.clear();
 	}
 
-	async undoRevert(io: Pick<FileIo, "writeFile" | "deleteFile">): Promise<void> {
+	async undoRevert(
+		io: Pick<FileIo, "writeFile" | "deleteFile">,
+	): Promise<void> {
 		for (const [path, content] of this.preRevertBackups) {
 			if (content == null) {
 				await io.deleteFile(path);
@@ -262,10 +256,7 @@ export class SnapshotManager {
 		});
 	}
 
-	private async tryReadFile(
-		io: FileIo,
-		path: string,
-	): Promise<string | null> {
+	private async tryReadFile(io: FileIo, path: string): Promise<string | null> {
 		try {
 			return await io.readFile(path);
 		} catch {

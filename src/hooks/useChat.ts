@@ -11,7 +11,10 @@ import type { AuthenticationMethod } from "../domain/models/chat-session";
 import type { ErrorInfo } from "../domain/models/agent-error";
 import type { ImagePromptContent } from "../domain/models/prompt-content";
 import type { IMentionService } from "../shared/mention-utils";
-import { preparePrompt, sendPreparedPrompt } from "../application/use-cases/prompt";
+import {
+	preparePrompt,
+	sendPreparedPrompt,
+} from "../application/use-cases/prompt";
 import { Platform } from "obsidian";
 import { chatReducer } from "./state/chat.reducer";
 import { createInitialChatState, type ChatAction } from "./state/chat.actions";

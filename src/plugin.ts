@@ -1,9 +1,4 @@
-import {
-	Plugin,
-	Notice,
-	addIcon,
-	type IconName,
-} from "obsidian";
+import { Plugin, Notice, addIcon, type IconName } from "obsidian";
 import { ChatView, VIEW_TYPE_CHAT } from "./components/chat/ChatView";
 import { ChatViewRegistry } from "./application/services/chat-view-registry";
 import {

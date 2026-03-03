@@ -52,7 +52,7 @@ function normalizeRange(selection: {
 		: {
 				from: selection.to,
 				to: selection.from,
-		};
+			};
 }
 
 function extractSelectionByCharacterRange(
@@ -301,7 +301,7 @@ export async function buildAutoMentionResource(
 		convertToWsl,
 	);
 	const uri = buildFileUri(absolutePath);
- if (activeNote.selection) {
+	if (activeNote.selection) {
 		const fromLine = activeNote.selection.from.line + 1;
 		const toLine = activeNote.selection.to.line + 1;
 

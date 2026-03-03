@@ -379,10 +379,7 @@ export function useSessionHistory(
 	 * Fire-and-forget (does not block UI).
 	 */
 	const saveSessionMessages = useCallback(
-		(
-			sessionId: string,
-			messages: ChatMessage[],
-		) => {
+		(sessionId: string, messages: ChatMessage[]) => {
 			if (!session.agentId || messages.length === 0) return;
 
 			// Fire-and-forget

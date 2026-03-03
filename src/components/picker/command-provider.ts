@@ -37,8 +37,7 @@ export class CommandPickerProvider implements PickerProvider {
 			? commands.filter(
 					(cmd) =>
 						cmd.name.toLowerCase().includes(q) ||
-						(cmd.description &&
-							cmd.description.toLowerCase().includes(q)),
+						(cmd.description && cmd.description.toLowerCase().includes(q)),
 				)
 			: commands;
 

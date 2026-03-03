@@ -42,10 +42,7 @@ function iconForExtension(ext: string): string {
 	}
 }
 
-function buildPathTree(
-	fullPath: string,
-	fileIcon: string,
-): PickerTreeNode[] {
+function buildPathTree(fullPath: string, fileIcon: string): PickerTreeNode[] {
 	const parts = fullPath.split("/");
 	if (parts.length === 1) {
 		return [{ name: parts[0], icon: fileIcon }];
@@ -158,8 +155,7 @@ export class FolderPickerProvider implements PickerProvider {
 
 		return filtered.map((folder) => {
 			const parts = folder.split("/");
-			const parentDir =
-				parts.length > 1 ? parts.slice(0, -1).join("/") : "/";
+			const parentDir = parts.length > 1 ? parts.slice(0, -1).join("/") : "/";
 			return {
 				id: `folder:${folder}`,
 				label: parts[parts.length - 1] || folder,

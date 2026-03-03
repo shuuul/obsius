@@ -75,7 +75,10 @@ export function useChatControllerEffects({
 				(model) => model.modelId === config.model,
 			);
 			if (modelExists && session.models.currentModelId !== config.model) {
-				logger.log("[useChatController] Applying configured model:", config.model);
+				logger.log(
+					"[useChatController] Applying configured model:",
+					config.model,
+				);
 				void setModel(config.model);
 			}
 		}
@@ -118,7 +121,9 @@ export function useChatControllerEffects({
 		if (
 			targetModelId &&
 			targetModelId !== session.models.currentModelId &&
-			session.models.availableModels.some((model) => model.modelId === targetModelId)
+			session.models.availableModels.some(
+				(model) => model.modelId === targetModelId,
+			)
 		) {
 			logger.log(
 				`[useChatController] Initial mode → model: switching to ${targetModelId} for mode ${currentModeId}`,
@@ -196,7 +201,9 @@ export function useChatControllerEffects({
 
 		if (wasSending && !isSending && session.sessionId && messages.length > 0) {
 			saveSessionMessages(session.sessionId, messages);
-			logger.log(`[useChatController] Session messages saved: ${session.sessionId}`);
+			logger.log(
+				`[useChatController] Session messages saved: ${session.sessionId}`,
+			);
 		}
 	}, [isSending, session.sessionId, messages, saveSessionMessages, logger]);
 

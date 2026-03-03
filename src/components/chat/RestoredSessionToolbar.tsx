@@ -48,7 +48,8 @@ export function RestoredSessionToolbar({
 			const fallbackRelative = relativeFromFullPath
 				.replace(/\\/g, "/")
 				.replace(/^\/+/, "");
-			const openPath = change.vaultPath ?? (!isAbsolutePath ? fallbackRelative : null);
+			const openPath =
+				change.vaultPath ?? (!isAbsolutePath ? fallbackRelative : null);
 			const displayPath = openPath ?? change.path;
 			const hasInlineDiff =
 				(change.originalText !== null &&
@@ -150,8 +151,10 @@ export function RestoredSessionToolbar({
 				.getLeavesOfType("markdown")
 				.find((leaf) => {
 					if ("file" in leaf.view) {
-						return (leaf.view as { file: { path: string } | null }).file
-							?.path === openPath;
+						return (
+							(leaf.view as { file: { path: string } | null }).file?.path ===
+							openPath
+						);
 					}
 					return false;
 				});
@@ -220,7 +223,11 @@ export function RestoredSessionToolbar({
 								<span
 									className={`obsius-changes-file-name ${row.openPath ? "obsius-changes-file-name--link" : ""}`}
 									onClick={(e) => handleOpenFile(row.openPath, e)}
-									title={row.openPath ? "Open file in new tab" : "File is outside vault"}
+									title={
+										row.openPath
+											? "Open file in new tab"
+											: "File is outside vault"
+									}
 								>
 									{row.displayPath}
 								</span>
@@ -229,12 +236,18 @@ export function RestoredSessionToolbar({
 									<span className="obsius-changes-badge">NEW</span>
 								)}
 								{row.isDeleted && (
-									<span className="obsius-changes-badge obsius-changes-badge--deleted">DELETED</span>
+									<span className="obsius-changes-badge obsius-changes-badge--deleted">
+										DELETED
+									</span>
 								)}
 
 								<span className="obsius-changes-file-stats">
-									<span className="obsius-changes-file-stat--add">+{row.added}</span>
-									<span className="obsius-changes-file-stat--remove">-{row.removed}</span>
+									<span className="obsius-changes-file-stat--add">
+										+{row.added}
+									</span>
+									<span className="obsius-changes-file-stat--remove">
+										-{row.removed}
+									</span>
 								</span>
 
 								<span className="obsius-changes-file-actions">
@@ -245,7 +258,11 @@ export function RestoredSessionToolbar({
 											void handleRevertFile(row.change.path);
 										}}
 										disabled={!row.canRevert || isBusy}
-										title={row.canRevert ? "Undo this file's changes" : "Cannot revert: no original content"}
+										title={
+											row.canRevert
+												? "Undo this file's changes"
+												: "Cannot revert: no original content"
+										}
 									>
 										<ObsidianIcon name="x" size={14} />
 									</button>
@@ -272,18 +289,20 @@ export function RestoredSessionToolbar({
 
 							{isExpanded && row.hasInlineDiff && (
 								<div className="obsius-changes-file-diff">
-								<DiffRenderer
-									diff={{
-										type: "diff",
-										path: row.change.path,
-										oldText: row.change.isNewFile
-											? null
-											: row.change.originalText ?? undefined,
-										newText: row.isDeleted ? "" : row.change.finalText,
-									}}
+									<DiffRenderer
+										diff={{
+											type: "diff",
+											path: row.change.path,
+											oldText: row.change.isNewFile
+												? null
+												: (row.change.originalText ?? undefined),
+											newText: row.isDeleted ? "" : row.change.finalText,
+										}}
 										plugin={plugin}
 										showHeader={false}
-										autoCollapse={plugin.settings.displaySettings.autoCollapseDiffs}
+										autoCollapse={
+											plugin.settings.displaySettings.autoCollapseDiffs
+										}
 										collapseThreshold={
 											plugin.settings.displaySettings.diffCollapseThreshold
 										}

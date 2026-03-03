@@ -109,7 +109,10 @@ function appendOrMergeAssistantContent(
 	messages: ChatMessage[],
 	content: MessageContent,
 ): ChatMessage[] {
-	if (messages.length === 0 || messages[messages.length - 1].role !== "assistant") {
+	if (
+		messages.length === 0 ||
+		messages[messages.length - 1].role !== "assistant"
+	) {
 		const newMessage: ChatMessage = {
 			id: crypto.randomUUID(),
 			role: "assistant",

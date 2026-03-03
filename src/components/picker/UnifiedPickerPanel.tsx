@@ -91,9 +91,7 @@ function PickerItemRow({
 			)}
 			<span className="obsius-picker-item-label">{item.label}</span>
 			{item.sublabel && (
-				<span className="obsius-picker-item-desc">
-					{item.sublabel}
-				</span>
+				<span className="obsius-picker-item-desc">{item.sublabel}</span>
 			)}
 		</div>
 	);
@@ -166,8 +164,9 @@ export function UnifiedPickerPanel({ picker, mode }: PickerPanelProps) {
 
 	useEffect(() => {
 		if (!listRef.current) return;
-		const selected =
-			listRef.current.querySelector<HTMLElement>("[data-selected='true']");
+		const selected = listRef.current.querySelector<HTMLElement>(
+			"[data-selected='true']",
+		);
 		selected?.scrollIntoView({ block: "nearest" });
 	}, [picker.selectedIndex]);
 

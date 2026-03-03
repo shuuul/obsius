@@ -116,8 +116,10 @@ export function DiffRenderer({
 		(filePath: string) =>
 			plugin.app.workspace.getLeavesOfType("markdown").find((leaf) => {
 				if ("file" in leaf.view) {
-					return (leaf.view as { file: { path: string } | null }).file
-						?.path === filePath;
+					return (
+						(leaf.view as { file: { path: string } | null }).file?.path ===
+						filePath
+					);
 				}
 				return false;
 			}),
@@ -170,9 +172,7 @@ export function DiffRenderer({
 				const leaf = plugin.app.workspace.getLeaf("tab");
 				void leaf
 					.openFile(
-						plugin.app.vault.getAbstractFileByPath(
-							relativePath,
-						) as never,
+						plugin.app.vault.getAbstractFileByPath(relativePath) as never,
 					)
 					.then(() => scrollEditorToLine(leaf.view, lineNumber));
 			}
@@ -347,7 +347,9 @@ export function DiffRenderer({
 					>
 						{fileName || relativePath}
 					</span>
-					{isNewFile(diff) && <span className="obsius-diff-new-badge">new</span>}
+					{isNewFile(diff) && (
+						<span className="obsius-diff-new-badge">new</span>
+					)}
 					{(diffStats.added > 0 || diffStats.removed > 0) && (
 						<span className="obsius-diff-line-stats">
 							{diffStats.added > 0 && (

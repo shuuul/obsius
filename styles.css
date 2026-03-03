@@ -65,7 +65,8 @@ If your plugin does not need CSS, delete this file.
 	margin-top: 20px;
 	margin-bottom: 4px;
 	padding-bottom: 6px;
-	border-bottom: 1px solid var(--background-modifier-border-hover, var(--background-modifier-border));
+	border-bottom: 1px solid
+		var(--background-modifier-border-hover, var(--background-modifier-border));
 }
 
 .obsius-settings-agent-subheading-title {
@@ -127,31 +128,36 @@ If your plugin does not need CSS, delete this file.
 
 /* Dot 0: TL → TR → BR → BL */
 .ac-sq-dot-0 {
-	animation: ac-sq-dot0-cx 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
+	animation:
+		ac-sq-dot0-cx 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-dot0-cy 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
 }
 
 /* Dot 1: TR → BR → BL → TL */
 .ac-sq-dot-1 {
-	animation: ac-sq-dot1-cx 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
+	animation:
+		ac-sq-dot1-cx 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-dot1-cy 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
 }
 
 /* Dot 2: BR → BL → TL → TR */
 .ac-sq-dot-2 {
-	animation: ac-sq-dot2-cx 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
+	animation:
+		ac-sq-dot2-cx 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-dot2-cy 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
 }
 
 /* Dot 3: BL → TL → TR → BR */
 .ac-sq-dot-3 {
-	animation: ac-sq-dot3-cx 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
+	animation:
+		ac-sq-dot3-cx 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-dot3-cy 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
 }
 
 /* Line 0: dot0 → dot1 */
 .ac-sq-line-0 {
-	animation: ac-sq-line0-x1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
+	animation:
+		ac-sq-line0-x1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line0-y1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line0-x2 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line0-y2 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
@@ -159,7 +165,8 @@ If your plugin does not need CSS, delete this file.
 
 /* Line 1: dot1 → dot2 */
 .ac-sq-line-1 {
-	animation: ac-sq-line1-x1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
+	animation:
+		ac-sq-line1-x1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line1-y1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line1-x2 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line1-y2 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
@@ -167,7 +174,8 @@ If your plugin does not need CSS, delete this file.
 
 /* Line 2: dot2 → dot3 */
 .ac-sq-line-2 {
-	animation: ac-sq-line2-x1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
+	animation:
+		ac-sq-line2-x1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line2-x2 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line2-y1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line2-y2 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
@@ -175,7 +183,8 @@ If your plugin does not need CSS, delete this file.
 
 /* Line 3: dot3 → dot0 */
 .ac-sq-line-3 {
-	animation: ac-sq-line3-x1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
+	animation:
+		ac-sq-line3-x1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line3-y1 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line3-x2 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
 		ac-sq-line3-y2 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
@@ -184,7 +193,6 @@ If your plugin does not need CSS, delete this file.
 /* ---- Dot keyframes (cx/cy) ---- */
 /* Dot 0: TL(15,15) → TR(85,15) → BR(85,85) → BL(15,85) → TL */
 @keyframes ac-sq-dot0-cx {
-
 	0%,
 	100% {
 		cx: 15;
@@ -204,7 +212,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-dot0-cy {
-
 	0%,
 	100% {
 		cy: 15;
@@ -225,7 +232,6 @@ If your plugin does not need CSS, delete this file.
 
 /* Dot 1: TR(85,15) → BR(85,85) → BL(15,85) → TL(15,15) → TR */
 @keyframes ac-sq-dot1-cx {
-
 	0%,
 	100% {
 		cx: 85;
@@ -245,7 +251,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-dot1-cy {
-
 	0%,
 	100% {
 		cy: 15;
@@ -266,7 +271,6 @@ If your plugin does not need CSS, delete this file.
 
 /* Dot 2: BR(85,85) → BL(15,85) → TL(15,15) → TR(85,15) → BR */
 @keyframes ac-sq-dot2-cx {
-
 	0%,
 	100% {
 		cx: 85;
@@ -286,7 +290,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-dot2-cy {
-
 	0%,
 	100% {
 		cy: 85;
@@ -307,7 +310,6 @@ If your plugin does not need CSS, delete this file.
 
 /* Dot 3: BL(15,85) → TL(15,15) → TR(85,15) → BR(85,85) → BL */
 @keyframes ac-sq-dot3-cx {
-
 	0%,
 	100% {
 		cx: 15;
@@ -327,7 +329,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-dot3-cy {
-
 	0%,
 	100% {
 		cy: 85;
@@ -349,7 +350,6 @@ If your plugin does not need CSS, delete this file.
 /* ---- Line keyframes (x1/y1/x2/y2) — each line connects dot N to dot N+1 ---- */
 /* Line 0: dot0(TL) → dot1(TR) */
 @keyframes ac-sq-line0-x1 {
-
 	0%,
 	100% {
 		x1: 15;
@@ -369,7 +369,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line0-y1 {
-
 	0%,
 	100% {
 		y1: 15;
@@ -389,7 +388,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line0-x2 {
-
 	0%,
 	100% {
 		x2: 85;
@@ -409,7 +407,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line0-y2 {
-
 	0%,
 	100% {
 		y2: 15;
@@ -430,7 +427,6 @@ If your plugin does not need CSS, delete this file.
 
 /* Line 1: dot1(TR) → dot2(BR) */
 @keyframes ac-sq-line1-x1 {
-
 	0%,
 	100% {
 		x1: 85;
@@ -450,7 +446,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line1-y1 {
-
 	0%,
 	100% {
 		y1: 15;
@@ -470,7 +465,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line1-x2 {
-
 	0%,
 	100% {
 		x2: 85;
@@ -490,7 +484,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line1-y2 {
-
 	0%,
 	100% {
 		y2: 85;
@@ -511,7 +504,6 @@ If your plugin does not need CSS, delete this file.
 
 /* Line 2: dot2(BR) → dot3(BL) */
 @keyframes ac-sq-line2-x1 {
-
 	0%,
 	100% {
 		x1: 85;
@@ -531,7 +523,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line2-y1 {
-
 	0%,
 	100% {
 		y1: 85;
@@ -551,7 +542,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line2-x2 {
-
 	0%,
 	100% {
 		x2: 15;
@@ -571,7 +561,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line2-y2 {
-
 	0%,
 	100% {
 		y2: 85;
@@ -592,7 +581,6 @@ If your plugin does not need CSS, delete this file.
 
 /* Line 3: dot3(BL) → dot0(TL) */
 @keyframes ac-sq-line3-x1 {
-
 	0%,
 	100% {
 		x1: 15;
@@ -612,7 +600,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line3-y1 {
-
 	0%,
 	100% {
 		y1: 85;
@@ -632,7 +619,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line3-x2 {
-
 	0%,
 	100% {
 		x2: 15;
@@ -652,7 +638,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 @keyframes ac-sq-line3-y2 {
-
 	0%,
 	100% {
 		y2: 15;
@@ -872,7 +857,9 @@ If your plugin does not need CSS, delete this file.
 	min-width: 0;
 	overflow: hidden;
 	color: var(--text-accent);
-	transition: width 0.15s ease, min-width 0.15s ease;
+	transition:
+		width 0.15s ease,
+		min-width 0.15s ease;
 }
 
 .ac-tool-live-indicator--active {
@@ -959,9 +946,11 @@ If your plugin does not need CSS, delete this file.
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 8px;
 	overflow: hidden;
-	background: color-mix(in srgb,
-			var(--background-secondary) 24%,
-			var(--background-primary));
+	background: color-mix(
+		in srgb,
+		var(--background-secondary) 24%,
+		var(--background-primary)
+	);
 }
 
 .ac-toolcall--file-edit .obsius-tool-call-diff {
@@ -1045,9 +1034,11 @@ If your plugin does not need CSS, delete this file.
 	margin-inline-start: 0;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 8px;
-	background: color-mix(in srgb,
-			var(--background-secondary) 20%,
-			var(--background-primary));
+	background: color-mix(
+		in srgb,
+		var(--background-secondary) 20%,
+		var(--background-primary)
+	);
 }
 
 /* Terminal variant */
@@ -1085,9 +1076,11 @@ If your plugin does not need CSS, delete this file.
 	padding: 8px 10px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 8px;
-	background: color-mix(in srgb,
-			var(--background-secondary) 60%,
-			var(--background-primary));
+	background: color-mix(
+		in srgb,
+		var(--background-secondary) 60%,
+		var(--background-primary)
+	);
 	font-size: 13px;
 	user-select: text;
 	max-width: 100%;
@@ -1135,7 +1128,8 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-muted);
 }
 
-.obsius-message-plan-entry.obsius-plan-status-completed .obsius-message-plan-entry-text {
+.obsius-message-plan-entry.obsius-plan-status-completed
+	.obsius-message-plan-entry-text {
 	text-decoration: line-through;
 }
 
@@ -1143,9 +1137,9 @@ If your plugin does not need CSS, delete this file.
 	font-weight: 600;
 }
 
-.obsius-message-plan-entry.obsius-plan-status-in_progress .obsius-message-plan-entry-icon {
+.obsius-message-plan-entry.obsius-plan-status-in_progress
+	.obsius-message-plan-entry-icon {
 	color: var(--interactive-accent);
-}
 }
 
 /* Permission Request */
@@ -1205,13 +1199,21 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-message-permission-request-result.obsius-selected.obsius-result-allow {
-	background-color: color-mix(in srgb, var(--color-green) 36%, var(--background-secondary)) !important;
+	background-color: color-mix(
+		in srgb,
+		var(--color-green) 36%,
+		var(--background-secondary)
+	) !important;
 	color: white;
 	border: none;
 }
 
 .obsius-message-permission-request-result.obsius-selected.obsius-result-deny {
-	background-color: color-mix(in srgb, var(--color-red) 34%, var(--background-secondary)) !important;
+	background-color: color-mix(
+		in srgb,
+		var(--color-red) 34%,
+		var(--background-secondary)
+	) !important;
 	color: white;
 	border: none;
 }
@@ -1230,7 +1232,10 @@ If your plugin does not need CSS, delete this file.
 	cursor: pointer;
 	font-size: 13px;
 	font-weight: 600;
-	transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+	transition:
+		background-color 0.16s ease,
+		border-color 0.16s ease,
+		color 0.16s ease;
 	min-width: 80px;
 	text-align: center;
 	opacity: 1;
@@ -1254,32 +1259,68 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Special kinds */
-.obsius-permission-option.obsius-permission-kind-allow_always:not(.obsius-selected):not(.obsius-disabled),
-.obsius-permission-option.obsius-permission-kind-allow_once:not(.obsius-selected):not(.obsius-disabled) {
-	background-color: color-mix(in srgb, var(--color-green) 36%, var(--background-secondary)) !important;
+.obsius-permission-option.obsius-permission-kind-allow_always:not(
+		.obsius-selected
+	):not(.obsius-disabled),
+.obsius-permission-option.obsius-permission-kind-allow_once:not(
+		.obsius-selected
+	):not(.obsius-disabled) {
+	background-color: color-mix(
+		in srgb,
+		var(--color-green) 36%,
+		var(--background-secondary)
+	) !important;
 	color: white !important;
 	border: none !important;
 }
 
-.obsius-permission-option.obsius-permission-kind-reject_once:not(.obsius-selected):not(.obsius-disabled),
-.obsius-permission-option.obsius-permission-kind-reject_always:not(.obsius-selected):not(.obsius-disabled) {
-	background-color: color-mix(in srgb, var(--color-red) 34%, var(--background-secondary)) !important;
+.obsius-permission-option.obsius-permission-kind-reject_once:not(
+		.obsius-selected
+	):not(.obsius-disabled),
+.obsius-permission-option.obsius-permission-kind-reject_always:not(
+		.obsius-selected
+	):not(.obsius-disabled) {
+	background-color: color-mix(
+		in srgb,
+		var(--color-red) 34%,
+		var(--background-secondary)
+	) !important;
 	color: white !important;
 	border: none !important;
 }
 
-.obsius-permission-option.obsius-permission-kind-allow_always:not(.obsius-selected):not(.obsius-disabled):hover,
-.obsius-permission-option.obsius-permission-kind-allow_once:not(.obsius-selected):not(.obsius-disabled):hover {
-	background-color: color-mix(in srgb, var(--color-green) 44%, var(--background-secondary)) !important;
+.obsius-permission-option.obsius-permission-kind-allow_always:not(
+		.obsius-selected
+	):not(.obsius-disabled):hover,
+.obsius-permission-option.obsius-permission-kind-allow_once:not(
+		.obsius-selected
+	):not(.obsius-disabled):hover {
+	background-color: color-mix(
+		in srgb,
+		var(--color-green) 44%,
+		var(--background-secondary)
+	) !important;
 }
 
-.obsius-permission-option.obsius-permission-kind-reject_once:not(.obsius-selected):not(.obsius-disabled):hover,
-.obsius-permission-option.obsius-permission-kind-reject_always:not(.obsius-selected):not(.obsius-disabled):hover {
-	background-color: color-mix(in srgb, var(--color-red) 42%, var(--background-secondary)) !important;
+.obsius-permission-option.obsius-permission-kind-reject_once:not(
+		.obsius-selected
+	):not(.obsius-disabled):hover,
+.obsius-permission-option.obsius-permission-kind-reject_always:not(
+		.obsius-selected
+	):not(.obsius-disabled):hover {
+	background-color: color-mix(
+		in srgb,
+		var(--color-red) 42%,
+		var(--background-secondary)
+	) !important;
 }
 
 /* Normal option button hover (no kind specified) */
-.obsius-permission-option:not(.obsius-permission-kind-allow_always):not(.obsius-permission-kind-allow_once):not(.obsius-permission-kind-reject_once):not(.obsius-permission-kind-reject_always):not(.obsius-disabled):not(.obsius-selected):hover {
+.obsius-permission-option:not(.obsius-permission-kind-allow_always):not(
+		.obsius-permission-kind-allow_once
+	):not(.obsius-permission-kind-reject_once):not(
+		.obsius-permission-kind-reject_always
+	):not(.obsius-disabled):not(.obsius-selected):hover {
 	background-color: var(--background-modifier-hover) !important;
 }
 
@@ -1322,7 +1363,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-agent-header-selector .obsius-selector-icon svg,
-.obsius-agent-header-selector .obsius-selector-icon>span {
+.obsius-agent-header-selector .obsius-selector-icon > span {
 	width: 18px;
 	height: 18px;
 }
@@ -1343,7 +1384,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-agent-header-label .obsius-selector-icon svg,
-.obsius-agent-header-label .obsius-selector-icon>span {
+.obsius-agent-header-label .obsius-selector-icon > span {
 	width: 18px;
 	height: 18px;
 }
@@ -1716,13 +1757,18 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-inline-context-badge {
-	background-color: color-mix(in srgb,
-			var(--interactive-accent) 22%,
-			var(--background-secondary));
+	background-color: color-mix(
+		in srgb,
+		var(--interactive-accent) 22%,
+		var(--background-secondary)
+	);
 	color: var(--text-normal);
-	border: 1px solid color-mix(in srgb,
+	border: 1px solid
+		color-mix(
+			in srgb,
 			var(--interactive-accent) 38%,
-			var(--background-modifier-border));
+			var(--background-modifier-border)
+		);
 }
 
 .obsius-inline-context-badge-clickable {
@@ -1730,9 +1776,11 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-inline-context-badge:hover {
-	background-color: color-mix(in srgb,
-			var(--interactive-accent) 30%,
-			var(--background-modifier-hover));
+	background-color: color-mix(
+		in srgb,
+		var(--interactive-accent) 30%,
+		var(--background-modifier-hover)
+	);
 }
 
 .obsius-inline-context-badge .obsius-inline-mention-name {
@@ -1795,9 +1843,11 @@ If your plugin does not need CSS, delete this file.
 	gap: 3px;
 	padding: 1px 6px;
 	border-radius: var(--radius-s);
-	background-color: color-mix(in srgb,
-			var(--interactive-accent) 15%,
-			transparent);
+	background-color: color-mix(
+		in srgb,
+		var(--interactive-accent) 15%,
+		transparent
+	);
 	color: var(--text-muted);
 	font-size: 0.88em;
 	line-height: var(--line-height-normal);
@@ -1808,9 +1858,11 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-auto-mention-fixed:hover {
-	background-color: color-mix(in srgb,
-			var(--interactive-accent) 25%,
-			transparent);
+	background-color: color-mix(
+		in srgb,
+		var(--interactive-accent) 25%,
+		transparent
+	);
 	color: var(--text-normal);
 }
 
@@ -1929,7 +1981,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-selector-icon svg,
-.obsius-selector-icon>span {
+.obsius-selector-icon > span {
 	width: 14px;
 	height: 14px;
 }
@@ -2010,7 +2062,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-selector-option-icon svg,
-.obsius-selector-option-icon>span {
+.obsius-selector-option-icon > span {
 	width: 16px;
 	height: 16px;
 }
@@ -2142,7 +2194,9 @@ If your plugin does not need CSS, delete this file.
 
 .obsius-meter-fill {
 	stroke: var(--interactive-accent);
-	transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
+	transition:
+		stroke-dashoffset 0.3s ease,
+		stroke 0.3s ease;
 }
 
 .obsius-context-meter-percent {
@@ -2284,12 +2338,12 @@ If your plugin does not need CSS, delete this file.
 	min-width: 0;
 }
 
-.obsius-message-content-item>.ac-collapsible,
-.obsius-message-content-item>.obsius-text-with-mentions,
-.obsius-message-content-item>.obsius-markdown-text-renderer,
-.obsius-message-content-item>.obsius-message-plan,
-.obsius-message-content-item>.obsius-message-image,
-.obsius-message-content-item>.obsius-message-images-strip {
+.obsius-message-content-item > .ac-collapsible,
+.obsius-message-content-item > .obsius-text-with-mentions,
+.obsius-message-content-item > .obsius-markdown-text-renderer,
+.obsius-message-content-item > .obsius-message-plan,
+.obsius-message-content-item > .obsius-message-image,
+.obsius-message-content-item > .obsius-message-images-strip {
 	margin: 0;
 }
 
@@ -2308,9 +2362,11 @@ If your plugin does not need CSS, delete this file.
 	margin: 0 -16px;
 	margin-bottom: 4px;
 	border-bottom: 1px solid var(--background-modifier-border);
-	background: color-mix(in srgb,
-			var(--background-secondary) 72%,
-			var(--background-primary));
+	background: color-mix(
+		in srgb,
+		var(--background-secondary) 72%,
+		var(--background-primary)
+	);
 	font-size: 11px;
 	font-weight: 600;
 	letter-spacing: 0.04em;
@@ -2835,21 +2891,27 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-session-history-item--clickable:hover {
-	background: color-mix(in srgb,
-			var(--interactive-accent) 7%,
-			var(--background-modifier-hover));
+	background: color-mix(
+		in srgb,
+		var(--interactive-accent) 7%,
+		var(--background-modifier-hover)
+	);
 }
 
 .obsius-session-history-item--current {
-	background: color-mix(in srgb,
-			var(--interactive-accent) 13%,
-			var(--background-primary));
+	background: color-mix(
+		in srgb,
+		var(--interactive-accent) 13%,
+		var(--background-primary)
+	);
 }
 
-.obsius-session-history-item--current+.obsius-session-history-item {
-	border-top-color: color-mix(in srgb,
-			var(--interactive-accent) 18%,
-			var(--background-modifier-border));
+.obsius-session-history-item--current + .obsius-session-history-item {
+	border-top-color: color-mix(
+		in srgb,
+		var(--interactive-accent) 18%,
+		var(--background-modifier-border)
+	);
 }
 
 .obsius-session-history-item-icon {
@@ -3694,7 +3756,6 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-faint);
 }
 
-
 /* ============================================================
    Session Changes Panel (Codex-style)
    ============================================================ */
@@ -3755,7 +3816,9 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
 	cursor: pointer;
-	transition: background-color 0.1s ease, color 0.1s ease;
+	transition:
+		background-color 0.1s ease,
+		color 0.1s ease;
 }
 
 .obsius-changes-btn:hover:not(:disabled) {
@@ -3891,7 +3954,9 @@ If your plugin does not need CSS, delete this file.
 	box-shadow: none !important;
 	min-width: unset !important;
 	min-height: unset !important;
-	transition: background-color 0.1s ease, color 0.1s ease;
+	transition:
+		background-color 0.1s ease,
+		color 0.1s ease;
 }
 
 .obsius-changes-file-action:disabled {
@@ -3905,7 +3970,11 @@ If your plugin does not need CSS, delete this file.
 }
 
 .obsius-changes-file-action--accept:hover:not(:disabled) {
-	background: color-mix(in srgb, var(--color-green) 15%, transparent) !important;
+	background: color-mix(
+		in srgb,
+		var(--color-green) 15%,
+		transparent
+	) !important;
 	color: var(--color-green);
 }
 

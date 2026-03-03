@@ -123,7 +123,8 @@ export function TextWithMentions({
 	autoMentionContext,
 }: TextWithMentionsProps): React.ReactElement {
 	// Match @[[filename]], context tokens, and slash command tokens
-	const mentionRegex = /@\[obsius-context:[A-Za-z0-9_-]+\]|@\[obsius-slash:([^\]]+)\]|@\[\[([^\]]+)\]\]/g;
+	const mentionRegex =
+		/@\[obsius-context:[A-Za-z0-9_-]+\]|@\[obsius-slash:([^\]]+)\]|@\[\[([^\]]+)\]\]/g;
 	const parts: React.ReactNode[] = [];
 
 	if (autoMentionContext) {
@@ -221,9 +222,7 @@ export function TextWithMentions({
 							className="obsius-inline-mention-icon"
 							size={12}
 						/>
-						<span className="obsius-inline-mention-name">
-							{file.basename}
-						</span>
+						<span className="obsius-inline-mention-name">{file.basename}</span>
 					</span>,
 				);
 			} else {

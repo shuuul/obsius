@@ -11,7 +11,10 @@ interface MessageRendererProps {
 	message: ChatMessage;
 	plugin: AgentClientPlugin;
 	agentClient?: IAgentClient;
-	activeSendingToolCallTarget?: { messageId: string; contentIndex: number } | null;
+	activeSendingToolCallTarget?: {
+		messageId: string;
+		contentIndex: number;
+	} | null;
 	/** Callback to approve a permission request */
 	onApprovePermission?: (requestId: string, optionId: string) => Promise<void>;
 }
@@ -27,7 +30,10 @@ function groupContent(
 	| { type: "single"; item: MessageContent; index: number }
 > {
 	const groups: Array<
-		| { type: "images"; items: Array<{ content: MessageContent; index: number }> }
+		| {
+				type: "images";
+				items: Array<{ content: MessageContent; index: number }>;
+		  }
 		| { type: "single"; item: MessageContent; index: number }
 	> = [];
 
@@ -63,7 +69,9 @@ export function MessageRenderer({
 	onApprovePermission,
 }: MessageRendererProps) {
 	const groups = groupContent(message.content);
-	const hasPlanContent = message.content.some((content) => content.type === "plan");
+	const hasPlanContent = message.content.some(
+		(content) => content.type === "plan",
+	);
 
 	return (
 		<div

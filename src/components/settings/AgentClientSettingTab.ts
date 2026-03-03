@@ -37,10 +37,20 @@ export class AgentClientSettingTab extends PluginSettingTab {
 
 		renderCoreSections(containerEl, this.plugin, () => this.display());
 
-		renderSectionHeader(containerEl, "bot", "Built-in agents", "Configure built-in AI agent connections");
+		renderSectionHeader(
+			containerEl,
+			"bot",
+			"Built-in agents",
+			"Configure built-in AI agent connections",
+		);
 		renderBuiltInAgentSettings(containerEl, this.plugin);
 
-		renderSectionHeader(containerEl, "puzzle", "Custom agents", "Add your own agent integrations");
+		renderSectionHeader(
+			containerEl,
+			"puzzle",
+			"Custom agents",
+			"Add your own agent integrations",
+		);
 		renderCustomAgents(containerEl, this.plugin, {
 			onRefreshDropdown: () => this.refreshAgentDropdown(),
 			onRedisplay: () => this.display(),

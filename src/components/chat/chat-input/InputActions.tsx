@@ -7,10 +7,7 @@ import type {
 	SessionModelState,
 } from "../../../domain/models/chat-session";
 import { SelectorButton, type SelectorOption } from "./SelectorButton";
-import {
-	ContextUsageMeter,
-	type ContextUsage,
-} from "./ContextUsageMeter";
+import { ContextUsageMeter, type ContextUsage } from "./ContextUsageMeter";
 import { getModeIcon, parseModelDisplay } from "./mode-icons";
 import { ProviderLogo, preloadProviderLogos } from "./ProviderLogo";
 
@@ -116,7 +113,10 @@ export function InputActions({
 			)}
 
 			<div className="obsius-input-actions-right">
-				<ContextUsageMeter usage={contextUsage ?? null} isSessionReady={isSessionReady} />
+				<ContextUsageMeter
+					usage={contextUsage ?? null}
+					isSessionReady={isSessionReady}
+				/>
 				<button
 					ref={sendButtonRef}
 					onClick={onSendOrStop}

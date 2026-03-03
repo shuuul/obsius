@@ -47,7 +47,9 @@ export function useModelFiltering(
 		);
 		const filtered = validCandidates
 			.map((modelId) => modelById.get(modelId))
-			.filter((model): model is (typeof available)[number] => model !== undefined);
+			.filter(
+				(model): model is (typeof available)[number] => model !== undefined,
+			);
 
 		const currentInFiltered = filtered.some(
 			(m) => m.modelId === sessionModels.currentModelId,

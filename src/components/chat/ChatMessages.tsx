@@ -61,9 +61,9 @@ export function ChatMessages({
 	const svgRef = useRef<SVGSVGElement>(null);
 	const isSpinning = !isSessionReady || isRestoringSession;
 	const prevIsSpinningRef = useRef(isSpinning);
-	const [spinState, setSpinState] = useState<'spinning' | 'stopping' | 'stopped'>(
-		isSpinning ? 'spinning' : 'stopped'
-	);
+	const [spinState, setSpinState] = useState<
+		"spinning" | "stopping" | "stopped"
+	>(isSpinning ? "spinning" : "stopped");
 
 	useEffect(() => {
 		let timeoutId: number;
@@ -71,7 +71,7 @@ export function ChatMessages({
 		prevIsSpinningRef.current = isSpinning;
 
 		if (isSpinning) {
-			setSpinState('spinning');
+			setSpinState("spinning");
 			if (svgRef.current) {
 				const style = svgRef.current.style;
 				style.removeProperty("animation");
@@ -80,13 +80,13 @@ export function ChatMessages({
 			}
 		} else if (wasSpinning && !isSpinning) {
 			// Just stopped spinning
-			setSpinState('stopping');
+			setSpinState("stopping");
 			if (svgRef.current) {
 				const computedStyle = window.getComputedStyle(svgRef.current);
-				const matrix = computedStyle.getPropertyValue('transform');
+				const matrix = computedStyle.getPropertyValue("transform");
 				let currentAngle = 0;
-				if (matrix && matrix !== 'none') {
-					const values = matrix.split('(')[1].split(')')[0].split(',');
+				if (matrix && matrix !== "none") {
+					const values = matrix.split("(")[1].split(")")[0].split(",");
 					const a = parseFloat(values[0]);
 					const b = parseFloat(values[1]);
 					currentAngle = Math.round(Math.atan2(b, a) * (180 / Math.PI));
@@ -109,11 +109,14 @@ export function ChatMessages({
 				const distance = targetAngle - currentAngle;
 				const duration = Math.max(0.8, distance / 260); // Roughly match velocity
 
-				style.setProperty("transition", `transform ${duration}s cubic-bezier(0.25, 1, 0.5, 1)`);
+				style.setProperty(
+					"transition",
+					`transform ${duration}s cubic-bezier(0.25, 1, 0.5, 1)`,
+				);
 				style.setProperty("transform", `rotate(${targetAngle}deg)`);
 
 				timeoutId = window.setTimeout(() => {
-					setSpinState('stopped');
+					setSpinState("stopped");
 				}, duration * 1000);
 			}
 		}
@@ -204,8 +207,10 @@ export function ChatMessages({
 		latestRunningToolCall && !latestRunningToolCall.isFileEdit
 			? latestRunningToolCall
 			: null;
-	const showInlineToolCallIndicator = isSending && !!latestRunningToolCallTarget;
-	const hasRunningFileEditTool = isSending && !!latestRunningToolCall?.isFileEdit;
+	const showInlineToolCallIndicator =
+		isSending && !!latestRunningToolCallTarget;
+	const hasRunningFileEditTool =
+		isSending && !!latestRunningToolCall?.isFileEdit;
 
 	return (
 		<div ref={containerRef} className="obsius-chat-view-messages">
@@ -213,7 +218,7 @@ export function ChatMessages({
 				<div className="obsius-chat-empty-state">
 					<svg
 						ref={svgRef}
-						className={`obsius-empty-state-icon${spinState === 'spinning' ? " obsius-empty-state-icon--spinning" : ""}`}
+						className={`obsius-empty-state-icon${spinState === "spinning" ? " obsius-empty-state-icon--spinning" : ""}`}
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 100 100"
 					>
@@ -250,23 +255,55 @@ export function ChatMessages({
 							plugin={plugin}
 							agentClient={agentClient}
 							onApprovePermission={onApprovePermission}
-							activeSendingToolCallTarget={showInlineToolCallIndicator ? latestRunningToolCallTarget : null}
+							activeSendingToolCallTarget={
+								showInlineToolCallIndicator ? latestRunningToolCallTarget : null
+							}
 						/>
 					))}
-					{isSending && !showInlineToolCallIndicator && !hasRunningFileEditTool && (
-						<div className="ac-loading">
-							<svg className="ac-loading__spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-								<line className="ac-sq-line-0" x1="15" y1="15" x2="85" y2="15" />
-								<line className="ac-sq-line-1" x1="85" y1="15" x2="85" y2="85" />
-								<line className="ac-sq-line-2" x1="85" y1="85" x2="15" y2="85" />
-								<line className="ac-sq-line-3" x1="15" y1="85" x2="15" y2="15" />
-								<circle className="ac-sq-dot-0" r="6" cx="15" cy="15" />
-								<circle className="ac-sq-dot-1" r="6" cx="85" cy="15" />
-								<circle className="ac-sq-dot-2" r="6" cx="85" cy="85" />
-								<circle className="ac-sq-dot-3" r="6" cx="15" cy="85" />
-							</svg>
-						</div>
-					)}
+					{isSending &&
+						!showInlineToolCallIndicator &&
+						!hasRunningFileEditTool && (
+							<div className="ac-loading">
+								<svg
+									className="ac-loading__spinner"
+									viewBox="0 0 100 100"
+									xmlns="http://www.w3.org/2000/svg"
+								>
+									<line
+										className="ac-sq-line-0"
+										x1="15"
+										y1="15"
+										x2="85"
+										y2="15"
+									/>
+									<line
+										className="ac-sq-line-1"
+										x1="85"
+										y1="15"
+										x2="85"
+										y2="85"
+									/>
+									<line
+										className="ac-sq-line-2"
+										x1="85"
+										y1="85"
+										x2="15"
+										y2="85"
+									/>
+									<line
+										className="ac-sq-line-3"
+										x1="15"
+										y1="85"
+										x2="15"
+										y2="15"
+									/>
+									<circle className="ac-sq-dot-0" r="6" cx="15" cy="15" />
+									<circle className="ac-sq-dot-1" r="6" cx="85" cy="15" />
+									<circle className="ac-sq-dot-2" r="6" cx="85" cy="85" />
+									<circle className="ac-sq-dot-3" r="6" cx="15" cy="85" />
+								</svg>
+							</div>
+						)}
 					{!isSending && messages.length > 0 && (
 						<button
 							className="obsius-copy-session-btn"

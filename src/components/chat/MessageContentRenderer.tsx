@@ -15,7 +15,10 @@ interface MessageContentRendererProps {
 	contentIndex?: number;
 	messageRole?: "user" | "assistant";
 	hasPlanContent?: boolean;
-	activeSendingToolCallTarget?: { messageId: string; contentIndex: number } | null;
+	activeSendingToolCallTarget?: {
+		messageId: string;
+		contentIndex: number;
+	} | null;
 	agentClient?: IAgentClient;
 	/** Callback to approve a permission request */
 	onApprovePermission?: (requestId: string, optionId: string) => Promise<void>;
@@ -91,12 +94,15 @@ export function MessageContentRenderer({
 								role="listitem"
 								className={`obsius-message-plan-entry obsius-plan-status-${entry.status}`}
 							>
-								<span className="obsius-message-plan-entry-icon" aria-hidden="true">
+								<span
+									className="obsius-message-plan-entry-icon"
+									aria-hidden="true"
+								>
 									{entry.status === "completed"
-											? "\u00A0"
-											: entry.status === "in_progress"
-												? "◉"
-												: "○"}
+										? "\u00A0"
+										: entry.status === "in_progress"
+											? "◉"
+											: "○"}
 								</span>
 								<span className="obsius-message-plan-entry-text">
 									{entry.content}

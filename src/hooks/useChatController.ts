@@ -52,8 +52,7 @@ export function useChatController(
 		(
 			currentSettings: ReturnType<(typeof plugin.settingsStore)["getSnapshot"]>,
 			agentId: string,
-		): string =>
-			plugin.getApiKeyForAgentId(agentId, currentSettings),
+		): string => plugin.getApiKeyForAgentId(agentId, currentSettings),
 		[plugin],
 	);
 	const resolveSecretBindingEnvForAgent = useCallback(

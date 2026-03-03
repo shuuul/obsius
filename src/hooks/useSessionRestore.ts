@@ -28,10 +28,7 @@ export interface UseSessionRestoreReturn {
 	dismiss: () => void;
 	keepFile: (changePath: string) => void;
 
-	revertFile: (
-		changePath: string,
-		io: FileIo,
-	) => Promise<RevertFileResult>;
+	revertFile: (changePath: string, io: FileIo) => Promise<RevertFileResult>;
 	revertChanges: (
 		io: FileIo,
 	) => Promise<{ reverted: string[]; conflicts: string[] }>;
@@ -87,9 +84,7 @@ export function useSessionRestore(): UseSessionRestoreReturn {
 	const keepFile = useCallback(
 		(changePath: string) => {
 			if (!changeSet) return;
-			const change = changeSet.changes.find(
-				(item) => item.path === changePath,
-			);
+			const change = changeSet.changes.find((item) => item.path === changePath);
 			if (change) {
 				managerRef.current.keepFile(change);
 			}
@@ -109,14 +104,9 @@ export function useSessionRestore(): UseSessionRestoreReturn {
 	);
 
 	const revertFile = useCallback(
-		async (
-			changePath: string,
-			io: FileIo,
-		): Promise<RevertFileResult> => {
+		async (changePath: string, io: FileIo): Promise<RevertFileResult> => {
 			if (!changeSet) return { reverted: false, conflict: false };
-			const change = changeSet.changes.find(
-				(item) => item.path === changePath,
-			);
+			const change = changeSet.changes.find((item) => item.path === changePath);
 			if (!change) return { reverted: false, conflict: false };
 
 			const result = await managerRef.current.revertFile(change, io);
@@ -154,9 +144,7 @@ export function useSessionRestore(): UseSessionRestoreReturn {
 				const remaining = changeSet.changes.filter(
 					(c) => !revertedSet.has(c.path),
 				);
-				syncState(
-					remaining.length > 0 ? { changes: remaining } : null,
-				);
+				syncState(remaining.length > 0 ? { changes: remaining } : null);
 			}
 
 			return { reverted, conflicts };

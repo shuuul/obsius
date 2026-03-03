@@ -1,4 +1,7 @@
-import type { ChatMessage, ToolKind } from "../../../domain/models/chat-message";
+import type {
+	ChatMessage,
+	ToolKind,
+} from "../../../domain/models/chat-message";
 import { toRelativePath } from "../../../shared/path-utils";
 
 export interface FileChange {

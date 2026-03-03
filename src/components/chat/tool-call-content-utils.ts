@@ -1,7 +1,10 @@
 import * as Diff from "diff";
 import type { MessageContent } from "../../domain/models/chat-message";
 
-type ToolCallContent = Extract<MessageContent, { type: "tool_call" }>["content"];
+type ToolCallContent = Extract<
+	MessageContent,
+	{ type: "tool_call" }
+>["content"];
 
 export function countDiffStats(
 	content: ToolCallContent,

@@ -28,11 +28,7 @@ export function CollapsibleSection({
 				role={collapsible ? "button" : undefined}
 				tabIndex={collapsible ? 0 : undefined}
 				aria-expanded={collapsible ? isExpanded : undefined}
-				onClick={
-					collapsible
-						? () => setExpanded((v) => !v)
-						: undefined
-				}
+				onClick={collapsible ? () => setExpanded((v) => !v) : undefined}
 				onKeyDown={(e) => {
 					if (!collapsible) return;
 					if (e.key === "Enter" || e.key === " ") {

@@ -2,7 +2,10 @@ import * as React from "react";
 
 const { useMemo, useCallback, useEffect } = React;
 
-import { SelectorButton, type SelectorOption } from "./chat-input/SelectorButton";
+import {
+	SelectorButton,
+	type SelectorOption,
+} from "./chat-input/SelectorButton";
 import { ProviderLogo, preloadProviderLogos } from "./chat-input/ProviderLogo";
 import { getAgentSlug, getAgentFallbackIcon } from "./chat-input/mode-icons";
 import { ObsidianIcon } from "./ObsidianIcon";

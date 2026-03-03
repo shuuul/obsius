@@ -29,8 +29,7 @@ export function RawPatchView({
 						);
 					}
 
-					const isFileHeader =
-						line.startsWith("---") || line.startsWith("+++");
+					const isFileHeader = line.startsWith("---") || line.startsWith("+++");
 					const isAdded = !isFileHeader && line.startsWith("+");
 					const isRemoved = !isFileHeader && line.startsWith("-");
 

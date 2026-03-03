@@ -1,5 +1,8 @@
 import { useCallback, useState } from "react";
-import type { SessionModeState, SessionModelState } from "../../domain/models/chat-session";
+import type {
+	SessionModeState,
+	SessionModelState,
+} from "../../domain/models/chat-session";
 import type { Logger } from "../../shared/logger";
 
 interface UseHistoryLoadStateOptions {
@@ -25,17 +28,22 @@ export function useHistoryLoadState({
 			modes?: SessionModeState,
 			models?: SessionModelState,
 		) => {
-			logger.log(`[useChatController] Session loaded/resumed/forked: ${sessionId}`, {
-				modes,
-				models,
-			});
+			logger.log(
+				`[useChatController] Session loaded/resumed/forked: ${sessionId}`,
+				{
+					modes,
+					models,
+				},
+			);
 			updateSessionFromLoad(sessionId, modes, models);
 		},
 		[logger, updateSessionFromLoad],
 	);
 
 	const handleLoadStart = useCallback(() => {
-		logger.log("[useChatController] session/load started, ignoring history replay");
+		logger.log(
+			"[useChatController] session/load started, ignoring history replay",
+		);
 		setIsLoadingSessionHistory(true);
 		clearMessages();
 	}, [logger, clearMessages]);

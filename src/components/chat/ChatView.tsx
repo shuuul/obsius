@@ -1,8 +1,4 @@
-import {
-	ItemView,
-	type WorkspaceLeaf,
-	type IconName,
-} from "obsidian";
+import { ItemView, type WorkspaceLeaf, type IconName } from "obsidian";
 import type {
 	ChatViewType,
 	ChatViewContextReference,

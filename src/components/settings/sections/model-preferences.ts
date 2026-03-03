@@ -46,7 +46,13 @@ export function renderAgentModelSettings(
 			}
 		};
 
-		renderCandidateModelPicker(root, plugin, agentId, models, renderModeMapping);
+		renderCandidateModelPicker(
+			root,
+			plugin,
+			agentId,
+			models,
+			renderModeMapping,
+		);
 		modeMappingContainer = root.createDiv();
 		renderModeMapping();
 	};
@@ -79,7 +85,10 @@ export function renderAgentModelSettings(
 		const retryButton = renderLoadingState("Loading models and modes...");
 		retryButton.disabled = true;
 		const loaded = await settingsPlugin.refreshAgentCatalog(agentId, { force });
-		if (loaded && (plugin.settings.cachedAgentModels?.[agentId]?.length ?? 0) > 0) {
+		if (
+			loaded &&
+			(plugin.settings.cachedAgentModels?.[agentId]?.length ?? 0) > 0
+		) {
 			renderReadyState();
 			return;
 		}

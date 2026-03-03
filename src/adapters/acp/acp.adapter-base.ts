@@ -1,7 +1,5 @@
 import * as acp from "@agentclientprotocol/sdk";
-import type {
-	AgentConfig,
-} from "../../domain/ports/agent-client.port";
+import type { AgentConfig } from "../../domain/ports/agent-client.port";
 import type { PermissionOption } from "../../domain/models/chat-message";
 import type { ProcessError } from "../../domain/models/agent-error";
 import type { SessionUpdate } from "../../domain/models/session-update";
@@ -99,9 +97,7 @@ export abstract class AcpAdapterBase {
 		this.terminalManager = new TerminalManager(plugin);
 	}
 
-	abstract sessionUpdate(
-		params: acp.SessionNotification,
-	): Promise<void>;
+	abstract sessionUpdate(params: acp.SessionNotification): Promise<void>;
 	abstract requestPermission(
 		params: acp.RequestPermissionRequest,
 	): Promise<acp.RequestPermissionResponse>;

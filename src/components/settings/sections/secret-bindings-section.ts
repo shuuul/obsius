@@ -68,7 +68,8 @@ export function renderGlobalSecretBindings(
 					}),
 			)
 			.addButton((button) => {
-				const label = binding.secretId.length > 0 ? binding.secretId : "Link...";
+				const label =
+					binding.secretId.length > 0 ? binding.secretId : "Link...";
 				button
 					.setButtonText(label)
 					.setTooltip("Choose keychain secret")
