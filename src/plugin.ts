@@ -1,20 +1,22 @@
 import {
 	Plugin,
-	WorkspaceLeaf,
 	Notice,
 	addIcon,
 	type IconName,
 } from "obsidian";
 import { ChatView, VIEW_TYPE_CHAT } from "./components/chat/ChatView";
-import { ChatViewRegistry } from "./shared/chat-view-registry";
+import { ChatViewRegistry } from "./application/services/chat-view-registry";
 import {
 	createSettingsStore,
 	type SettingsStore,
 } from "./adapters/obsidian/settings-store.adapter";
+import { NoteMentionService } from "./adapters/obsidian/mention-service";
+import { ObsidianVaultAdapter } from "./adapters/obsidian/vault.adapter";
 import { AgentClientSettingTab } from "./components/settings/AgentClientSettingTab";
 import { AcpAdapter } from "./adapters/acp/acp.adapter";
 import { AgentRuntimeManager } from "./adapters/acp/agent-runtime-manager";
-import type { AgentConfig } from "./domain/ports/agent-client.port";
+import type { IAgentClient } from "./domain/ports/agent-client.port";
+import type { IVaultAccess } from "./domain/ports/vault-access.port";
 import {
 	AgentEnvVar,
 	AgentSecretBinding,
@@ -23,7 +25,6 @@ import {
 	CodexAgentSettings,
 	OpenCodeAgentSettings,
 	CustomAgentSettings,
-	type BaseAgentSettings,
 } from "./domain/models/agent-config";
 import type { SavedSessionInfo } from "./domain/models/session-info";
 import { initializeLogger } from "./shared/logger";
@@ -33,14 +34,10 @@ import {
 	SETTINGS_SCHEMA_VERSION,
 } from "./shared/settings-schema";
 import {
-	broadcastCancel,
-	broadcastPrompt,
-	broadcastSend,
 	ensureDefaultAgentId,
 	getAvailableAgents,
 	openChatWithAgent,
 	registerAgentCommands,
-	registerBroadcastCommands,
 	registerPermissionCommands,
 } from "./plugin/agent-ops";
 import {
@@ -49,16 +46,19 @@ import {
 	registerEditorContextMenus,
 } from "./plugin/editor-context";
 import { checkForUpdates } from "./plugin/update-check";
-import { createNewChatLeaf, focusChatTextarea } from "./plugin/view-helpers";
 import { registerInlineEditCommand } from "./plugin/inline-edit";
 import type { ChatContextReference } from "./shared/chat-context-token";
+import type { IMentionService } from "./shared/mention-utils";
+import { resolveShellEnvironment } from "./shared/shell-utils";
+import { refreshAgentCatalogForPlugin } from "./plugin/catalog";
 import {
 	getApiKeyForAgentId,
 	getSecretBindingEnvForAgentId,
-} from "./shared/secret-storage";
-import { resolveVaultBasePath } from "./shared/vault-path";
-import { toAgentConfig } from "./shared/settings-utils";
-import { resolveShellEnvironment } from "./shared/shell-utils";
+} from "./adapters/obsidian/secret-storage.adapter";
+import {
+	activateChatView,
+	openNewChatViewWithAgent,
+} from "./plugin/view-actions";
 
 export type { AgentEnvVar, AgentSecretBinding, CustomAgentSettings };
 
@@ -87,25 +87,6 @@ export type TerminalPermissionMode =
 	| "prompt_once"
 	| "always_allow"
 	| "always_deny";
-
-const KEYCHAIN_ONLY_ENV_KEYS = new Set([
-	"ANTHROPIC_API_KEY",
-	"OPENAI_API_KEY",
-	"GEMINI_API_KEY",
-]);
-
-function removeKeychainOnlyEnv(
-	env: Record<string, string>,
-): Record<string, string> {
-	const cleaned: Record<string, string> = {};
-	for (const [key, value] of Object.entries(env)) {
-		if (KEYCHAIN_ONLY_ENV_KEYS.has(key)) {
-			continue;
-		}
-		cleaned[key] = value;
-	}
-	return cleaned;
-}
 
 export interface AgentClientPluginSettings {
 	schemaVersion: number;
@@ -158,6 +139,13 @@ export interface AgentClientPluginSettings {
 	modeModelDefaults?: Record<string, Record<string, string>>;
 	// Auto-remembered last model per mode per agent (agentId → modeId → modelId)
 	lastModeModels?: Record<string, Record<string, string>>;
+}
+
+export interface ChatSessionDependencies {
+	agentClient: IAgentClient;
+	vaultAccess: IVaultAccess;
+	mentionService: IMentionService;
+	dispose: () => void;
 }
 
 const DEFAULT_SETTINGS: AgentClientPluginSettings = {
@@ -252,7 +240,6 @@ export default class AgentClientPlugin extends Plugin {
 		// Register agent-specific commands
 		this.registerAgentCommands();
 		this.registerPermissionCommands();
-		this.registerBroadcastCommands();
 		registerEditorContextMenus(this);
 		registerInlineEditCommand(this);
 
@@ -283,6 +270,18 @@ export default class AgentClientPlugin extends Plugin {
 			this._sessionAdapters.set(sessionKey, adapter);
 		}
 		return adapter;
+	}
+
+	createChatSessionDependencies(sessionKey: string): ChatSessionDependencies {
+		const mentionService = new NoteMentionService(this);
+		const vaultAccess = new ObsidianVaultAdapter(this, mentionService);
+		const agentClient = this.getOrCreateSessionAdapter(sessionKey);
+		return {
+			agentClient,
+			vaultAccess,
+			mentionService,
+			dispose: () => mentionService.destroy(),
+		};
 	}
 
 	/**
@@ -326,40 +325,7 @@ export default class AgentClientPlugin extends Plugin {
 	}
 
 	async activateView() {
-		const { workspace } = this.app;
-
-		let leaf: WorkspaceLeaf | null = null;
-		const leaves = workspace.getLeavesOfType(VIEW_TYPE_CHAT);
-
-		if (leaves.length > 0) {
-			// Find the leaf matching lastActiveChatViewId, or fall back to first leaf
-			const focusedId = this.lastActiveChatViewId;
-			if (focusedId) {
-				leaf =
-					leaves.find((l) => (l.view as ChatView)?.viewId === focusedId) ||
-					leaves[0];
-			} else {
-				leaf = leaves[0];
-			}
-		} else {
-			leaf = createNewChatLeaf(
-				this.app,
-				this.settings.chatViewLocation,
-				false,
-				VIEW_TYPE_CHAT,
-			);
-			if (leaf) {
-				await leaf.setViewState({
-					type: VIEW_TYPE_CHAT,
-					active: true,
-				});
-			}
-		}
-
-		if (leaf) {
-			await workspace.revealLeaf(leaf);
-			focusChatTextarea(leaf);
-		}
+		await activateChatView(this, VIEW_TYPE_CHAT);
 	}
 
 	/**
@@ -378,25 +344,7 @@ export default class AgentClientPlugin extends Plugin {
 	 * Always creates a new view (doesn't reuse existing).
 	 */
 	async openNewChatViewWithAgent(agentId: string): Promise<void> {
-		const leaf = createNewChatLeaf(
-			this.app,
-			this.settings.chatViewLocation,
-			true,
-			VIEW_TYPE_CHAT,
-		);
-		if (!leaf) {
-			console.warn("[AgentClient] Failed to create new leaf");
-			return;
-		}
-
-		await leaf.setViewState({
-			type: VIEW_TYPE_CHAT,
-			active: true,
-			state: { initialAgentId: agentId },
-		});
-
-		await this.app.workspace.revealLeaf(leaf);
-		focusChatTextarea(leaf, 0);
+		await openNewChatViewWithAgent(this, VIEW_TYPE_CHAT, agentId);
 	}
 
 	/**
@@ -424,13 +372,6 @@ export default class AgentClientPlugin extends Plugin {
 		registerPermissionCommands(this);
 	}
 
-	/**
-	 * Register broadcast commands for multi-view operations
-	 */
-	private registerBroadcastCommands(): void {
-		registerBroadcastCommands(this);
-	}
-
 	async addContextReferenceToCurrentChat(
 		reference: ChatContextReference,
 	): Promise<boolean> {
@@ -439,27 +380,6 @@ export default class AgentClientPlugin extends Plugin {
 
 	async openContextReference(reference: ChatContextReference): Promise<void> {
 		await openContextReferenceInEditor(this.app, reference);
-	}
-
-	/**
-	 * Copy prompt from active view to all other views
-	 */
-	private broadcastPrompt(): void {
-		broadcastPrompt(this);
-	}
-
-	/**
-	 * Send message in all views that can send
-	 */
-	private async broadcastSend(): Promise<void> {
-		await broadcastSend(this);
-	}
-
-	/**
-	 * Cancel operation in all views
-	 */
-	private async broadcastCancel(): Promise<void> {
-		await broadcastCancel(this);
 	}
 
 	async loadSettings() {
@@ -512,150 +432,33 @@ export default class AgentClientPlugin extends Plugin {
 		ensureDefaultAgentId(this.settings, DEFAULT_SETTINGS.claude.id);
 	}
 
-	private getAgentSettingsById(agentId: string): BaseAgentSettings | null {
-		if (agentId === this.settings.claude.id) {
-			return this.settings.claude;
-		}
-		if (agentId === this.settings.opencode.id) {
-			return this.settings.opencode;
-		}
-		if (agentId === this.settings.codex.id) {
-			return this.settings.codex;
-		}
-		if (agentId === this.settings.gemini.id) {
-			return this.settings.gemini;
-		}
-		return (
-			this.settings.customAgents.find((agent) => agent.id === agentId) || null
-		);
+	getApiKeyForAgentId(
+		agentId: string,
+		settings: AgentClientPluginSettings = this.settings,
+	): string {
+		return getApiKeyForAgentId(this.app.secretStorage, settings, agentId);
 	}
 
-	private buildAgentConfigForCatalog(agentId: string): AgentConfig | null {
-		const agentSettings = this.getAgentSettingsById(agentId);
-		if (!agentSettings) {
-			return null;
-		}
-		const workingDirectory = resolveVaultBasePath(this.app);
-		const baseConfig = toAgentConfig(agentSettings, workingDirectory);
-		const apiKey = getApiKeyForAgentId(
+	getSecretBindingEnvForAgentId(
+		agentId: string,
+		settings: AgentClientPluginSettings = this.settings,
+	): Record<string, string> {
+		return getSecretBindingEnvForAgentId(
 			this.app.secretStorage,
-			this.settings,
+			settings,
 			agentId,
 		);
-		const secretBindingEnv = getSecretBindingEnvForAgentId(
-			this.app.secretStorage,
-			this.settings,
-			agentId,
-		);
-		const mergedEnv = {
-			...removeKeychainOnlyEnv(baseConfig.env || {}),
-			...secretBindingEnv,
-		};
-
-		if (agentId === this.settings.claude.id) {
-			return {
-				...baseConfig,
-				env: {
-					...mergedEnv,
-					ANTHROPIC_API_KEY: apiKey,
-				},
-			};
-		}
-		if (agentId === this.settings.codex.id) {
-			return {
-				...baseConfig,
-				env: {
-					...mergedEnv,
-					OPENAI_API_KEY: apiKey,
-				},
-			};
-		}
-		if (agentId === this.settings.gemini.id) {
-			return {
-				...baseConfig,
-				env: {
-					...mergedEnv,
-					GEMINI_API_KEY: apiKey,
-				},
-			};
-		}
-
-		return {
-			...baseConfig,
-			env: mergedEnv,
-		};
 	}
 
 	async refreshAgentCatalog(
 		agentId: string,
 		options?: { force?: boolean },
 	): Promise<boolean> {
-		const existingModels = this.settings.cachedAgentModels?.[agentId];
-		const existingModes = this.settings.cachedAgentModes?.[agentId];
-		if (
-			!options?.force &&
-			(existingModels?.length ?? 0) > 0 &&
-			(existingModes?.length ?? 0) > 0
-		) {
-			return true;
-		}
-
-		const inFlight = this.agentCatalogRefreshInFlight.get(agentId);
-		if (inFlight) {
-			return inFlight;
-		}
-
-		const task = (async (): Promise<boolean> => {
-			const config = this.buildAgentConfigForCatalog(agentId);
-			if (!config) {
-				return false;
-			}
-
-			const adapter = new AcpAdapter(this);
-			try {
-				await adapter.initialize(config);
-				const session = await adapter.newSession(config.workingDirectory);
-				await this.settingsStore.updateSettings({
-					cachedAgentModels: {
-						...this.settings.cachedAgentModels,
-						[agentId]: session.models
-							? session.models.availableModels.map((model) => ({
-									modelId: model.modelId,
-									name: model.name,
-									description: model.description,
-								}))
-							: [],
-					},
-					cachedAgentModes: {
-						...this.settings.cachedAgentModes,
-						[agentId]: session.modes
-							? session.modes.availableModes.map((mode) => ({
-									id: mode.id,
-									name: mode.name,
-									description: mode.description,
-								}))
-							: [],
-					},
-				});
-				return true;
-			} catch (error) {
-				console.warn(
-					`[AgentClient] Failed to refresh model/mode catalog for agent "${agentId}":`,
-					error,
-				);
-				return false;
-			} finally {
-				try {
-					await adapter.disconnect();
-				} catch {
-					void 0;
-				}
-			}
-		})().finally(() => {
-			this.agentCatalogRefreshInFlight.delete(agentId);
-		});
-
-		this.agentCatalogRefreshInFlight.set(agentId, task);
-		return await task;
+		return await refreshAgentCatalogForPlugin(
+			this,
+			this.agentCatalogRefreshInFlight,
+			agentId,
+			options,
+		);
 	}
 }

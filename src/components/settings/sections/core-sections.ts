@@ -1,6 +1,6 @@
 import { Notice, Platform, Setting } from "obsidian";
 import type AgentClientPlugin from "../../../plugin";
-import type { AgentSecretBinding, ChatViewLocation } from "../../../plugin";
+import type { ChatViewLocation } from "../../../plugin";
 import {
 	CHAT_FONT_SIZE_MAX,
 	CHAT_FONT_SIZE_MIN,
@@ -8,6 +8,7 @@ import {
 } from "../../../shared/display-settings";
 import { resolveCommandFromShell } from "../../../shared/shell-utils";
 import { renderSectionHeader } from "../settings-ui-helpers";
+import { renderGlobalSecretBindings } from "./secret-bindings-section";
 
 export const renderCoreSections = (
 	containerEl: HTMLElement,
@@ -94,129 +95,6 @@ export const renderCoreSections = (
 	renderWindowsSection(containerEl, plugin, redisplay);
 	renderDeveloperSection(containerEl, plugin);
 };
-
-function renderGlobalSecretBindings(
-	containerEl: HTMLElement,
-	plugin: AgentClientPlugin,
-	redisplay: () => void,
-): void {
-	const store = plugin.settingsStore;
-	const bindings = plugin.settings.secretBindings;
-	const availableSecrets = getAvailableSecretIds(plugin);
-	const description =
-		"Bind environment variable names to Obsidian keychain secrets. Example: GEMINI_API_KEY -> nano-banana-api.";
-
-	if (bindings.length === 0) {
-		new Setting(containerEl)
-			.setName("Secret bindings")
-			.setDesc(description)
-			.addButton((button) =>
-				button.setButtonText("Add binding").onClick(async () => {
-					await store.updateSettings({
-						secretBindings: [
-							...plugin.settings.secretBindings,
-							{ envKey: "", secretId: "" },
-						],
-					});
-					redisplay();
-				}),
-			);
-		return;
-	}
-
-	const updateBinding = async (
-		index: number,
-		patch: Partial<AgentSecretBinding>,
-	): Promise<void> => {
-		const next = plugin.settings.secretBindings.map((binding, i) =>
-			i === index ? { ...binding, ...patch } : binding,
-		);
-		await store.updateSettings({ secretBindings: next });
-	};
-
-	bindings.forEach((binding, index) => {
-		const isFirst = index === 0;
-		const row = new Setting(containerEl);
-		if (isFirst) {
-			row.setName("Secret bindings").setDesc(description);
-		}
-		row
-			.addText((text) =>
-				text
-					.setPlaceholder("GEMINI_API_KEY")
-					.setValue(binding.envKey)
-					.onChange(async (value) => {
-						await updateBinding(index, { envKey: value.trim() });
-					}),
-			)
-			.addSearch((search) => {
-				search.setPlaceholder("Link...").setValue(binding.secretId);
-				const listId = `obsius-secret-bindings-${index}`;
-				const existing = row.controlEl.querySelector(`#${listId}`);
-				if (existing) {
-					existing.remove();
-				}
-				const listEl = row.controlEl.createEl("datalist", {
-					attr: { id: listId },
-				});
-				for (const secretId of availableSecrets) {
-					listEl.createEl("option", { attr: { value: secretId } });
-				}
-				search.inputEl.setAttr("list", listId);
-				search.onChange(async (value) => {
-					await updateBinding(index, { secretId: value.trim().toLowerCase() });
-				});
-				return search;
-			})
-			.addButton((button) =>
-				button.setButtonText("Refresh").onClick(() => {
-					redisplay();
-				}),
-			)
-			.addExtraButton((button) =>
-				button
-					.setIcon("trash")
-					.setTooltip("Remove binding")
-					.onClick(async () => {
-						const next = plugin.settings.secretBindings.filter(
-							(_, i) => i !== index,
-						);
-						await store.updateSettings({ secretBindings: next });
-						redisplay();
-					}),
-			);
-	});
-
-	new Setting(containerEl).addButton((button) =>
-		button.setButtonText("Add binding").onClick(async () => {
-			await store.updateSettings({
-				secretBindings: [
-					...plugin.settings.secretBindings,
-					{ envKey: "", secretId: "" },
-				],
-			});
-			redisplay();
-		}),
-	);
-}
-
-function getAvailableSecretIds(plugin: AgentClientPlugin): string[] {
-	const options = new Set<string>();
-	for (const secretId of plugin.app.secretStorage.listSecrets()) {
-		if (secretId.length > 0) {
-			options.add(secretId);
-		}
-	}
-	options.add(plugin.settings.gemini.apiKeySecretId);
-	options.add(plugin.settings.claude.apiKeySecretId);
-	options.add(plugin.settings.codex.apiKeySecretId);
-	for (const binding of plugin.settings.secretBindings) {
-		if (binding.secretId.length > 0) {
-			options.add(binding.secretId);
-		}
-	}
-	return Array.from(options).sort((a, b) => a.localeCompare(b));
-}
 
 function renderMentionsSection(
 	containerEl: HTMLElement,

@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Diff from "diff";
 import { FileSystemAdapter } from "obsidian";
-import type { FileChange } from "../../shared/session-file-restoration";
+import type { FileChange } from "../../application/services/session-restore";
 import type AgentClientPlugin from "../../plugin";
 import { toRelativePath } from "../../shared/path-utils";
 import { DiffRenderer } from "./DiffRenderer";
@@ -195,14 +195,14 @@ export function RestoredSessionToolbar({
 						onClick={() => void onUndoAll()}
 						title="Revert all file changes"
 					>
-						Undo All
+						Undo
 					</button>
 					<button
 						className="obsius-changes-btn"
 						onClick={onKeepAll}
 						title="Accept all changes and dismiss"
 					>
-						Keep All
+						Keep
 					</button>
 				</div>
 			</div>
