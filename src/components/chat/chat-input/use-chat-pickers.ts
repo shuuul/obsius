@@ -147,10 +147,7 @@ export function useChatPickers({
 	);
 
 	const commandProviders = React.useMemo(
-		() =>
-			[cmdProvider, mcpProvider, skillProvider].filter(
-				(provider) => provider.search("").length > 0 || true,
-			),
+		() => [cmdProvider, mcpProvider, skillProvider],
 		[cmdProvider, mcpProvider, skillProvider],
 	);
 

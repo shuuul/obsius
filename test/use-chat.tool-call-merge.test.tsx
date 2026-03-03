@@ -94,4 +94,60 @@ describe("useChat tool_call_update merge", () => {
 		expect(diff.oldText).toBe("original content");
 		expect(diff.newText).toBe("final content");
 	});
+
+	it("preserves existing terminal content when update only includes diff", () => {
+		const { result } = makeHook();
+
+		applyUpdate(result, {
+			type: "tool_call",
+			sessionId: "session-1",
+			toolCallId: "tc-2",
+			status: "in_progress",
+			content: [
+				{
+					type: "terminal",
+					terminalId: "term-1",
+				},
+			],
+		});
+
+		applyUpdate(result, {
+			type: "tool_call_update",
+			sessionId: "session-1",
+			toolCallId: "tc-2",
+			status: "completed",
+			content: [
+				{
+					type: "diff",
+					path: "notes/b.md",
+					newText: "new content",
+				},
+			],
+		});
+
+		const assistantMessage = result.current.messages.find(
+			(message) => message.role === "assistant",
+		);
+		expect(assistantMessage).toBeTruthy();
+		if (!assistantMessage) {
+			throw new Error("Expected assistant message to exist");
+		}
+
+		const toolCall = assistantMessage.content.find(
+			(content) => content.type === "tool_call",
+		);
+		expect(toolCall?.type).toBe("tool_call");
+		if (toolCall?.type !== "tool_call") return;
+
+		const terminal = toolCall.content?.find((item) => item.type === "terminal");
+		expect(terminal?.type).toBe("terminal");
+		if (terminal?.type !== "terminal") return;
+		expect(terminal.terminalId).toBe("term-1");
+
+		const diff = toolCall.content?.find((item) => item.type === "diff");
+		expect(diff?.type).toBe("diff");
+		if (diff?.type !== "diff") return;
+		expect(diff.path).toBe("notes/b.md");
+		expect(diff.newText).toBe("new content");
+	});
 });

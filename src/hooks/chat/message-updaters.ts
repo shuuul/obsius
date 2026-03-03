@@ -8,7 +8,6 @@ type ToolCallMessageContent = Extract<MessageContent, { type: "tool_call" }>;
 type ToolCallContentEntry = NonNullable<
 	ToolCallMessageContent["content"]
 >[number];
-type DiffToolCallContent = Extract<ToolCallContentEntry, { type: "diff" }>;
 
 function mergeToolCallEntries(
 	existing: ToolCallMessageContent["content"],
@@ -18,34 +17,66 @@ function mergeToolCallEntries(
 		return existing;
 	}
 
-	const nextEntries = update ?? [];
-	const previousDiffs = new Map<string, DiffToolCallContent>();
+	const existingEntries = existing ?? [];
+	const updateEntries = update ?? [];
+	const nextByKey = new Map<string, ToolCallContentEntry>();
 
-	for (const entry of existing ?? []) {
-		if (entry.type === "diff") {
-			previousDiffs.set(entry.path, entry);
-		}
+	for (const entry of updateEntries) {
+		nextByKey.set(getToolCallEntryKey(entry), entry);
 	}
 
-	return nextEntries.map((entry) => {
-		if (entry.type !== "diff") {
-			return entry;
-		}
+	const merged: ToolCallContentEntry[] = [];
+	const matchedKeys = new Set<string>();
 
-		if (entry.oldText !== undefined) {
-			return entry;
+	for (const previous of existingEntries) {
+		const key = getToolCallEntryKey(previous);
+		const next = nextByKey.get(key);
+		if (!next) {
+			merged.push(previous);
+			continue;
 		}
+		matchedKeys.add(key);
+		merged.push(mergeToolCallEntry(previous, next));
+	}
 
-		const previous = previousDiffs.get(entry.path);
-		if (!previous || previous.oldText === undefined) {
-			return entry;
+	for (const next of updateEntries) {
+		const key = getToolCallEntryKey(next);
+		if (matchedKeys.has(key)) {
+			continue;
 		}
+		merged.push(next);
+	}
 
-		return {
-			...entry,
-			oldText: previous.oldText,
-		};
-	});
+	return merged;
+}
+
+function getToolCallEntryKey(entry: ToolCallContentEntry): string {
+	if (entry.type === "diff") {
+		return `diff:${entry.path}`;
+	}
+	return `terminal:${entry.terminalId}`;
+}
+
+function mergeToolCallEntry(
+	previous: ToolCallContentEntry,
+	next: ToolCallContentEntry,
+): ToolCallContentEntry {
+	if (next.type !== "diff") {
+		return next;
+	}
+
+	if (next.oldText !== undefined) {
+		return next;
+	}
+
+	if (previous.type !== "diff" || previous.oldText === undefined) {
+		return next;
+	}
+
+	return {
+		...next,
+		oldText: previous.oldText,
+	};
 }
 
 export function mergeToolCallContent(

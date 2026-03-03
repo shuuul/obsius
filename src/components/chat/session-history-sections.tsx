@@ -55,9 +55,9 @@ function IconButton({
 	iconName: string;
 	label: string;
 	className: string;
-	onClick: (e: React.MouseEvent) => void;
+	onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
-	const iconRef = React.useRef<HTMLDivElement>(null);
+	const iconRef = React.useRef<HTMLButtonElement>(null);
 
 	React.useEffect(() => {
 		if (iconRef.current) {
@@ -66,7 +66,8 @@ function IconButton({
 	}, [iconName]);
 
 	return (
-		<div
+		<button
+			type="button"
 			ref={iconRef}
 			className={className}
 			aria-label={label}

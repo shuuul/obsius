@@ -32,7 +32,7 @@ export function getToolSummary(
 			if (pattern) return truncate(pattern, 50);
 		}
 
-		if (titleLower === "websearch" || titleLower === "websearch") {
+		if (titleLower === "websearch") {
 			return truncate(
 				(rawInput.query as string) || (rawInput.search_term as string) || "",
 				50,
