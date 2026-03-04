@@ -3,11 +3,39 @@
 	bsius — AI Agents in Obsidian
 </h1>
 
-Bring AI agents into your Obsidian vault with fine-grained context controls.
+Obsius rethinks how writers collaborate with AI. Instead of handing entire documents to a chatbot and hoping for the best, Obsius gives you precise, word-level control over every AI interaction. Select exactly what you want changed, see exactly what changed, and keep everything else untouched.
+
+Read the design write-up: [WHITEPAPER.md](WHITEPAPER.md)
 
 [![version](https://img.shields.io/badge/version-0.6.0-blue)](https://github.com/shuuul/obsius/releases)
 [![vite](https://img.shields.io/badge/vite-7.3.1-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
+
+## Key Features
+
+<details>
+<summary><strong>Word-and-Sentence-Level Context Control</strong></summary>
+
+Select precise text ranges for AI to modify; lock satisfied paragraphs from subsequent generations; define narrow edit boundaries so the action space stays constrained even with low-density prompts.
+
+![Word-and-Sentence-Level Context Control](./assets/precise-control.png)
+</details>
+
+<details>
+<summary><strong>Inline Diff for Every Modification</strong></summary>
+
+Every AI edit is presented as a visible diff (inspired by Cursor's inline diffs). Accept or reject changes at the word/sentence level instead of "accept all or reject all."
+
+![Inline Diff for Every Modification](./assets/diff.png)
+</details>
+
+<details>
+<summary><strong>Explicit Skills, Commands & MCP Triggers</strong></summary>
+
+Encapsulate reusable writing operations (style transfer, argument restructuring, summary extraction) as named, deterministic commands. Invoke them precisely instead of re-describing in natural language each time.
+
+![Explicit Skills, Commands & MCP Triggers](./assets/trigger.png)
+</details>
 
 
 
@@ -57,6 +85,7 @@ Built-in agent API keys (Claude, Codex, Gemini) are stored in Obsidian secure st
 
 - [obsidian-agent-client](https://github.com/RAIT-09/obsidian-agent-client) — Brilliant work that this project is forked from
 - [Agent Client Protocol (ACP)](https://github.com/zed-industries/agent-client-protocol) — Built on by Zed
+- [Notion](https://www.notion.so) — Design inspiration
 - [Claudian](https://github.com/YishenTu/claudian) — Design inspiration
 - [cursor.com](https://cursor.com) — Design inspiration
 - [@lobehub/icons](https://github.com/lobehub/lobe-icons) — AI brand icons
