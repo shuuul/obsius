@@ -5,15 +5,25 @@
 
 Bring AI agents into your Obsidian vault with fine-grained context controls.
 
+[![version](https://img.shields.io/badge/version-0.6.0-blue)](https://github.com/shuuul/obsius/releases)
+[![vite](https://img.shields.io/badge/vite-7.3.1-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
+
 
 
 ## Requirements
 
 - Obsidian `1.11.5` or later
 - Desktop only (not supported on mobile)
-- Tested only on macOS
 
-## Installation
+## Notice
+
+- Tested only on macOS.
+- I do not provide support for Windows/Linux, but it should work.
+- Recommendation: For desktop users, [cc-switch](https://github.com/farion1231/cc-switch) makes it easier to customize and switch agent configurations.
+
+<details>
+<summary>Installation</summary>
 
 You can install this plugin with [Obsidian42 - BRAT](https://github.com/TfTHacker/obsidian42-brat):
 
@@ -21,8 +31,7 @@ You can install this plugin with [Obsidian42 - BRAT](https://github.com/TfTHacke
 2. Open BRAT settings and choose `Add Beta plugin`.
 3. Paste this repository URL: `https://github.com/shuuul/obsius`
 4. Install the plugin from BRAT and enable `Obsius`.
-
-## Secure API Keys
+</details>
 
 <details>
 <summary>How Secure API Keys work</summary>
@@ -43,10 +52,6 @@ Built-in agent API keys (Claude, Codex, Gemini) are stored in Obsidian secure st
 - Keys are device-local and are not synced through your vault files.
 - If you use multiple devices, enter the key once on each device.
 </details>
-
-### Recommendation
-
-For desktop users, we recommend [cc-switch](https://github.com/farion1231/cc-switch), a GUI tool that makes it easier to customize and switch agent configurations.
 
 ## Acknowledgments
 

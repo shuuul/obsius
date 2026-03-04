@@ -172,17 +172,19 @@ grep -rn 'from.*adapters/' src/components/ src/hooks/ src/application/ 2>/dev/nu
 ### Version Synchronization (Release-Critical)
 1. **Obsidian UI version source** — Obsidian shows `manifest.json` `version`, not Git tag names.
 2. **Keep versions aligned** — `package.json` `version`, `manifest.json` `version`, and latest key in `versions.json` must match.
-3. **Tags/releases must match files** — create tag `vX.Y.Z` only after files are bumped to `X.Y.Z`.
-4. **Tags alone do not bump files** — pushing `v0.3.2` without bumping files still ships `manifest.json` `0.3.0` to Obsidian.
-5. **Pre-push consistency check**:
+3. **README badge must match release** — update the README `version` badge value to `X.Y.Z` whenever version is bumped.
+4. **Tags/releases must match files** — create tag `vX.Y.Z` only after files are bumped to `X.Y.Z`.
+5. **Tags alone do not bump files** — pushing `v0.3.2` without bumping files still ships `manifest.json` `0.3.0` to Obsidian.
+6. **Pre-push consistency check**:
 ```bash
 node -e 'const pkg=require("./package.json").version;const manifest=require("./manifest.json").version;const keys=Object.keys(require("./versions.json"));const latest=keys[keys.length-1];if(pkg!==manifest||manifest!==latest){console.error(`Version mismatch: package=${pkg}, manifest=${manifest}, versions.latest=${latest}`);process.exit(1)}console.log(`Version OK: ${pkg}`)'
 ```
-6. **Release flow**:
+7. **Release flow**:
 ```bash
 npm version patch             # or minor/major (updates package.json)
 npm run version              # sync manifest.json + versions.json from package version
-git add package.json package-lock.json manifest.json versions.json
+## update README version badge (README.md) to match X.Y.Z
+git add package.json package-lock.json manifest.json versions.json README.md
 git commit -m "chore: bump version to vX.Y.Z"
 git tag vX.Y.Z
 git push && git push --tags
