@@ -7,7 +7,7 @@ Obsius rethinks how writers collaborate with AI. Instead of handing entire docum
 
 Read the design write-up: [WHITEPAPER.md](WHITEPAPER.md)
 
-[![version](https://img.shields.io/badge/version-0.6.0-blue)](https://github.com/shuuul/obsius/releases)
+[![version](https://img.shields.io/badge/version-0.6.1-blue)](https://github.com/shuuul/obsius/releases)
 [![vite](https://img.shields.io/badge/vite-7.3.1-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
 
