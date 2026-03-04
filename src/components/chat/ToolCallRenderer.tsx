@@ -21,6 +21,7 @@ import {
 	getStatusDisplayClass,
 	getStatusIconName,
 } from "../../shared/tool-icons";
+import { extractToolFilePath } from "../../shared/tool-file-path";
 
 const FILE_EDIT_TITLES = new Set([
 	"write",
@@ -201,14 +202,7 @@ export function ToolCallRenderer({
 		if (!summary) return false;
 		if (kind === "execute" || kind === "think" || kind === "fetch")
 			return false;
-		if (rawInput) {
-			const filePath =
-				(rawInput.file_path as string) ||
-				(rawInput.path as string) ||
-				(rawInput.filePath as string) ||
-				"";
-			if (filePath) return true;
-		}
+		if (rawInput && extractToolFilePath(rawInput)) return true;
 		if (locations && locations.length > 0) return true;
 		return false;
 	}, [summary, kind, rawInput, locations]);
@@ -216,11 +210,7 @@ export function ToolCallRenderer({
 	const summaryClickPath = useMemo(() => {
 		if (!summaryIsFile) return "";
 		if (rawInput) {
-			const filePath =
-				(rawInput.file_path as string) ||
-				(rawInput.path as string) ||
-				(rawInput.filePath as string) ||
-				"";
+			const filePath = extractToolFilePath(rawInput);
 			if (filePath) return filePath;
 		}
 		if (locations && locations.length > 0) return locations[0].path;

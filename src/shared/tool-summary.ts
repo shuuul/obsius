@@ -1,4 +1,5 @@
 import type { ToolKind } from "../domain/models/chat-message";
+import { extractToolFilePath } from "./tool-file-path";
 
 export function getToolSummary(
 	title: string | null | undefined,
@@ -98,7 +99,7 @@ export function getToolSummary(
 
 		const filePath = extractFilePath(rawInput);
 		if (filePath) {
-			return fileNameOnly(filePath);
+			return toRelativeFromVault(filePath, vaultPath);
 		}
 	}
 
@@ -122,12 +123,7 @@ function extractCommandSummary(rawInput: Record<string, unknown>): string {
 }
 
 function extractFilePath(rawInput: Record<string, unknown>): string {
-	return (
-		(rawInput.file_path as string) ||
-		(rawInput.path as string) ||
-		(rawInput.filePath as string) ||
-		""
-	);
+	return extractToolFilePath(rawInput);
 }
 
 function fileNameOnly(filePath: string): string {
