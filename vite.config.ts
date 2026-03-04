@@ -35,8 +35,8 @@ export default defineConfig(({ mode }) => {
 			target: "es2020",
 			emptyOutDir: true,
 			outDir: "dist",
-			sourcemap: isProduction ? false : "inline",
-			minify: isProduction,
+			sourcemap: !isProduction,
+			minify: "esbuild",
 			lib: {
 				entry: resolve(__dirname, "src/main.ts"),
 				formats: ["cjs"],
