@@ -1,6 +1,6 @@
 # Chat Components Guide
 
-41 files for the chat UI. Entry point: `ChatView` (sidebar/Obsidian leaf). Includes `chat-input/` subdirectory with 12 files for input-related components and hooks. Picker panel in `components/picker/` (4 files).
+46 files for the chat UI (32 in `chat/` + 14 in `chat-input/`). Entry point: `ChatView` (sidebar/Obsidian leaf). Picker panel in `components/picker/` (4 files).
 
 ## Dependency Rules (CRITICAL)
 
@@ -26,35 +26,37 @@ There are currently no known adapter-boundary violations in `src/components/chat
 ## Component Tree
 
 ```
-ChatView (ItemView, ~531 lines) ─── Obsidian sidebar leaf
-  └── ChatComponent (React)
-        ├── ChatHeader          ─ agent dropdown, session controls, update badge (~167 lines)
+ChatView (ItemView, ~253 lines) ─── Obsidian sidebar leaf
+  └── ChatComponent (~277 lines, React)
+        ├── ChatHeader          ─ agent dropdown, session controls, update badge (~170 lines)
         │     ├── TabBar              ─ numbered tab badges (1,2,3…) (~61 lines)
         │     └── HeaderButton × 4    ─ new tab / new session / history / settings
-        └── TabContent          ─ per-tab chat view container (~374 lines)
-              ├── SessionHistoryPopover ─ floating session list panel
-              │     └── SessionHistoryContent ─ session list + restore/fork/delete (~498 lines)
-              │           └── ConfirmDeleteModal (Obsidian Modal)
-              ├── ChatMessages        ─ scrollable message list (~262 lines)
-              │     └── MessageRenderer (per message)
-              │           └── MessageContentRenderer (per content block)
-              │                 ├── MarkdownTextRenderer  — markdown → Obsidian renderMarkdown
-              │                 ├── TextWithMentions      — @[[note]] + context token rendering; resolves md/canvas/excalidraw/image files (~270 lines)
-              │                 ├── ToolCallRenderer      — tool call accordion (~480 lines)
+        └── TabContent          ─ per-tab chat view container (~378 lines)
+              ├── SessionHistoryPopover ─ floating session list panel (~80 lines)
+              │     └── SessionHistoryContent ─ session list + restore/fork/delete (~166 lines)
+              │           ├── session-history-sections.tsx ─ section grouping helpers (~268 lines)
+              │           └── ConfirmDeleteModal (Obsidian Modal, ~77 lines)
+              ├── ChatMessages        ─ scrollable message list (~345 lines)
+              │     └── MessageRenderer (~127 lines, per message)
+              │           └── MessageContentRenderer (~140 lines, per content block)
+              │                 ├── MarkdownTextRenderer  — markdown → Obsidian renderMarkdown (~51 lines)
+              │                 ├── TextWithMentions      — @[[note]] + context token rendering; resolves md/canvas/excalidraw/image files (~263 lines)
+              │                 ├── ToolCallRenderer      — tool call accordion (~415 lines)
               │                 │     ├── DiffRenderer       — unified diff view (~387 lines)
-              │                 │     ├── TerminalRenderer   — polling terminal output (~143 lines)
-              │                 │     └── PermissionRequestSection — approve/deny buttons
-              │                 ├── CollapsibleThought    — agent reasoning toggle
-              │                 └── CollapsibleSection    — generic collapsible wrapper; `collapsible={false}` renders static (non-clickable) header (~55 lines)
-              ├── RestoredSessionToolbar ─ session restore accept/discard bar (~87 lines)
+              │                 │     ├── TerminalRenderer   — polling terminal output (~140 lines)
+              │                 │     ├── RawPatchView       — raw patch display (~76 lines)
+              │                 │     └── PermissionRequestSection — approve/deny buttons (~121 lines)
+              │                 ├── CollapsibleThought    — agent reasoning toggle (~48 lines)
+              │                 └── CollapsibleSection    — generic collapsible wrapper; `collapsible={false}` renders static (non-clickable) header (~45 lines)
+              ├── RestoredSessionToolbar ─ session restore accept/discard bar (~318 lines)
               ├── DiffViewer            ─ side-by-side diff display for inline edits (~74 lines)
               ├── SuggestionDropdown  ─ @mention + /command dropdown (~140 lines)
-              └── ChatInput           ─ input orchestrator (~619 lines)
-                    ├── ErrorOverlay        ─ error banner above input
+              └── ChatInput           ─ input orchestrator (~406 lines)
+                    ├── ErrorOverlay        ─ error banner above input (~78 lines)
                     ├── SuggestionDropdown  ─ (mentions + slash commands, 2 instances)
-                    ├── ContextBadgeStrip   ─ auto-mention + context reference badges
-                    ├── RichTextarea        ─ contenteditable input (~550 lines)
-                    ├── ImagePreviewStrip   ─ attached image thumbnails
+                    ├── ContextBadgeStrip   ─ auto-mention + context reference badges (~81 lines)
+                    ├── RichTextarea        ─ contenteditable input (~241 lines)
+                    ├── ImagePreviewStrip   ─ attached image thumbnails (~52 lines)
                     ├── ContextUsageMeter   ─ context window usage meter (~93 lines)
                     └── InputActions        ─ mode/model selectors + send/stop (~130 lines)
                           ├── SelectorButton (mode) ─ portal-based popover (~174 lines)
@@ -62,17 +64,21 @@ ChatView (ItemView, ~531 lines) ─── Obsidian sidebar leaf
                           └── Send/Stop button
 
 Picker (components/picker/):
-  UnifiedPickerPanel  ─ unified picker for mentions + commands (~207 lines)
-  mention-provider.ts ─ @mention picker provider (~178 lines)
-  command-provider.ts ─ /command picker provider (~70 lines)
+  UnifiedPickerPanel  ─ unified picker for mentions + commands (~206 lines)
+  mention-provider.ts ─ @mention picker provider (~182 lines)
+  command-provider.ts ─ /command picker provider (~69 lines)
   types.ts            ─ PickerProvider, PickerItem interfaces (~80 lines)
 
 Standalone:
-  HeaderButton        ─ reusable icon button for header
+  HeaderButton        ─ reusable icon button for header (~39 lines)
   ObsidianIcon        ─ Obsidian Lucide icon wrapper (~29 lines)
   ProviderLogo        ─ CDN SVG brand icons (~56 lines)
-  MentionBadgeStrip   ─ attached note badges (~105 lines)
+  MentionBadgeStrip   ─ attached note badges (~106 lines)
   AutoMentionBadge    ─ active note indicator (~68 lines)
+
+Utilities:
+  tool-call-content-utils.ts ─ tool call content extraction helpers (~57 lines)
+  types.ts                   ─ IChatViewHost + shared component types (~49 lines)
 ```
 
 ## Entry Point
@@ -97,12 +103,13 @@ Session history uses a popover pattern (not a modal). `SessionHistoryPopover` wr
 
 Components that need DOM event cleanup depend on `IChatViewHost` (not `ChatView` directly). This decouples components from the concrete view implementation.
 
-## chat-input/ Subdirectory
+## chat-input/ Subdirectory (14 files)
 
 Input-related components extracted from `ChatInput.tsx`. Contains:
-- **3 hooks**: `use-chat-input-behavior` (keydown/submit), `use-image-attachments` (paste/drop), `use-obsidian-dropdown` (native Obsidian dropdown bridge)
-- **6 components**: `RichTextarea`, `InputActions`, `SelectorButton`, `ProviderLogo`, `ContextUsageMeter`, `MentionBadgeStrip`, `AutoMentionBadge`
+- **4 hooks**: `use-chat-input-behavior` (keydown/submit), `use-chat-pickers` (picker integration), `use-image-attachments` (paste/drop), `use-obsidian-dropdown` (native Obsidian dropdown bridge)
+- **7 components**: `RichTextarea`, `InputActions`, `SelectorButton`, `ProviderLogo`, `ContextUsageMeter`, `MentionBadgeStrip`, `AutoMentionBadge`
 - **2 icon maps**: `mode-icons.ts`, `file-icons.ts`
+- **1 DOM helper**: `rich-textarea-dom.ts` (contenteditable DOM manipulation)
 
 Note: hooks in `chat-input/` use `kebab-case` naming (not `usePascalCase`) since they're input-specific, not controller-level.
 

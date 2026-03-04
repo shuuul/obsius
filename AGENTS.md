@@ -1,6 +1,6 @@
 # Obsius - LLM Developer Guide
 
-**Generated:** 2026-03-04 | **Branch:** codex/cleanup-wave-00-guardrails
+**Generated:** 2026-03-04 | **Branch:** master
 
 ## Overview
 Obsidian desktop plugin for AI chat (OpenCode, Claude Code, Codex, Gemini CLI, custom agents). React 19 + TypeScript, communicating via Agent Client Protocol (ACP) over JSON-RPC stdin/stdout. Multi-tab chat sessions in a sidebar view.
@@ -21,11 +21,11 @@ src/
 │   ├── services/             # chat-view registry + session restore services
 │   └── use-cases/            # prompt preparation/sending use case
 ├── hooks/                    # React custom hooks + reducer-backed state modules
-│   ├── state/
-│   ├── chat-controller/
-│   ├── agent-session/
-│   ├── chat/
-│   └── session-history/
+│   ├── state/                # Typed reducers + action creators
+│   ├── chat-controller/      # Controller types, effects, history handlers
+│   ├── agent-session/        # Session lifecycle, helpers, types
+│   ├── chat/                 # Message updaters (extracted from useChat)
+│   └── session-history/      # History ops + types
 ├── components/
 │   ├── chat/
 │   ├── picker/
@@ -43,7 +43,7 @@ src/
 | UI changes | `components/chat/` | See `components/chat/AGENTS.md` |
 | Settings changes | `plugin.ts` (interface) + `components/settings/sections/` (UI sections) | `AgentClientSettingTab.ts` is thin coordinator |
 | Add picker provider | `components/picker/` | Implement provider matching `PickerProvider` type |
-| Add input UI element | `components/chat/chat-input/` | 12 files: RichTextarea, InputActions, SelectorButton, ContextUsageMeter, etc. |
+| Add input UI element | `components/chat/chat-input/` | 14 files: RichTextarea, InputActions, SelectorButton, ContextUsageMeter, etc. |
 | Inline edit | `plugin/inline-edit.ts` | Selection → agent prompt with diff viewer |
 | Tab management | `hooks/useTabs.ts` + `components/chat/TabBar.tsx` + `TabContent.tsx` | Multi-tab chat sessions |
 | Editor context menus | `plugin/editor-context.ts` | Selection, file, folder context references |
@@ -220,7 +220,7 @@ npm run docs:build       # VitePress build
 ```
 
 ## Notes
-- **Tests exist**: Vitest with coverage gates for reducer/routing/schema modules (test/ directory, 8 test files + setup + mocks/)
+- **Tests exist**: Vitest with coverage gates (test/ directory, 19 test files + setup + mocks/)
 - **CI**: PR workflow enforces typecheck, lint, tests with coverage, plugin build, and docs build
 - **Multi-session**: `ChatViewRegistry` manages sidebar views with independent ACP sessions
 - **Multi-tab**: `useTabs` hook supports up to 4 concurrent chat tabs per view, each with its own agent/session; new tabs inherit the active tab's agent ID
@@ -247,7 +247,7 @@ npm run docs:build       # VitePress build
 - **Shared runtime**: Multiple tabs using the same agent share one ACP process via `AgentRuntimeManager` + `RuntimeMultiplexer`
 - **Undocumented API**: `vault.adapter.ts` uses `editor.cm` (CodeMirror 6 internal) for selection tracking
 - **ACP SDK**: `@agentclientprotocol/sdk ^0.14.1` — protocol may evolve
-- **External deps**: `react ^19.2.0`, `diff ^8.0.2`, `semver ^7.7.3`, `zod ^3.24.1`, `@codemirror/state`, `@codemirror/view`
+- **External deps**: `react ^19.2.0`, `diff ^8.0.2`, `semver ^7.7.3`, `zod ^3.24.1`, `tslib ^2.8.1`, `@codemirror/state 6.5.0`, `@codemirror/view 6.38.6`
 - **Provider logos**: `ProviderLogo.tsx` loads SVGs from `@lobehub/icons-static-svg` CDN via CSS mask-image
 
 ## Subdirectory Guides

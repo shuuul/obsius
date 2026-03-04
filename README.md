@@ -17,7 +17,7 @@ Bring AI agents into your Obsidian vault with fine-grained context controls.
 
 You can install this plugin with [Obsidian42 - BRAT](https://github.com/TfTHacker/obsidian42-brat):
 
-1. Install and enable `Obsidian42 - BRAT` in Obsidian.
+1. Install and enable `BRAT` in Obsidian.
 2. Open BRAT settings and choose `Add Beta plugin`.
 3. Paste this repository URL: `https://github.com/shuuul/obsius`
 4. Install the plugin from BRAT and enable `Obsius`.

@@ -11,13 +11,13 @@ domain/
 │   ├── session-update.ts    # SessionUpdate union (8 routed types) — agent → UI event stream (~181 lines)
 │   ├── chat-session.ts      # ChatSession state, SessionState, SlashCommand, AuthenticationMethod, modes, models (~266 lines)
 │   ├── agent-error.ts       # AcpErrorCode constants, ErrorInfo, AcpError, ProcessError, ProcessErrorType (~122 lines)
-│   ├── agent-config.ts      # BaseAgentSettings, ClaudeAgentSettings, GeminiAgentSettings, CodexAgentSettings, OpenCodeAgentSettings, CustomAgentSettings (~100 lines)
+│   ├── agent-config.ts      # BaseAgentSettings, ClaudeAgentSettings, GeminiAgentSettings, CodexAgentSettings, OpenCodeAgentSettings, CustomAgentSettings (~121 lines)
 │   ├── session-info.ts      # SessionInfo, ListSessionsResult, LoadSessionResult, ResumeSessionResult, ForkSessionResult, SavedSessionInfo (~92 lines)
 │   ├── prompt-content.ts    # PromptContent union (text, image, resource), ResourceAnnotations (~72 lines)
 │   ├── chat-input-state.ts  # ChatInputState, AttachedImage (for broadcast) (~20 lines)
 │   └── terminal-output.ts   # TerminalOutputSnapshot, TerminalExitStatus
-└── ports/           # Interface contracts (4 files, ~771 lines)
-    ├── agent-client.port.ts    # IAgentClient — 423 lines, full agent communication contract
+└── ports/           # Interface contracts (4 files, ~797 lines)
+    ├── agent-client.port.ts    # IAgentClient — ~432 lines, full agent communication contract
     ├── settings-access.port.ts # ISettingsAccess — settings CRUD + session persistence (~131 lines)
     ├── chat-view-container.port.ts # IChatViewContainer + ChatViewContextReference — view registration, focus, broadcast, context (~123 lines)
     └── vault-access.port.ts    # IVaultAccess — note search, read, binary read, active file tracking (~110 lines)

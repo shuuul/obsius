@@ -26,24 +26,26 @@ There are currently no known adapter-boundary violations in `src/hooks/`.
 
 ## Hook Inventory
 
+Main hook files (extracted helper modules listed separately below):
+
 | Hook | Lines | State Owned | Key Deps | Composed In |
 |------|-------|-------------|----------|-------------|
-| `useChatController` | 536 | Combines 10 hooks below | All hooks + adapters | `TabContent` |
-| `useAgentSession` | 628 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` | `useChatController` |
-| `useChat` | 553 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` | `useChatController` |
-| `useSessionHistory` | 577 | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` | `useChatController` |
-| `usePicker` | 268 | Picker panel open/selection state | `PickerProvider[]` | `ChatInput` (×2) |
+| `useChatController` | 429 | Combines 10 hooks below | All hooks + adapters | `TabContent` |
+| `useSessionHistory` | 424 | Session list, load/resume/fork | `IAgentClient`, `ISettingsAccess` | `useChatController` |
+| `useAgentSession` | 367 | `ChatSession`, connection lifecycle | `IAgentClient`, `ISettingsAccess` | `useChatController` |
+| `useChat` | 301 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` | `useChatController` |
+| `usePicker` | 261 | Picker panel open/selection state | `PickerProvider[]` | `ChatInput` (×2) |
 | `usePermission` | 234 | `activePermission`, approval queue | `IAgentClient` | `useChatController` |
+| `useSessionRestore` | 192 | Thin React wrapper around `SnapshotManager`; exposes change set state + revert/keep/dismiss; triggers disk comparison on every messages update | `SnapshotManager` | `TabContent` |
+| `useTabs` | 174 | `tabs[]`, `activeTabId` (max 4); inherits active tab's agent when opening new tabs | `ChatTab`, agent info | `ChatComponent` |
 | `useSlashCommands` | 150 | Suggestions dropdown + token handling | `SlashCommand[]` | `useChatController` |
-| `useSessionRestore` | ~190 | Thin React wrapper around `SnapshotManager`; exposes change set state + revert/keep/dismiss; triggers disk comparison on every messages update | `SnapshotManager` | `TabContent` |
-| `useTabs` | ~185 | `tabs[]`, `activeTabId` (max 4); inherits active tab's agent when opening new tabs | `ChatTab`, agent info | `ChatComponent` |
 | `useInputHistory` | 139 | History index (ref-based) | `ChatMessage[]` | `ChatInput` |
 | `useMentions` | 130 | Suggestions dropdown state | `IVaultAccess`, `mention-utils` | `useChatController` |
 | `useWorkspaceEvents` | 127 | None (effect-only) | `Workspace` events | `ChatComponent` |
-| `useModelFiltering` | 98 | Model search/filter state | `SessionModelState` | `useChatController` |
+| `useModelFiltering` | 103 | Model search/filter state | `SessionModelState` | `useChatController` |
 | `useAutoMention` | 76 | `activeNote`, `isDisabled` | `IVaultAccess` | `useChatController` |
+| `useUpdateCheck` | 33 | Update available flag | Plugin version | `ChatComponent` |
 | `useSettings` | 19 | None — delegates to `useSyncExternalStore` | `plugin.settingsStore` | `useChatController` |
-| `useUpdateCheck` | 19 | Update available flag | Plugin version | `ChatComponent` |
 
 ## Composition Flow
 
@@ -79,10 +81,25 @@ ChatComponent (ChatView.tsx)
 
 ## Extracted Hook Modules
 
-- `chat-controller/types.ts` (85): exported `UseChatControllerOptions` + `UseChatControllerReturn` interfaces
-- `chat-controller/session-history-handlers.ts` (132): isolated history restore/fork/delete/open handler orchestration (popover state)
-- `agent-session/helpers.ts` (~160) + `agent-session/types.ts` (39): normalization and shared type contracts; includes `resolveExistingAgentId` for safe agent ID resolution against available agents list
-- `session-history/session-history-ops.ts` (221): pure history list/load/restore/fork helpers
+Larger hooks are decomposed into focused helper modules in subdirectories:
+
+**`chat-controller/`** (extracted from `useChatController`):
+- `controller-effects.ts` (229): side-effect orchestration (session update routing, send message, new chat, load session, restart agent)
+- `session-history-handlers.ts` (132): history restore/fork/delete/open handler orchestration (popover state)
+- `types.ts` (85): exported `UseChatControllerOptions` + `UseChatControllerReturn` interfaces
+- `history-load-state.ts` (64): history load state tracking
+
+**`agent-session/`** (extracted from `useAgentSession`):
+- `session-lifecycle.ts` (360): session creation, agent switching, connection lifecycle logic
+- `helpers.ts` (183): normalization and shared type contracts; includes `resolveExistingAgentId` for safe agent ID resolution against available agents list
+- `types.ts` (39): agent session type contracts
+
+**`chat/`** (extracted from `useChat`):
+- `message-updaters.ts` (292): message upsert/merge logic, tool call content merging, streaming update handlers
+
+**`session-history/`** (extracted from `useSessionHistory`):
+- `session-history-ops.ts` (221): pure history list/load/restore/fork helpers
+- `types.ts` (65): session history type contracts
 
 ## State Modules (`hooks/state/`)
 

@@ -32,7 +32,7 @@ graph TB
 
     subgraph Hooks["Hook Composition Layer"]
         Controller["useChatController<br/>Central coordinator"]
-        SubHooks["useAgentSession · useChat<br/>usePermission · useMentions<br/>useSlashCommands · useAutoMention<br/>useSessionHistory · useModelFiltering"]
+        SubHooks["useAgentSession · useChat<br/>usePermission · useMentions<br/>useSlashCommands · useAutoMention<br/>useSessionHistory · useModelFiltering<br/>useSessionHistoryHandlers"]
         ViewHooks["useTabs · useUpdateCheck<br/>useWorkspaceEvents"]
         InputHooks["usePicker · useInputHistory"]
         State["hooks/state/<br/>Reducers + Actions"]
@@ -142,6 +142,7 @@ graph LR
     CC --> AM[useAutoMention]
     CC --> MF[useModelFiltering]
     CC --> SH[useSessionHistory]
+    CC --> SHH[useSessionHistoryHandlers]
 
     CI[ChatInput] --> PK[usePicker x2]
     CI --> IH[useInputHistory]
@@ -332,7 +333,7 @@ Session updates stream back as typed events: message chunks, tool calls, plans, 
 
 Hooks are composed at three levels:
 1. **View level** (`ChatComponent`): `useTabs`, `useUpdateCheck`, `useWorkspaceEvents`
-2. **Tab level** (`useChatController`): 10 hooks for session, chat, permissions, mentions, commands, history, model filtering
+2. **Tab level** (`useChatController`): 10 hooks — settings, session, chat, permissions, mentions, commands, auto-mention, model filtering, history, history handlers
 3. **Input level** (`ChatInput`): `usePicker` (×2), `useInputHistory`
 
 Components are pure renderers that receive props from the controller. No ViewModel or UseCase classes.
