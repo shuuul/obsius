@@ -7,9 +7,13 @@
 	bsius — AI Agents in Obsidian
 </h1>
 
+<p align="center">
+	<img src="./assets/screenshot.png" alt="Obsius Screenshot" width="61.8%" />
+</p>
+
 Obsius rethinks how writers collaborate with AI. Instead of handing entire documents to a chatbot and hoping for the best, Obsius gives you precise, word-level control over every AI interaction. Select exactly what you want changed, see exactly what changed, and keep everything else untouched.
 
-Read the design write-up: [WHITEPAPER.md](WHITEPAPER.md)
+Read the [White Paper](WHITEPAPER.md).
 
 ## Key Features
 
