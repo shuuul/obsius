@@ -48,6 +48,7 @@ Do not reintroduce these concerns in `shared/`.
 - `tool-summary.ts`: Tool summary extraction utilities.
 - `vault-path.ts`: Vault base path helper.
 - `windows-env.ts`: Windows PATH enhancement helpers.
+- `word-diff.ts`: Word-level diff segment computation for inline diff decorations.
 - `wsl-utils.ts`: Windows -> WSL path/command helpers.
 
 ## Notes

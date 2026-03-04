@@ -17,7 +17,7 @@ import { getLastAssistantMessage } from "../../application/services/session-rest
 import { ChatInput } from "./ChatInput";
 import { ChatMessages } from "./ChatMessages";
 import { SessionHistoryPopover } from "./SessionHistoryPopover";
-import { RestoredSessionToolbar } from "./RestoredSessionToolbar";
+import { FileChangesPanel } from "./FileChangesPanel";
 import type { ChatView } from "./ChatView";
 
 export interface TabContentActions {
@@ -332,7 +332,7 @@ export function TabContent({
 
 			{sessionRestore.changeSet &&
 				sessionRestore.changeSet.changes.length > 0 && (
-					<RestoredSessionToolbar
+					<FileChangesPanel
 						changes={sessionRestore.changeSet.changes}
 						plugin={plugin}
 						onUndoAll={() => void handleUndoAll()}

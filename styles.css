@@ -953,20 +953,6 @@ If your plugin does not need CSS, delete this file.
 	);
 }
 
-.ac-toolcall--file-edit .obsius-tool-call-diff {
-	margin-top: 0;
-	border: none;
-	border-radius: 0;
-	background: transparent;
-}
-
-.ac-toolcall--file-edit .obsius-tool-call-diff-content {
-	background: transparent;
-	max-height: 320px;
-	min-height: 40px;
-	overflow-y: auto;
-}
-
 /* Tree items */
 .ac-tree__item {
 	margin: 4px 0;
@@ -2415,204 +2401,6 @@ If your plugin does not need CSS, delete this file.
 	overflow-x: auto;
 }
 
-/* Tool Call Diff Renderer */
-.obsius-tool-call-diff {
-	margin-top: 8px;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	overflow: hidden;
-	font-family: var(--font-monospace);
-	font-size: 12px;
-	background: var(--background-primary);
-}
-
-.obsius-tool-call-diff-content {
-	background-color: var(--background-primary);
-	overflow: auto;
-}
-
-.obsius-diff-line-info {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	padding: 6px 10px;
-	background-color: var(--background-secondary);
-	color: var(--text-muted);
-	font-family: var(--font-monospace);
-	font-size: 12px;
-	border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.obsius-diff-file-name {
-	font-style: normal;
-	font-weight: 500;
-	color: var(--text-normal);
-}
-
-.obsius-diff-file-name--link {
-	cursor: pointer;
-	color: var(--text-accent);
-}
-
-.obsius-diff-file-name--link:hover {
-	text-decoration: underline;
-}
-
-.obsius-diff-new-badge {
-	font-size: 10px;
-	font-style: italic;
-	color: var(--color-green);
-	padding: 0 4px;
-	border: 1px solid var(--color-green);
-	border-radius: 3px;
-	line-height: 1.4;
-}
-
-.obsius-diff-line-stats {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	margin-left: auto;
-	font-size: 11px;
-	font-weight: 600;
-}
-
-.obsius-diff-line-stats-added {
-	color: var(--color-green);
-}
-
-.obsius-diff-line-stats-removed {
-	color: var(--color-red);
-}
-
-.obsius-diff-line {
-	display: flex;
-	align-items: flex-start;
-	line-height: 1.5;
-	user-select: text;
-}
-
-.obsius-diff-line-number {
-	display: inline-block;
-	width: 40px;
-	padding: 2px 8px;
-	text-align: right;
-	flex-shrink: 0;
-	color: var(--text-muted);
-	user-select: none;
-	font-size: 11px;
-}
-
-.obsius-diff-line-number--clickable {
-	cursor: pointer;
-}
-
-.obsius-diff-line-number--clickable:hover {
-	color: var(--text-accent);
-	text-decoration: underline;
-}
-
-.obsius-diff-line-number-old {
-	border-right: 1px solid var(--background-modifier-border);
-}
-
-.obsius-diff-line-number-new {
-	border-right: 1px solid var(--background-modifier-border);
-}
-
-.obsius-diff-line-marker {
-	display: inline-block;
-	width: 20px;
-	padding: 2px 4px;
-	flex-shrink: 0;
-	font-weight: bold;
-	user-select: none;
-	text-align: center;
-}
-
-.obsius-diff-line-content {
-	flex: 1;
-	padding: 2px 12px;
-	white-space: pre-wrap;
-	word-break: break-all;
-}
-
-.obsius-diff-line-added {
-	background-color: rgba(46, 160, 67, 0.15);
-}
-
-.obsius-diff-line-added .obsius-diff-line-marker {
-	color: var(--color-green);
-}
-
-.obsius-diff-line-removed {
-	background-color: rgba(248, 81, 73, 0.15);
-}
-
-.obsius-diff-line-removed .obsius-diff-line-marker {
-	color: var(--color-red);
-}
-
-.obsius-diff-line-context {
-	background-color: transparent;
-}
-
-.obsius-diff-line-context .obsius-diff-line-marker {
-	color: var(--text-faint);
-}
-
-/* Hunk header styling */
-.obsius-diff-hunk-header {
-	padding: 4px 12px;
-	background-color: var(--background-secondary-alt);
-	color: var(--text-muted);
-	font-size: 11px;
-	border-top: 1px solid var(--background-modifier-border);
-	border-bottom: 1px solid var(--background-modifier-border);
-	font-weight: 500;
-}
-
-/* Word-level diff highlighting */
-.obsius-diff-word-added {
-	background-color: rgba(46, 160, 67, 0.4);
-	font-weight: 600;
-}
-
-.obsius-diff-word-removed {
-	background-color: rgba(248, 81, 73, 0.4);
-	font-weight: 600;
-	text-decoration: line-through;
-}
-
-/* Diff Expand/Collapse Bar */
-.obsius-diff-expand-bar {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 6px 12px;
-	background-color: var(--background-secondary-alt);
-	border-top: 1px solid var(--background-modifier-border);
-	cursor: pointer;
-	user-select: none;
-	transition: background-color 0.1s ease;
-}
-
-.obsius-diff-expand-bar:hover {
-	background-color: var(--background-modifier-hover);
-}
-
-.obsius-diff-expand-text {
-	font-size: 11px;
-	color: var(--text-muted);
-	font-family: var(--font-monospace);
-}
-
-.obsius-diff-expand-icon {
-	font-size: 0.8em;
-	color: var(--text-muted);
-	margin-left: 8px;
-}
-
 /* Tool Call Details */
 .obsius-tool-call-read-details,
 .obsius-tool-call-edit-details,
@@ -3784,20 +3572,6 @@ If your plugin does not need CSS, delete this file.
 	white-space: nowrap;
 }
 
-.obsius-changes-stat {
-	font-family: var(--font-monospace);
-	font-size: var(--font-ui-smaller);
-	font-weight: 500;
-}
-
-.obsius-changes-stat--add {
-	color: var(--color-green);
-}
-
-.obsius-changes-stat--remove {
-	color: var(--color-red);
-}
-
 .obsius-changes-actions {
 	display: inline-flex;
 	align-items: center;
@@ -3917,10 +3691,11 @@ If your plugin does not need CSS, delete this file.
 .obsius-changes-file-stats {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	gap: 2px;
 	flex-shrink: 0;
 	font-family: var(--font-monospace);
 	font-size: var(--font-ui-smaller);
+	font-weight: 700;
 }
 
 .obsius-changes-file-stat--add {
@@ -3978,95 +3753,21 @@ If your plugin does not need CSS, delete this file.
 	color: var(--color-green);
 }
 
-.obsius-changes-file-chevron {
+/* Seen/unseen indicator in changes panel */
+.obsius-changes-file-seen {
 	flex-shrink: 0;
 	color: var(--text-faint);
-	transition: transform 0.15s ease;
-}
-
-.obsius-changes-file-row--expanded .obsius-changes-file-chevron {
-	color: var(--text-muted);
-}
-
-.obsius-changes-file-diff {
-	border-top: 1px solid var(--background-modifier-border);
-	max-height: 400px;
-	overflow-y: auto;
-}
-
-/* ============================================================
-   Shared Diff Viewer
-   ============================================================ */
-
-.obsius-diff-viewer {
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-	overflow: hidden;
-}
-
-.obsius-diff-viewer-header {
-	padding: 6px 12px;
-	background: var(--background-secondary);
-	border-bottom: 1px solid var(--background-modifier-border);
-	font-family: var(--font-monospace);
-	font-size: var(--font-ui-smaller);
-	color: var(--text-muted);
-}
-
-.obsius-diff-viewer-content {
-	margin: 0;
-	padding: 0;
-	overflow: auto;
-	font-family: var(--font-monospace);
-	font-size: var(--font-ui-smaller);
-	line-height: 1.6;
-}
-
-.obsius-diff-line {
 	display: flex;
-	padding: 0 12px;
-	min-height: 1.6em;
+	align-items: center;
 }
 
-.obsius-diff-line--add {
-	background-color: rgba(0, 200, 80, 0.12);
-}
-
-.obsius-diff-line--remove {
-	background-color: rgba(255, 60, 60, 0.12);
-}
-
-.obsius-diff-line-prefix {
-	flex-shrink: 0;
-	width: 1.5em;
-	text-align: center;
-	color: var(--text-faint);
-	user-select: none;
-}
-
-.obsius-diff-line--add .obsius-diff-line-prefix {
-	color: var(--color-green);
-}
-
-.obsius-diff-line--remove .obsius-diff-line-prefix {
-	color: var(--color-red);
-}
-
-.obsius-diff-line-text {
-	white-space: pre;
+.obsius-changes-file-seen--yes {
+	color: var(--text-muted);
 }
 
 /* ============================================================
    Inline Edit Modal
    ============================================================ */
-
-.obsius-inline-edit-modal {
-	max-width: 700px;
-}
-
-.obsius-inline-edit-container {
-	margin-bottom: 16px;
-}
 
 .obsius-inline-edit-footer {
 	display: flex;
@@ -4089,4 +3790,49 @@ If your plugin does not need CSS, delete this file.
 	font-size: var(--font-ui-small);
 	resize: vertical;
 	font-family: inherit;
+}
+
+/* ============================================================
+   Inline Diff Decorations (CodeMirror editor)
+   ============================================================ */
+
+.obsius-inline-diff-added {
+	background-color: color-mix(in srgb, var(--color-green) 15%, transparent);
+	border-radius: 2px;
+}
+
+.obsius-inline-diff-deleted {
+	background-color: color-mix(in srgb, var(--color-red) 12%, transparent);
+	color: color-mix(in srgb, var(--text-normal) 50%, transparent);
+	text-decoration: line-through;
+	border-radius: 2px;
+	font-size: 0.95em;
+}
+
+/* ============================================================
+   Compact Diff File Badge (ToolCallRenderer)
+   ============================================================ */
+
+.ac-diff-file-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 8px;
+	border-radius: 6px;
+	background: var(--background-secondary);
+	cursor: pointer;
+	font-family: var(--font-monospace);
+	font-size: 12px;
+	color: var(--text-accent);
+	transition: background-color 0.1s ease;
+}
+
+.ac-diff-file-badge:hover {
+	background: var(--background-modifier-hover);
+}
+
+.ac-diff-file-badge__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }

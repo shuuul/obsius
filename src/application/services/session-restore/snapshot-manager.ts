@@ -43,15 +43,19 @@ export class SnapshotManager {
 	/** vault-relative path -> content right before we reverted (null = file didn't exist) */
 	private preRevertBackups = new Map<string, string | null>();
 
+	/** Serializes computeChanges calls so earlier disk reads finish before later calls start */
+	private computeLock: Promise<void> = Promise.resolve();
+
 	/**
 	 * Discover all files mentioned in the conversation and record their
 	 * original state on first sighting.
 	 *
 	 * Original content comes from (in priority order):
 	 * 1. The first diff's `oldText` for that path (most reliable)
-	 * 2. Reading the file from disk (captures content before agent writes)
+	 * 2. Reading the file from disk (fallback for write-tool overwrites and MCP tools)
 	 *
-	 * A file whose first `oldText` is null is flagged as new (`isNew: true`).
+	 * When `oldText` is null (full-file write), a disk read is attempted first.
+	 * Only if the file doesn't exist on disk is it flagged as new (`isNew: true`).
 	 */
 	async captureSnapshots(
 		messages: ChatMessage[],
@@ -66,12 +70,16 @@ export class SnapshotManager {
 				if (file.wasDeleted && !existing.wasDeletedByAgent) {
 					existing.wasDeletedByAgent = true;
 				}
-				if (!existing.fromDiff && file.firstOldText !== undefined) {
-					existing.content =
-						typeof file.firstOldText === "string" ? file.firstOldText : null;
-					existing.isNew = file.firstOldText === null;
-					existing.fromDiff = true;
-				}
+				if (
+				!existing.fromDiff &&
+				typeof file.firstOldText === "string" &&
+				// Don't let a placeholder empty oldText overwrite a real disk snapshot
+				(file.firstOldText !== "" || !existing.content)
+			) {
+				existing.content = file.firstOldText;
+				existing.isNew = false;
+				existing.fromDiff = true;
+			}
 				continue;
 			}
 
@@ -117,6 +125,22 @@ export class SnapshotManager {
 	 * filtered out.
 	 */
 	async computeChanges(
+		messages: ChatMessage[],
+		vaultBasePath: string | undefined,
+		readFile: (path: string) => Promise<string>,
+	): Promise<SessionChangeSet | null> {
+		let result: SessionChangeSet | null = null;
+		await (this.computeLock = this.computeLock.then(async () => {
+			result = await this.computeChangesInner(
+				messages,
+				vaultBasePath,
+				readFile,
+			);
+		}));
+		return result;
+	}
+
+	private async computeChangesInner(
 		messages: ChatMessage[],
 		vaultBasePath: string | undefined,
 		readFile: (path: string) => Promise<string>,
@@ -236,6 +260,7 @@ export class SnapshotManager {
 	reset(): void {
 		this.originals.clear();
 		this.preRevertBackups.clear();
+		this.computeLock = Promise.resolve();
 	}
 
 	private advanceBaseline(change: FileChange): void {

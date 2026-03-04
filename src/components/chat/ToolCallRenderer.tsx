@@ -6,11 +6,9 @@ import type { IAgentClient } from "../../domain/ports/agent-client.port";
 import type AgentClientPlugin from "../../plugin";
 import { TerminalRenderer } from "./TerminalRenderer";
 import { PermissionRequestSection } from "./PermissionRequestSection";
-import { DiffRenderer } from "./DiffRenderer";
 import { toRelativePath } from "../../shared/path-utils";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { ObsidianIcon } from "./ObsidianIcon";
-import { RawPatchView } from "./RawPatchView";
 import {
 	countDiffStats,
 	countRawPatchStats,
@@ -153,17 +151,17 @@ export function ToolCallRenderer({
 		!!rawInput &&
 		typeof rawInput.command === "string";
 	const hasLocationDetails = !isFileTool && !!locations && locations.length > 0;
-	const hasToolContentDetails =
-		toolContent?.some(
-			(item) => item.type === "terminal" || item.type === "diff",
-		) ?? false;
+	const hasTerminalContent =
+		toolContent?.some((item) => item.type === "terminal") ?? false;
+	const hasDiffBadges =
+		toolContent?.some((item) => item.type === "diff") ?? false;
 	const hasTodoPlanRendered = isTodoTool && hasPlanContent;
 	const hasRenderableDetails =
 		!hasTodoPlanRendered &&
 		(hasCommandDetails ||
 			hasLocationDetails ||
-			hasToolContentDetails ||
-			!!rawPatchText ||
+			hasTerminalContent ||
+			hasDiffBadges ||
 			!!permissionRequest);
 
 	const fileTitle = useMemo(() => {
@@ -365,36 +363,27 @@ export function ToolCallRenderer({
 						);
 					}
 					if (item.type === "diff") {
+						const rel = toRelativePath(item.path, vaultPath);
 						return (
-							<div key={index} className="ac-tree__item">
-								<DiffRenderer
-									diff={item}
-									plugin={plugin}
-									showHeader={!isFileEditTool}
-									autoCollapse={
-										plugin.settings.displaySettings.autoCollapseDiffs
-									}
-									collapseThreshold={
-										plugin.settings.displaySettings.diffCollapseThreshold
-									}
-								/>
+							<div
+								key={index}
+								className="ac-tree__item ac-diff-file-badge"
+								onClick={() => {
+									void plugin.inlineDiffManager.applyDiff(
+										rel,
+										item.oldText ?? "",
+										item.newText,
+									);
+								}}
+								title="View inline diff"
+							>
+								<ObsidianIcon name="file-diff" size={14} />
+								<span className="ac-diff-file-badge__name">{rel}</span>
 							</div>
 						);
 					}
 					return null;
 				})}
-
-			{rawPatchText && (
-				<div className="ac-tree__item">
-					<RawPatchView
-						text={rawPatchText}
-						autoCollapse={plugin.settings.displaySettings.autoCollapseDiffs}
-						collapseThreshold={
-							plugin.settings.displaySettings.diffCollapseThreshold
-						}
-					/>
-				</div>
-			)}
 
 			{permissionRequest && (
 				<div className="ac-tree__item">

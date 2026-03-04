@@ -16,7 +16,7 @@ src/
 │   └── ports/                # IAgentClient, IVaultAccess, ISettingsAccess, IChatViewContainer
 ├── adapters/
 │   ├── acp/                  # ACP protocol bridge + runtime/process/terminal modules
-│   └── obsidian/             # VaultAdapter, SettingsStore, MentionService, SecretStorage adapter
+│   └── obsidian/             # VaultAdapter, SettingsStore, MentionService, SecretStorage, InlineDiffManager
 ├── application/
 │   ├── services/             # chat-view registry + session restore services
 │   └── use-cases/            # prompt preparation/sending use case
@@ -44,7 +44,8 @@ src/
 | Settings changes | `plugin.ts` (interface) + `components/settings/sections/` (UI sections) | `AgentClientSettingTab.ts` is thin coordinator |
 | Add picker provider | `components/picker/` | Implement provider matching `PickerProvider` type |
 | Add input UI element | `components/chat/chat-input/` | 14 files: RichTextarea, InputActions, SelectorButton, ContextUsageMeter, etc. |
-| Inline edit | `plugin/inline-edit.ts` | Selection → agent prompt with diff viewer |
+| Inline edit | `plugin/inline-edit.ts` | Selection → agent prompt → inline diff in editor |
+| Inline diff | `adapters/obsidian/inline-diff-manager.ts` + `inline-diff-extension.ts` | CM6 word-level diff decorations in editor |
 | Tab management | `hooks/useTabs.ts` + `components/chat/TabBar.tsx` + `TabContent.tsx` | Multi-tab chat sessions |
 | Editor context menus | `plugin/editor-context.ts` | Selection, file, folder context references |
 | Debug | Settings → Debug Mode ON → DevTools → filter `[AcpAdapter]`, `[useChat]`, `[NoteMentionService]` | |
@@ -228,7 +229,8 @@ npm run docs:build       # VitePress build
 - **Settings validation**: `settings-schema.ts` uses Zod for runtime validation with schema versioning (v4)
 - **Context references**: Editor context menus (selection, file, folder) inject `ChatContextReference` tokens into chat input via `chat-context-token.ts`
 - **Picker system**: `components/picker/` provides unified `UnifiedPickerPanel` for @mentions and /commands with pluggable providers
-- **Inline edit**: `plugin/inline-edit.ts` enables selection-based editing via agent prompt with diff viewer
+- **Inline edit**: `plugin/inline-edit.ts` enables selection-based editing via agent prompt with inline diff decorations in editor
+- **Inline diff**: `adapters/obsidian/inline-diff-manager.ts` manages CM6 word-level diff decorations; `shared/word-diff.ts` computes diff segments; `adapters/obsidian/inline-diff-extension.ts` provides the CM6 StateField/decorations
 - **Session restore**: `useSessionRestore` (thin React wrapper) delegates to `SnapshotManager` in `application/services/session-restore/`; captures original file state on first sighting (from diff `oldText` or disk read), detects changes via disk comparison; `discoverModifiedFiles` scans tool call sources (diffs, rawInput, locations) for file paths
 - **Settings migrations**: `settings-migrations.ts` handles schema version upgrades with typed migration functions
 - **Slash command tokens**: `slash-command-token.ts` encodes/decodes slash commands as inline tokens in message text

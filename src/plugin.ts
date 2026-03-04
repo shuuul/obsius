@@ -54,6 +54,7 @@ import {
 	activateChatView,
 	openNewChatViewWithAgent,
 } from "./plugin/view-actions";
+import { InlineDiffManager } from "./adapters/obsidian/inline-diff-manager";
 
 export type { AgentEnvVar, AgentSecretBinding, CustomAgentSettings };
 
@@ -161,6 +162,9 @@ export default class AgentClientPlugin extends Plugin {
 	/** Map of sessionKey (tab ID) to AcpAdapter — each tab owns one ACP session */
 	private _sessionAdapters: Map<string, AcpAdapter> = new Map();
 
+	/** Manages inline word-level diff decorations in Obsidian editor leaves */
+	inlineDiffManager!: InlineDiffManager;
+
 	async onload() {
 		await this.loadSettings();
 		void resolveShellEnvironment();
@@ -187,6 +191,8 @@ export default class AgentClientPlugin extends Plugin {
 
 		// Initialize settings store
 		this.settingsStore = createSettingsStore(this.settings, this);
+
+		this.inlineDiffManager = new InlineDiffManager(this.app);
 
 		this.registerView(VIEW_TYPE_CHAT, (leaf) => new ChatView(leaf, this));
 
@@ -250,7 +256,7 @@ export default class AgentClientPlugin extends Plugin {
 	}
 
 	onunload() {
-		// Clear registry (sidebar views are managed by Obsidian workspace)
+		this.inlineDiffManager.clearAll();
 		this.viewRegistry.clear();
 	}
 

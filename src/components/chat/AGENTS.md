@@ -1,6 +1,6 @@
 # Chat Components Guide
 
-46 files for the chat UI (32 in `chat/` + 14 in `chat-input/`). Entry point: `ChatView` (sidebar/Obsidian leaf). Picker panel in `components/picker/` (4 files).
+43 files for the chat UI (29 in `chat/` + 14 in `chat-input/`). Entry point: `ChatView` (sidebar/Obsidian leaf). Picker panel in `components/picker/` (4 files).
 
 ## Dependency Rules (CRITICAL)
 
@@ -41,15 +41,12 @@ ChatView (ItemView, ~253 lines) ─── Obsidian sidebar leaf
               │           └── MessageContentRenderer (~140 lines, per content block)
               │                 ├── MarkdownTextRenderer  — markdown → Obsidian renderMarkdown (~51 lines)
               │                 ├── TextWithMentions      — @[[note]] + context token rendering; resolves md/canvas/excalidraw/image files (~263 lines)
-              │                 ├── ToolCallRenderer      — tool call accordion (~415 lines)
-              │                 │     ├── DiffRenderer       — unified diff view (~387 lines)
+              │                 ├── ToolCallRenderer      — tool call accordion; diff file badges jump to editor (~405 lines)
               │                 │     ├── TerminalRenderer   — polling terminal output (~140 lines)
-              │                 │     ├── RawPatchView       — raw patch display (~76 lines)
               │                 │     └── PermissionRequestSection — approve/deny buttons (~121 lines)
               │                 ├── CollapsibleThought    — agent reasoning toggle (~48 lines)
               │                 └── CollapsibleSection    — generic collapsible wrapper; `collapsible={false}` renders static (non-clickable) header (~45 lines)
-              ├── RestoredSessionToolbar ─ session restore accept/discard bar (~318 lines)
-              ├── DiffViewer            ─ side-by-side diff display for inline edits (~74 lines)
+              ├── FileChangesPanel      ─ changed files list with seen/unseen tracking, click-to-jump inline diff (~260 lines)
               ├── SuggestionDropdown  ─ @mention + /command dropdown (~140 lines)
               └── ChatInput           ─ input orchestrator (~406 lines)
                     ├── ErrorOverlay        ─ error banner above input (~78 lines)
@@ -113,17 +110,17 @@ Input-related components extracted from `ChatInput.tsx`. Contains:
 
 Note: hooks in `chat-input/` use `kebab-case` naming (not `usePascalCase`) since they're input-specific, not controller-level.
 
-## Session Restore
+## Session Restore and File Changes
 
-`RestoredSessionToolbar` renders an accept/discard bar when `useSessionRestore` detects file changes. `useSessionRestore` is a thin React wrapper around `SnapshotManager` in `application/services/session-restore/`. The manager captures original file state on first sighting (from diff `oldText` or disk read) and detects changes by comparing each snapshot with current disk content. Works with standard edit tools (via diffs), custom MCP tools (via tool call locations), and any tool with rawInput path keys. `DiffViewer` displays side-by-side diffs for inline edit results.
+`FileChangesPanel` renders a compact file list when `useSessionRestore` detects file changes. Each file row shows path, NEW/DELETED badges, +/-N line stats, a seen/unseen eye icon, and revert/keep actions. Clicking a file row opens it in the editor with inline word-level diff decorations via `plugin.inlineDiffManager.applyDiff()`. `useSessionRestore` is a thin React wrapper around `SnapshotManager` in `application/services/session-restore/`.
+
+**Inline diff**: Diffs are shown directly in the Obsidian editor using CodeMirror 6 decorations (added text highlighted, deleted text shown as inline strikethrough widgets). The diff computation (`shared/word-diff.ts`) uses `Diff.diffWords()` for word-level granularity. The CM6 extension lives in `adapters/obsidian/inline-diff-extension.ts`; lifecycle management in `adapters/obsidian/inline-diff-manager.ts`.
 
 **Loading spinner**: `ChatMessages` renders an SVG square-dots spinner (`.ac-loading__spinner` with 4 circles + 4 lines) while `isSending` is true. CSS-animated via keyframes in `styles.css`; replaces the former three-dot pulse indicator.
 
 **Markdown**: `MarkdownTextRenderer` calls Obsidian's `MarkdownRenderer.render()` into a `<div ref>`. Must handle async rendering and cleanup.
 
 **Terminal output**: `TerminalRenderer` polls `agentClient.getTerminalOutput(terminalId)` on interval. Shows live output + exit status.
-
-**Diff display**: `DiffRenderer` uses `diff` library to generate unified diff view with word-level highlighting. Computes relative paths via `toRelativePath()`.
 
 **Permission UI**: `PermissionRequestSection` renders approve/deny options. Local `selectedOptionId` state for immediate feedback before server confirms.
 

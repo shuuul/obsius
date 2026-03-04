@@ -822,5 +822,104 @@ describe("SnapshotManager", () => {
 				"# Title\nOriginal callout content",
 			);
 		});
+
+		it("read then write with oldText null: preserves original from first snapshot", async () => {
+			const readMessages: ChatMessage[] = [
+				makeLocationMessage(
+					"Read article.md",
+					[{ path: "article.md" }],
+					"read",
+					{ path: "article.md" },
+				),
+			];
+			const preWriteRead = vi.fn(async () => "Original article content");
+			await manager.computeChanges(readMessages, undefined, preWriteRead);
+
+			const allMessages: ChatMessage[] = [
+				...readMessages,
+				makeDiffMessage("article.md", null, "Polished article content"),
+			];
+			const io = mockFileIo({
+				"article.md": "Polished article content",
+			});
+			const cs = await manager.computeChanges(
+				allMessages,
+				undefined,
+				io.readFile,
+			);
+
+			expect(cs).not.toBeNull();
+			const change = requireDefined(cs).changes[0];
+			expect(change.isNewFile).toBe(false);
+			expect(change.originalText).toBe("Original article content");
+			expect(change.finalText).toBe("Polished article content");
+		});
+
+		it("computeChanges serializes: second call sees originals captured by first", async () => {
+			const readMessages: ChatMessage[] = [
+				makeLocationMessage("Read note.md", [{ path: "note.md" }], "read", {
+					path: "note.md",
+				}),
+			];
+			const allMessages: ChatMessage[] = [
+				...readMessages,
+				makeDiffMessage("note.md", null, "Rewritten content"),
+			];
+
+			const preWriteRead = vi.fn(async () => "Original content");
+			const postWriteIo = mockFileIo({
+				"note.md": "Rewritten content",
+			});
+
+			// Fire both calls; mutex ensures first completes before second starts
+			const p1 = manager.computeChanges(readMessages, undefined, preWriteRead);
+			const p2 = manager.computeChanges(
+				allMessages,
+				undefined,
+				postWriteIo.readFile,
+			);
+
+			await p1;
+			const cs = await p2;
+
+			expect(cs).not.toBeNull();
+			const change = requireDefined(cs).changes[0];
+			expect(change.isNewFile).toBe(false);
+			expect(change.originalText).toBe("Original content");
+			expect(change.finalText).toBe("Rewritten content");
+		});
+
+		it("empty oldText placeholder does not overwrite disk-captured original", async () => {
+			const readMessages: ChatMessage[] = [
+				makeLocationMessage(
+					"Read article.md",
+					[{ path: "article.md" }],
+					"read",
+					{ path: "article.md" },
+				),
+			];
+			const preWriteRead = vi.fn(async () => "Original article content");
+			await manager.computeChanges(readMessages, undefined, preWriteRead);
+
+			// Edit tool emits oldText: "" (placeholder) with full newText
+			const allMessages: ChatMessage[] = [
+				...readMessages,
+				makeDiffMessage("article.md", "", "Polished article content"),
+			];
+			const io = mockFileIo({
+				"article.md": "Polished article content",
+			});
+			const cs = await manager.computeChanges(
+				allMessages,
+				undefined,
+				io.readFile,
+			);
+
+			expect(cs).not.toBeNull();
+			const change = requireDefined(cs).changes[0];
+			expect(change.isNewFile).toBe(false);
+			expect(change.originalText).toBe("Original article content");
+			expect(change.finalText).toBe("Polished article content");
+		});
 	});
 });

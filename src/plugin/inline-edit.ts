@@ -1,59 +1,5 @@
 import { Modal, type App, Notice } from "obsidian";
 import type AgentClientPlugin from "../plugin";
-import { createRoot, type Root } from "react-dom/client";
-import * as React from "react";
-import { DiffViewer } from "../components/chat/DiffViewer";
-
-class InlineEditDiffModal extends Modal {
-	private root: Root | null = null;
-
-	constructor(
-		app: App,
-		private filePath: string,
-		private originalText: string,
-		private editedText: string,
-		private onAccept: () => void,
-	) {
-		super(app);
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.addClass("obsius-inline-edit-modal");
-
-		const container = contentEl.createDiv("obsius-inline-edit-container");
-		this.root = createRoot(container);
-		this.root.render(
-			React.createElement(DiffViewer, {
-				oldText: this.originalText,
-				newText: this.editedText,
-				filePath: this.filePath,
-				maxHeight: 500,
-			}),
-		);
-
-		const footer = contentEl.createDiv("obsius-inline-edit-footer");
-
-		const rejectBtn = footer.createEl("button", { text: "Discard" });
-		rejectBtn.addClass("mod-warning");
-		rejectBtn.addEventListener("click", () => this.close());
-
-		const acceptBtn = footer.createEl("button", { text: "Apply" });
-		acceptBtn.addClass("mod-cta");
-		acceptBtn.addEventListener("click", () => {
-			this.onAccept();
-			this.close();
-		});
-	}
-
-	onClose() {
-		if (this.root) {
-			this.root.unmount();
-			this.root = null;
-		}
-		this.contentEl.empty();
-	}
-}
 
 class InlineEditPromptModal extends Modal {
 	constructor(
@@ -146,16 +92,13 @@ export function registerInlineEditCommand(plugin: AgentClientPlugin): void {
 							if (result && attempts > 2) {
 								clearInterval(checkInterval);
 								const cleaned = cleanCodeFence(result);
-								new InlineEditDiffModal(
-									plugin.app,
+								editor.replaceSelection(cleaned);
+								new Notice("Edit applied");
+								void plugin.inlineDiffManager.applyDiff(
 									filePath,
 									selection,
 									cleaned,
-									() => {
-										editor.replaceSelection(cleaned);
-										new Notice("Edit applied");
-									},
-								).open();
+								);
 							}
 							if (attempts >= maxAttempts) {
 								clearInterval(checkInterval);
