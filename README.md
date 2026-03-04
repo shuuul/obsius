@@ -1,3 +1,7 @@
+[![version](https://img.shields.io/badge/version-0.6.1-blue)](https://github.com/shuuul/obsius/releases)
+[![vite](https://img.shields.io/badge/vite-7.3.1-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
+
 <h1>
 	<img src="assets/icons/obsius-o.svg" alt="O" width="28" height="28" style="vertical-align: -4px;" />
 	bsius — AI Agents in Obsidian
@@ -6,10 +10,6 @@
 Obsius rethinks how writers collaborate with AI. Instead of handing entire documents to a chatbot and hoping for the best, Obsius gives you precise, word-level control over every AI interaction. Select exactly what you want changed, see exactly what changed, and keep everything else untouched.
 
 Read the design write-up: [WHITEPAPER.md](WHITEPAPER.md)
-
-[![version](https://img.shields.io/badge/version-0.6.1-blue)](https://github.com/shuuul/obsius/releases)
-[![vite](https://img.shields.io/badge/vite-7.3.1-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
-[![obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
 
 ## Key Features
 
