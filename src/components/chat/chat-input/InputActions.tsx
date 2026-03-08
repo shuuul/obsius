@@ -40,28 +40,33 @@ export function InputActions({
 	contextUsage,
 	isSessionReady,
 }: InputActionsProps) {
-	const modeOptions: SelectorOption[] | undefined = modes?.availableModes.map(
-		(mode, index) => ({
-			id: mode.id,
-			label: mode.name,
-			description: mode.description,
-			icon: getModeIcon(mode.id, index),
-		}),
+	const modeOptions: SelectorOption[] | undefined = useMemo(
+		() =>
+			modes?.availableModes.map((mode, index) => ({
+				id: mode.id,
+				label: mode.name,
+				description: mode.description,
+				icon: getModeIcon(mode.id, index),
+			})),
+		[modes],
 	);
 
-	const modelOptions: SelectorOption[] | undefined =
-		models?.availableModels.map((model) => {
-			const parsed = parseModelDisplay(model.modelId, model.name);
-			return {
-				id: model.modelId,
-				label: parsed.modelName,
-				description: model.description,
-				iconElement: parsed.providerSlug ? (
-					<ProviderLogo slug={parsed.providerSlug} />
-				) : undefined,
-				icon: parsed.providerSlug ? undefined : parsed.fallbackIcon,
-			};
-		});
+	const modelOptions: SelectorOption[] | undefined = useMemo(
+		() =>
+			models?.availableModels.map((model) => {
+				const parsed = parseModelDisplay(model.modelId, model.name);
+				return {
+					id: model.modelId,
+					label: parsed.modelName,
+					description: model.description,
+					iconElement: parsed.providerSlug ? (
+						<ProviderLogo slug={parsed.providerSlug} />
+					) : undefined,
+					icon: parsed.providerSlug ? undefined : parsed.fallbackIcon,
+				};
+			}),
+		[models],
+	);
 
 	// Preload model provider logos as soon as model list arrives
 	const modelSlugs = useMemo(() => {
@@ -78,7 +83,7 @@ export function InputActions({
 	const showModes =
 		modeOptions && modeOptions.length > 1 && modes && onModeChange;
 	const showModels =
-		modelOptions && modelOptions.length > 1 && models && onModelChange;
+		modelOptions && modelOptions.length > 0 && models && onModelChange;
 
 	return (
 		<div className="obsius-chat-input-actions">
