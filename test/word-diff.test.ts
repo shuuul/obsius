@@ -229,7 +229,8 @@ describe("computeInlineDiffSegments", () => {
 			"## 辩证关系",
 		].join("\n");
 		const originalSnippet = "## 什么是 PKM 和 CKM?\n\n## PKM：个人知识管理";
-		const currentSnippet = "## 1. 什么是 PKM 和 CKM?\n\n## 2. PKM：个人知识管理";
+		const currentSnippet =
+			"## 1. 什么是 PKM 和 CKM?\n\n## 2. PKM：个人知识管理";
 
 		const segments = computeAnchoredInlineDiffSegments(
 			currentDocument,
@@ -255,9 +256,13 @@ describe("computeInlineDiffSegments", () => {
 	});
 
 	it("returns null when snippet current text is not present in the full document", () => {
-		const documentText = ["# Title", "", "## Section A", "", "## Section B"].join(
-			"\n",
-		);
+		const documentText = [
+			"# Title",
+			"",
+			"## Section A",
+			"",
+			"## Section B",
+		].join("\n");
 		const originalSnippet = "## Section A";
 		const currentSnippet = "## 1. Section A";
 
