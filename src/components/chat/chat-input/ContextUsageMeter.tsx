@@ -63,12 +63,18 @@ export function ContextUsageMeter({
 		<div
 			className={`obsius-context-meter${isWarning ? " obsius-context-meter-warning" : ""}`}
 			title={tooltip}
+			role="meter"
+			aria-label={`Context usage: ${percentage}%`}
+			aria-valuenow={percentage}
+			aria-valuemin={0}
+			aria-valuemax={100}
 		>
 			<svg
 				className="obsius-context-meter-gauge"
 				width={SVG_SIZE}
 				height={SVG_SIZE}
 				viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
+				aria-hidden="true"
 			>
 				<path
 					className="obsius-meter-bg"

@@ -27,16 +27,18 @@ export function ContextBadgeStrip({
 		<div
 			className={className ?? "obsius-input-context-badge-strip"}
 			data-context-badge-strip="true"
+			role="list"
+			aria-label="Context references"
 		>
 			{items.map((item) => {
 				const clickable = typeof item.onClick === "function";
 				return (
 					<span
 						key={item.id}
+						role="listitem"
 						className={`obsius-inline-mention-badge obsius-inline-context-badge${clickable ? " obsius-inline-context-badge-clickable" : ""}`}
 						title={item.title ?? item.label}
 						onClick={() => item.onClick?.()}
-						role={clickable ? "button" : undefined}
 						tabIndex={clickable ? 0 : undefined}
 						onKeyDown={(e) => {
 							if (!clickable) return;

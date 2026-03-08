@@ -98,6 +98,7 @@ export function registerInlineEditCommand(plugin: AgentClientPlugin): void {
 									filePath,
 									selection,
 									cleaned,
+									{ mode: "snippet" },
 								);
 							}
 							if (attempts >= maxAttempts) {

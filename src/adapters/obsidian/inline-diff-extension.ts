@@ -1,15 +1,16 @@
 import {
-	StateField,
-	StateEffect,
 	type Extension,
 	RangeSetBuilder,
+	StateEffect,
+	StateField,
 } from "@codemirror/state";
 import {
 	Decoration,
 	type DecorationSet,
-	WidgetType,
 	EditorView,
+	WidgetType,
 } from "@codemirror/view";
+import { editorLivePreviewField } from "obsidian";
 import type { InlineDiffSegment } from "../../shared/word-diff";
 
 class DeletedTextWidget extends WidgetType {
@@ -37,6 +38,31 @@ class DeletedTextWidget extends WidgetType {
 	}
 }
 
+class AddedTextWidget extends WidgetType {
+	constructor(readonly text: string) {
+		super();
+	}
+
+	toDOM(): HTMLElement {
+		const span = document.createElement("span");
+		span.className = "obsius-inline-diff-added-widget";
+		span.textContent = this.text;
+		return span;
+	}
+
+	eq(other: AddedTextWidget): boolean {
+		return this.text === other.text;
+	}
+
+	get estimatedHeight(): number {
+		return -1;
+	}
+
+	ignoreEvent(): boolean {
+		return true;
+	}
+}
+
 export const setInlineDiff = StateEffect.define<InlineDiffSegment[]>();
 const clearInlineDiff = StateEffect.define<void>();
 
@@ -48,7 +74,11 @@ const inlineDiffField = StateField.define<DecorationSet>({
 	update(decorations, tr) {
 		for (const effect of tr.effects) {
 			if (effect.is(setInlineDiff)) {
-				return buildDecorations(effect.value, tr.state.doc.length);
+				return buildDecorations(
+					effect.value,
+					tr.state.doc,
+					tr.state.field(editorLivePreviewField, false) === true,
+				);
 			}
 			if (effect.is(clearInlineDiff)) {
 				return Decoration.none;
@@ -67,9 +97,11 @@ const inlineDiffField = StateField.define<DecorationSet>({
 
 function buildDecorations(
 	segments: InlineDiffSegment[],
-	docLength: number,
+	doc: EditorView["state"]["doc"],
+	isLivePreview: boolean,
 ): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>();
+	const docLength = doc.length;
 
 	const sorted = [...segments].sort((a, b) => a.from - b.from || a.to - b.to);
 
@@ -88,6 +120,17 @@ function buildDecorations(
 		} else if (seg.type === "added") {
 			const to = Math.min(seg.to, docLength);
 			if (to > seg.from) {
+				if (isLivePreview) {
+					builder.add(
+						seg.from,
+						to,
+						Decoration.replace({
+							widget: new AddedTextWidget(doc.sliceString(seg.from, to)),
+						}),
+					);
+					continue;
+				}
+
 				builder.add(
 					seg.from,
 					to,

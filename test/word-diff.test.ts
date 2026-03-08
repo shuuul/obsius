@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { computeInlineDiffSegments } from "../src/shared/word-diff";
+import {
+	computeAnchoredInlineDiffSegments,
+	computeInlineDiffSegments,
+} from "../src/shared/word-diff";
 
 describe("computeInlineDiffSegments", () => {
 	it("returns empty for identical texts", () => {
@@ -84,5 +87,186 @@ describe("computeInlineDiffSegments", () => {
 		const deleted = segments.filter((s) => s.type === "deleted");
 		expect(added.length).toBeGreaterThan(0);
 		expect(deleted.length).toBeGreaterThan(0);
+	});
+
+	it("limits added header numbering to changed header blocks", () => {
+		const original = [
+			"# PKM 与 CKM 核心概念总结",
+			"",
+			"## 什么是 PKM 和 CKM?",
+			"",
+			"## PKM：个人知识管理",
+			"",
+			"核心流程：",
+			"1. 捕获",
+			"2. 组织",
+			"3. 提炼与综合",
+			"4. 表达与应用",
+			"",
+			"关键特征：",
+			"一 主体：个体导向",
+			"二 目标：提升个人认知效率、创造力",
+			"",
+			"## CKM：协同/企业知识管理",
+			"",
+			"## 辩证关系",
+		].join("\n");
+		const current = [
+			"# 1. PKM 与 CKM 核心概念总结",
+			"",
+			"## 2. 什么是 PKM 和 CKM?",
+			"",
+			"## 3. PKM：个人知识管理",
+			"",
+			"核心流程：",
+			"1. 捕获",
+			"2. 组织",
+			"3. 提炼与综合",
+			"4. 表达与应用",
+			"",
+			"关键特征：",
+			"一 主体：个体导向",
+			"二 目标：提升个人认知效率、创造力",
+			"",
+			"## 4. CKM：协同/企业知识管理",
+			"",
+			"## 5. 辩证关系",
+		].join("\n");
+
+		const segments = computeInlineDiffSegments(original, current);
+		const addedTexts = segments
+			.filter((segment) => segment.type === "added")
+			.map((segment) => current.slice(segment.from, segment.to));
+
+		expect(addedTexts).toEqual(["1. ", "2. ", "3. ", "4. ", "5. "]);
+	});
+
+	it("limits removed header numbering to changed header blocks", () => {
+		const original = [
+			"# 1. PKM 与 CKM 核心概念总结",
+			"",
+			"## 2. 什么是 PKM 和 CKM?",
+			"",
+			"## 3. PKM：个人知识管理",
+			"",
+			"核心流程：",
+			"1. 捕获",
+			"2. 组织",
+			"3. 提炼与综合",
+			"4. 表达与应用",
+			"",
+			"关键特征：",
+			"一 主体：个体导向",
+			"二 目标：提升个人认知效率、创造力",
+			"",
+			"## 4. CKM：协同/企业知识管理",
+			"",
+			"## 5. 辩证关系",
+		].join("\n");
+		const current = [
+			"# PKM 与 CKM 核心概念总结",
+			"",
+			"## 什么是 PKM 和 CKM?",
+			"",
+			"## PKM：个人知识管理",
+			"",
+			"核心流程：",
+			"1. 捕获",
+			"2. 组织",
+			"3. 提炼与综合",
+			"4. 表达与应用",
+			"",
+			"关键特征：",
+			"一 主体：个体导向",
+			"二 目标：提升个人认知效率、创造力",
+			"",
+			"## CKM：协同/企业知识管理",
+			"",
+			"## 辩证关系",
+		].join("\n");
+
+		const segments = computeInlineDiffSegments(original, current);
+		const deletedTexts = segments
+			.filter((segment) => segment.type === "deleted")
+			.map((segment) => segment.deletedText);
+
+		expect(deletedTexts).toEqual(["1. ", "2. ", "3. ", "4. ", "5. "]);
+	});
+
+	it("anchors snippet diffs to the matching block in the full document", () => {
+		const originalDocument = [
+			"# PKM 与 CKM 核心概念总结",
+			"",
+			"## 什么是 PKM 和 CKM?",
+			"",
+			"## PKM：个人知识管理",
+			"",
+			"核心流程：",
+			"1. 捕获",
+			"2. 组织",
+			"3. 提炼与综合",
+			"4. 表达与应用",
+			"",
+			"## CKM：协同/企业知识管理",
+			"",
+			"## 辩证关系",
+		].join("\n");
+		const currentDocument = [
+			"# PKM 与 CKM 核心概念总结",
+			"",
+			"## 1. 什么是 PKM 和 CKM?",
+			"",
+			"## 2. PKM：个人知识管理",
+			"",
+			"核心流程：",
+			"1. 捕获",
+			"2. 组织",
+			"3. 提炼与综合",
+			"4. 表达与应用",
+			"",
+			"## CKM：协同/企业知识管理",
+			"",
+			"## 辩证关系",
+		].join("\n");
+		const originalSnippet = "## 什么是 PKM 和 CKM?\n\n## PKM：个人知识管理";
+		const currentSnippet = "## 1. 什么是 PKM 和 CKM?\n\n## 2. PKM：个人知识管理";
+
+		const segments = computeAnchoredInlineDiffSegments(
+			currentDocument,
+			originalSnippet,
+			currentSnippet,
+		);
+
+		expect(segments).not.toBeNull();
+		const addedTexts = (segments ?? [])
+			.filter((segment) => segment.type === "added")
+			.map((segment) => currentDocument.slice(segment.from, segment.to));
+		expect(addedTexts).toEqual(["1. ", "2. "]);
+		expect(
+			addedTexts.every(
+				(text) =>
+					text !== "1. 捕获" &&
+					text !== "2. 组织" &&
+					text !== "3. 提炼与综合" &&
+					text !== "4. 表达与应用",
+			),
+		).toBe(true);
+		expect(originalDocument.includes(originalSnippet)).toBe(true);
+	});
+
+	it("returns null when snippet current text is not present in the full document", () => {
+		const documentText = ["# Title", "", "## Section A", "", "## Section B"].join(
+			"\n",
+		);
+		const originalSnippet = "## Section A";
+		const currentSnippet = "## 1. Section A";
+
+		const segments = computeAnchoredInlineDiffSegments(
+			documentText,
+			originalSnippet,
+			currentSnippet,
+		);
+
+		expect(segments).toBeNull();
 	});
 });

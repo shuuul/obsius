@@ -26,7 +26,8 @@ function normalizeVaultPath(path: string): string {
 	return path
 		.replace(/\\/g, "/")
 		.replace(/^\.\/+/, "")
-		.replace(/^\/+/, "");
+		.replace(/^\/+/, "")
+		.normalize("NFC");
 }
 
 function getPathFromRawInput(rawInput: Record<string, unknown>): string | null {
@@ -179,8 +180,15 @@ export interface DiscoveredFile {
 	rawPath: string;
 	/** First oldText seen for this path — string for existing, null for explicit new-file, undefined for unknown */
 	firstOldText: string | null | undefined;
+	/** Most recent string oldText seen (used to refresh baseline after keepFile) */
+	latestOldText: string | undefined;
+	/** Most recent string newText seen (used to detect line-level edit snippets) */
+	latestNewText: string | undefined;
 	/** True when any tool call with `kind === "delete"` targeted this path */
 	wasDeleted: boolean;
+	/** All (oldText, newText) diff pairs in message order — used to reverse-apply
+	 *  line-level edits and reconstruct the full original when firstOldText is a snippet */
+	allDiffPairs: Array<{ oldText: string; newText: string }>;
 }
 
 /**
@@ -201,7 +209,12 @@ export function discoverModifiedFiles(
 ): DiscoveredFile[] {
 	const found = new Map<string, DiscoveredFile>();
 
-	const add = (rawPath: string, oldText?: string | null, kind?: ToolKind) => {
+	const add = (
+		rawPath: string,
+		oldText?: string | null,
+		newText?: string,
+		kind?: ToolKind,
+	) => {
 		const vaultPath = toVaultRelativePath(rawPath, vaultBasePath);
 		if (!vaultPath) return;
 
@@ -211,6 +224,15 @@ export function discoverModifiedFiles(
 			if (existing.firstOldText === undefined && typeof oldText === "string") {
 				existing.firstOldText = oldText;
 			}
+			if (typeof oldText === "string") {
+				existing.latestOldText = oldText;
+			}
+			if (typeof newText === "string") {
+				existing.latestNewText = newText;
+			}
+			if (typeof oldText === "string" && typeof newText === "string") {
+				existing.allDiffPairs.push({ oldText, newText });
+			}
 			return;
 		}
 
@@ -218,7 +240,13 @@ export function discoverModifiedFiles(
 			vaultPath,
 			rawPath,
 			firstOldText: oldText,
+			latestOldText: typeof oldText === "string" ? oldText : undefined,
+			latestNewText: typeof newText === "string" ? newText : undefined,
 			wasDeleted: kind === "delete",
+			allDiffPairs:
+				typeof oldText === "string" && typeof newText === "string"
+					? [{ oldText, newText }]
+					: [],
 		});
 	};
 
@@ -230,7 +258,7 @@ export function discoverModifiedFiles(
 			if (content.content) {
 				for (const item of content.content) {
 					if (item.type !== "diff") continue;
-					add(item.path, item.oldText, kind);
+					add(item.path, item.oldText, item.newText, kind);
 				}
 			}
 
@@ -238,18 +266,23 @@ export function discoverModifiedFiles(
 				const command = getCommandFromRawInput(content.rawInput);
 				if (kind === "execute" && command) {
 					for (const parsed of parseExecuteCommandPaths(command)) {
-						add(parsed.path, undefined, parsed.isDelete ? "delete" : kind);
+						add(
+							parsed.path,
+							undefined,
+							undefined,
+							parsed.isDelete ? "delete" : kind,
+						);
 					}
 				}
 
 				const rawPath =
 					getPathFromRawInput(content.rawInput) || content.locations?.[0]?.path;
-				if (rawPath) add(rawPath, undefined, kind);
+				if (rawPath) add(rawPath, undefined, undefined, kind);
 			}
 
 			if (content.locations && kind !== "search") {
 				for (const loc of content.locations) {
-					add(loc.path, undefined, kind);
+					add(loc.path, undefined, undefined, kind);
 				}
 			}
 		}

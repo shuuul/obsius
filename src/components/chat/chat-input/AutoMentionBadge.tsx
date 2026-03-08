@@ -29,6 +29,7 @@ export function AutoMentionBadge({
 				onClick={handleOpenNote}
 				role="link"
 				tabIndex={0}
+				aria-label={`Open ${autoMention.activeNote.name}`}
 				onKeyDown={(e) => {
 					if (e.key === "Enter" || e.key === " ") {
 						e.preventDefault();

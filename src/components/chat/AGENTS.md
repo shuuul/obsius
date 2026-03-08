@@ -112,7 +112,7 @@ Note: hooks in `chat-input/` use `kebab-case` naming (not `usePascalCase`) since
 
 ## Session Restore and File Changes
 
-`FileChangesPanel` renders a compact file list when `useSessionRestore` detects file changes. Each file row shows path, NEW/DELETED badges, +/-N line stats, a seen/unseen eye icon, and revert/keep actions. Clicking a file row opens it in the editor with inline word-level diff decorations via `plugin.inlineDiffManager.applyDiff()`. `useSessionRestore` is a thin React wrapper around `SnapshotManager` in `application/services/session-restore/`.
+`FileChangesPanel` renders a compact file list when `useSessionRestore` detects file changes. Each file row shows path, NEW/DELETED badges, +/-N line stats, a seen/unseen eye icon, and revert/keep actions. Clicking a file row opens it in the editor with inline word-level diff decorations via `plugin.inlineDiffManager.applyDiff()`. `useSessionRestore` is a thin React wrapper around `SnapshotManager` in `application/services/session-restore/`. `SnapshotManager` uses `baselineAdvanced` flag (set by `keepFile`/`dismissAll`) to prevent stale `firstOldText` from overwriting the advanced baseline; `normalizeVaultPath` applies NFC normalization to avoid duplicate Map entries from macOS NFD paths.
 
 **Inline diff**: Diffs are shown directly in the Obsidian editor using CodeMirror 6 decorations (added text highlighted, deleted text shown as inline strikethrough widgets). The diff computation (`shared/word-diff.ts`) uses `Diff.diffWords()` for word-level granularity. The CM6 extension lives in `adapters/obsidian/inline-diff-extension.ts`; lifecycle management in `adapters/obsidian/inline-diff-manager.ts`.
 
@@ -131,6 +131,8 @@ Note: hooks in `chat-input/` use `kebab-case` naming (not `usePascalCase`) since
 **Context usage**: `ContextUsageMeter` displays a visual meter showing how much of the agent's context window is consumed, rendered in the input area.
 
 **CollapsibleSection non-collapsible mode**: Pass `collapsible={false}` to render a static header with no click/expand behaviour (adds `.ac-collapsible--static` CSS class). Used by `ToolCallRenderer` when the tool call has no renderable details (no command, no locations, no terminal/diff content, no patch).
+
+**Accessibility**: Components include ARIA landmark roles (`role="tablist"` on TabBar, `role="dialog"` on SessionHistoryPopover, `role="listbox"` on picker/selector panels, `role="list"` on badge strips, `role="meter"` on ContextUsageMeter). Keyboard navigation: roving tabindex with arrow keys in TabBar, focus trapping in SessionHistoryPopover, Enter/Space activation on diff file badges in ToolCallRenderer. All interactive elements have `:focus-visible` ring via `box-shadow`.
 
 **ToolCallRenderer enhancements**: 
 - Unknown/generic tool names are shown as `.ac-row__summary` next to the "Tool" display name.

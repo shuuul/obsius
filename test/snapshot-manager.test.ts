@@ -227,9 +227,10 @@ describe("SnapshotManager", () => {
 			const messages = [makeDiffMessage("a.ts", "original", "content")];
 
 			await manager.captureSnapshots(messages, undefined, io.readFile);
-			await manager.captureSnapshots(messages, undefined, io.readFile);
+			const callsAfterFirst = vi.mocked(io.readFile).mock.calls.length;
 
-			expect(io.readFile).not.toHaveBeenCalled();
+			await manager.captureSnapshots(messages, undefined, io.readFile);
+			expect(vi.mocked(io.readFile).mock.calls.length).toBe(callsAfterFirst);
 		});
 	});
 
@@ -705,6 +706,34 @@ describe("SnapshotManager", () => {
 		});
 	});
 
+	describe("keepFile baseline reset for new files", () => {
+		it("keepFile on new file then agent re-edits: shows incremental diff, not all-green", async () => {
+			const io = mockFileIo({ "new.md": "created content" });
+			const messages1 = [makeDiffMessage("new.md", null, "created content")];
+
+			let cs = await manager.computeChanges(messages1, undefined, io.readFile);
+			expect(cs).not.toBeNull();
+			expect(requireDefined(cs).changes[0].isNewFile).toBe(true);
+			expect(requireDefined(cs).changes[0].originalText).toBeNull();
+
+			manager.keepFile(requireDefined(cs).changes[0]);
+
+			io.files["new.md"] = "modified content";
+			const messages2 = [
+				...messages1,
+				makeDiffMessage("new.md", "created content", "modified content"),
+			];
+
+			cs = await manager.computeChanges(messages2, undefined, io.readFile);
+			expect(cs).not.toBeNull();
+			expect(requireDefined(cs).changes[0].isNewFile).toBe(false);
+			expect(requireDefined(cs).changes[0].originalText).toBe(
+				"created content",
+			);
+			expect(requireDefined(cs).changes[0].finalText).toBe("modified content");
+		});
+	});
+
 	describe("real-world scenarios", () => {
 		it("create file then edit it: tracks as new", async () => {
 			const io = mockFileIo({ "summary.md": "content without title" });
@@ -920,6 +949,163 @@ describe("SnapshotManager", () => {
 			expect(change.isNewFile).toBe(false);
 			expect(change.originalText).toBe("Original article content");
 			expect(change.finalText).toBe("Polished article content");
+		});
+
+		it("line-level edit diffs do not overwrite a full-file snapshot", async () => {
+			const original = [
+				"# 1. PKM 与 CKM 核心概念总结",
+				"",
+				"## 2. 什么是 PKM 和 CKM？",
+				"",
+				"正文段落",
+				"",
+				"## 3. PKM：个人知识管理",
+			].join("\n");
+			const current = [
+				"# PKM 与 CKM 核心概念总结",
+				"",
+				"## 什么是 PKM 和 CKM？",
+				"",
+				"正文段落",
+				"",
+				"## PKM：个人知识管理",
+			].join("\n");
+
+			const readMessages: ChatMessage[] = [
+				makeLocationMessage("Read note.md", [{ path: "note.md" }], "read", {
+					path: "note.md",
+				}),
+			];
+			const preWriteRead = vi.fn(async () => original);
+			await manager.computeChanges(readMessages, undefined, preWriteRead);
+
+			const allMessages: ChatMessage[] = [
+				...readMessages,
+				makeDiffMessage(
+					"note.md",
+					"# 1. PKM 与 CKM 核心概念总结",
+					"# PKM 与 CKM 核心概念总结",
+				),
+				makeDiffMessage(
+					"note.md",
+					"## 2. 什么是 PKM 和 CKM？",
+					"## 什么是 PKM 和 CKM？",
+				),
+				makeDiffMessage(
+					"note.md",
+					"## 3. PKM：个人知识管理",
+					"## PKM：个人知识管理",
+				),
+			];
+			const io = mockFileIo({ "note.md": current });
+			const cs = await manager.computeChanges(
+				allMessages,
+				undefined,
+				io.readFile,
+			);
+
+			expect(cs).not.toBeNull();
+			const change = requireDefined(cs).changes[0];
+			expect(change.originalText).toBe(original);
+			expect(change.finalText).toBe(current);
+		});
+
+		it("line-level diffs reconstruct original when all messages arrive at once", async () => {
+			const original = [
+				"# 1. PKM 与 CKM 核心概念总结",
+				"",
+				"## 2. 什么是 PKM 和 CKM？",
+				"",
+				"正文段落",
+				"",
+				"## 3. PKM：个人知识管理",
+			].join("\n");
+			const current = [
+				"# PKM 与 CKM 核心概念总结",
+				"",
+				"## 什么是 PKM 和 CKM？",
+				"",
+				"正文段落",
+				"",
+				"## PKM：个人知识管理",
+			].join("\n");
+
+			const allMessages: ChatMessage[] = [
+				makeLocationMessage("Read note.md", [{ path: "note.md" }], "read", {
+					path: "note.md",
+				}),
+				makeDiffMessage(
+					"note.md",
+					"# 1. PKM 与 CKM 核心概念总结",
+					"# PKM 与 CKM 核心概念总结",
+				),
+				makeDiffMessage(
+					"note.md",
+					"## 2. 什么是 PKM 和 CKM？",
+					"## 什么是 PKM 和 CKM？",
+				),
+				makeDiffMessage(
+					"note.md",
+					"## 3. PKM：个人知识管理",
+					"## PKM：个人知识管理",
+				),
+			];
+			const io = mockFileIo({ "note.md": current });
+			const cs = await manager.computeChanges(
+				allMessages,
+				undefined,
+				io.readFile,
+			);
+
+			expect(cs).not.toBeNull();
+			const change = requireDefined(cs).changes[0];
+			expect(change.originalText).toBe(original);
+			expect(change.finalText).toBe(current);
+		});
+
+		it("line-level diffs without prior Read still reconstruct from disk", async () => {
+			const original = [
+				"# 1. Title",
+				"",
+				"Content paragraph",
+				"",
+				"## 2. Section",
+			].join("\n");
+			const current = [
+				"# Title",
+				"",
+				"Content paragraph",
+				"",
+				"## Section",
+			].join("\n");
+
+			const messages: ChatMessage[] = [
+				makeDiffMessage("note.md", "# 1. Title", "# Title"),
+				makeDiffMessage("note.md", "## 2. Section", "## Section"),
+			];
+			const io = mockFileIo({ "note.md": current });
+			const cs = await manager.computeChanges(messages, undefined, io.readFile);
+
+			expect(cs).not.toBeNull();
+			const change = requireDefined(cs).changes[0];
+			expect(change.originalText).toBe(original);
+			expect(change.finalText).toBe(current);
+		});
+
+		it("full-file diffs are used as-is without reconstruction", async () => {
+			const original = "line1\nline2\nline3";
+			const current = "line1\nmodified\nline3";
+
+			const messages: ChatMessage[] = [
+				makeDiffMessage("a.ts", original, current),
+			];
+			const io = mockFileIo({ "a.ts": current });
+			const cs = await manager.computeChanges(messages, undefined, io.readFile);
+
+			expect(cs).not.toBeNull();
+			const change = requireDefined(cs).changes[0];
+			expect(change.originalText).toBe(original);
+			expect(change.finalText).toBe(current);
 		});
 	});
 });

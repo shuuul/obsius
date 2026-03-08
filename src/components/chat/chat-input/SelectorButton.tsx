@@ -99,8 +99,10 @@ export function SelectorButton({
 				className={`obsius-selector-button ${isOpen ? "obsius-selector-active" : ""} ${className ?? ""}`}
 				onClick={handleToggle}
 				title={title}
-				role="button"
+				role="combobox"
 				tabIndex={0}
+				aria-expanded={isOpen}
+				aria-haspopup="listbox"
 				onKeyDown={(e) => {
 					if (e.key === "Enter" || e.key === " ") {
 						e.preventDefault();
@@ -134,6 +136,8 @@ export function SelectorButton({
 						ref={popoverRef}
 						className="obsius-selector-popover"
 						style={popoverStyle}
+						role="listbox"
+						aria-label={title}
 					>
 						{options.map((option) => (
 							<div

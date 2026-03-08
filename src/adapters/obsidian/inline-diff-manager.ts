@@ -3,7 +3,11 @@ import { MarkdownView } from "obsidian";
 import { EditorView } from "@codemirror/view";
 import { Compartment, StateEffect } from "@codemirror/state";
 import { inlineDiffExtension, setInlineDiff } from "./inline-diff-extension";
-import { computeInlineDiffSegments } from "../../shared/word-diff";
+import {
+	computeAnchoredInlineDiffSegments,
+	computeInlineDiffSegments,
+	type InlineDiffOptions,
+} from "../../shared/word-diff";
 
 interface TrackedLeaf {
 	leaf: WorkspaceLeaf;
@@ -20,6 +24,7 @@ export class InlineDiffManager {
 		filePath: string,
 		originalText: string,
 		currentText: string,
+		options: InlineDiffOptions = {},
 	): Promise<void> {
 		const leaf = await this.ensureFileOpen(filePath);
 		if (!leaf) return;
@@ -27,9 +32,15 @@ export class InlineDiffManager {
 		const cm = this.getEditorView(leaf);
 		if (!cm) return;
 
+		const segments = this.computeSegments(
+			cm.state.doc.toString(),
+			originalText,
+			currentText,
+			options,
+		);
+
 		const existing = this.tracked.get(filePath);
 		if (existing) {
-			const segments = computeInlineDiffSegments(originalText, currentText);
 			cm.dispatch({ effects: setInlineDiff.of(segments) });
 			return;
 		}
@@ -41,7 +52,6 @@ export class InlineDiffManager {
 			),
 		});
 
-		const segments = computeInlineDiffSegments(originalText, currentText);
 		cm.dispatch({ effects: setInlineDiff.of(segments) });
 
 		this.tracked.set(filePath, { leaf, compartment, filePath });
@@ -101,5 +111,24 @@ export class InlineDiffManager {
 		const editor = leaf.view.editor;
 		const cm = (editor as unknown as { cm?: EditorView }).cm;
 		return cm ?? null;
+	}
+
+	private computeSegments(
+		documentText: string,
+		originalText: string,
+		currentText: string,
+		options: InlineDiffOptions,
+	) {
+		if (options.mode === "snippet") {
+			return (
+				computeAnchoredInlineDiffSegments(
+					documentText,
+					originalText,
+					currentText,
+				) ?? []
+			);
+		}
+
+		return computeInlineDiffSegments(originalText, currentText);
 	}
 }

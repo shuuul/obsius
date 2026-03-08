@@ -354,17 +354,27 @@ export function ToolCallRenderer({
 					}
 					if (item.type === "diff") {
 						const rel = toRelativePath(item.path, vaultPath);
+						const openDiff = () => {
+							void plugin.inlineDiffManager.applyDiff(
+								rel,
+								item.oldText ?? "",
+								item.newText,
+								{ mode: "snippet" },
+							);
+						};
 						return (
 							<div
 								key={index}
 								className="ac-tree__item ac-diff-file-badge"
-								onClick={() => {
-									void plugin.inlineDiffManager.applyDiff(
-										rel,
-										item.oldText ?? "",
-										item.newText,
-									);
+								onClick={openDiff}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										openDiff();
+									}
 								}}
+								tabIndex={0}
+								role="button"
 								title="View inline diff"
 							>
 								<ObsidianIcon name="file-diff" size={14} />

@@ -36,7 +36,7 @@ Main hook files (extracted helper modules listed separately below):
 | `useChat` | 301 | `messages[]`, `isSending`, streaming | `IAgentClient`, `IVaultAccess` | `useChatController` |
 | `usePicker` | 261 | Picker panel open/selection state | `PickerProvider[]` | `ChatInput` (×2) |
 | `usePermission` | 234 | `activePermission`, approval queue | `IAgentClient` | `useChatController` |
-| `useSessionRestore` | 192 | Thin React wrapper around `SnapshotManager`; exposes change set state + revert/keep/dismiss; triggers disk comparison on every messages update | `SnapshotManager` | `TabContent` |
+| `useSessionRestore` | 192 | Thin React wrapper around `SnapshotManager`; exposes change set state + revert/keep/dismiss; triggers disk comparison on every messages update; keepFile sets baselineAdvanced flag to protect advanced baseline from stale firstOldText | `SnapshotManager` | `TabContent` |
 | `useTabs` | 174 | `tabs[]`, `activeTabId` (max 4); inherits active tab's agent when opening new tabs | `ChatTab`, agent info | `ChatComponent` |
 | `useSlashCommands` | 150 | Suggestions dropdown + token handling | `SlashCommand[]` | `useChatController` |
 | `useInputHistory` | 139 | History index (ref-based) | `ChatMessage[]` | `ChatInput` |

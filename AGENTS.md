@@ -234,6 +234,9 @@ npm run docs:build       # VitePress build
 - **Inline edit**: `plugin/inline-edit.ts` enables selection-based editing via agent prompt with inline diff decorations in editor
 - **Inline diff**: `adapters/obsidian/inline-diff-manager.ts` manages CM6 word-level diff decorations; `shared/word-diff.ts` computes diff segments; `adapters/obsidian/inline-diff-extension.ts` provides the CM6 StateField/decorations
 - **Session restore**: `useSessionRestore` (thin React wrapper) delegates to `SnapshotManager` in `application/services/session-restore/`; captures original file state on first sighting (from diff `oldText` or disk read), detects changes via disk comparison; `discoverModifiedFiles` scans tool call sources (diffs, rawInput, locations) for file paths
+- **Session restore baseline fix**: `SnapshotManager.advanceBaseline` now sets `baselineAdvanced: true`; `captureSnapshots` clears the flag on next call to prevent stale `firstOldText` from overwriting the advanced baseline. `normalizeVaultPath` applies NFC normalization to prevent duplicate entries from macOS NFD paths.
+- **Accessibility**: Chat components now include ARIA roles, keyboard navigation (roving tabindex in TabBar, focus trapping in SessionHistoryPopover), and `:focus-visible` indicators throughout.
+- **CSS shadow token**: `--obsius-shadow` custom property replaces hardcoded `rgba(0,0,0,X)` in all 6 box-shadow declarations.
 - **Settings migrations**: `settings-migrations.ts` handles schema version upgrades with typed migration functions
 - **Slash command tokens**: `slash-command-token.ts` encodes/decodes slash commands as inline tokens in message text
 - **Context usage meter**: `ContextUsageMeter.tsx` displays context window usage as a visual meter in the input area

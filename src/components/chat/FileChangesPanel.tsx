@@ -175,6 +175,7 @@ export function FileChangesPanel({
 					row.openPath,
 					originalText,
 					currentText,
+					{ mode: "document" },
 				);
 				setActivePaths((prev) => new Set(prev).add(row.key));
 			}

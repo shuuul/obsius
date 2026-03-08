@@ -30,6 +30,8 @@ function PickerItemRow({
 			<div
 				className={`obsius-picker-item obsius-picker-item--back${isSelected ? " obsius-picker-item--selected" : ""}`}
 				data-selected={isSelected}
+				role="option"
+				aria-selected={isSelected}
 				onClick={onClick}
 				onMouseEnter={onHover}
 			>
@@ -48,6 +50,8 @@ function PickerItemRow({
 			<div
 				className={`obsius-picker-item obsius-picker-item--category${isSelected ? " obsius-picker-item--selected" : ""}`}
 				data-selected={isSelected}
+				role="option"
+				aria-selected={isSelected}
 				onClick={onClick}
 				onMouseEnter={onHover}
 			>
@@ -70,6 +74,8 @@ function PickerItemRow({
 		<div
 			className={`obsius-picker-item${isSelected ? " obsius-picker-item--selected" : ""}`}
 			data-selected={isSelected}
+			role="option"
+			aria-selected={isSelected}
 			onClick={onClick}
 			onMouseEnter={onHover}
 		>
@@ -184,7 +190,12 @@ export function UnifiedPickerPanel({ picker, mode }: PickerPanelProps) {
 			onMouseDown={(e) => e.preventDefault()}
 		>
 			<div className="obsius-picker-panel">
-				<div className="obsius-picker-list" ref={listRef}>
+				<div
+					className="obsius-picker-list"
+					ref={listRef}
+					role="listbox"
+					aria-label={`${mode} suggestions`}
+				>
 					{picker.items.length === 0 && (
 						<div className="obsius-picker-empty">No results</div>
 					)}

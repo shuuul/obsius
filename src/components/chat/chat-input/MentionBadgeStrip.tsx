@@ -45,9 +45,17 @@ export function MentionBadgeStrip({
 	if (!showAddButton && contextMentions.length === 0) return null;
 
 	return (
-		<div className="obsius-mention-badge-strip">
+		<div
+			className="obsius-mention-badge-strip"
+			role="list"
+			aria-label="Mentioned files"
+		>
 			{contextMentions.map((name) => (
-				<div key={name} className="obsius-context-mention-badge">
+				<div
+					key={name}
+					className="obsius-context-mention-badge"
+					role="listitem"
+				>
 					<ObsidianIcon
 						name={getFileIcon(name)}
 						className="obsius-context-mention-icon"

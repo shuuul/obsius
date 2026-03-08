@@ -391,6 +391,8 @@ npx vitest run test/chat.reducer.test.ts  # By file
 1. Create `src/components/chat/MyComponent.tsx`
 2. Accept props from `useChatController` return
 3. Style in `styles.css`
+4. Add ARIA roles/labels for interactive elements (see existing patterns in `TabBar`, `SessionHistoryPopover`, `UnifiedPickerPanel`)
+5. Ensure keyboard accessibility: `:focus-visible` ring, Enter/Space activation on clickable non-button elements
 
 ### New Agent Type
 1. Implement `IAgentClient` in `src/adapters/myagent/`

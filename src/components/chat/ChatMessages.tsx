@@ -221,6 +221,7 @@ export function ChatMessages({
 						className={`obsius-empty-state-icon${spinState === "spinning" ? " obsius-empty-state-icon--spinning" : ""}`}
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 100 100"
+						aria-hidden="true"
 					>
 						<defs>
 							<mask id={emptyStateMaskId}>
@@ -324,6 +325,7 @@ export function ChatMessages({
 					{!isAtBottom && (
 						<button
 							className="obsius-scroll-to-bottom"
+							aria-label="Scroll to bottom"
 							onClick={() => {
 								const container = containerRef.current;
 								if (container) {

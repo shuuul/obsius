@@ -24,6 +24,8 @@ interface OriginalFileState {
 	rawPath: string;
 	/** True when original was captured from diff `oldText`, false for disk fallback */
 	fromDiff: boolean;
+	/** True after keepFile/dismissAll — allows baseline refresh from latest diff */
+	baselineAdvanced: boolean;
 }
 
 /**
@@ -70,26 +72,55 @@ export class SnapshotManager {
 				if (file.wasDeleted && !existing.wasDeletedByAgent) {
 					existing.wasDeletedByAgent = true;
 				}
+				if (existing.baselineAdvanced) {
+					existing.baselineAdvanced = false;
+					continue;
+				}
 				if (
-				!existing.fromDiff &&
-				typeof file.firstOldText === "string" &&
-				// Don't let a placeholder empty oldText overwrite a real disk snapshot
-				(file.firstOldText !== "" || !existing.content)
-			) {
-				existing.content = file.firstOldText;
-				existing.isNew = false;
-				existing.fromDiff = true;
-			}
+					!existing.fromDiff &&
+					typeof file.firstOldText === "string" &&
+					shouldPromoteDiffBaseline(
+						existing.content,
+						file.firstOldText,
+						file.latestNewText,
+					)
+				) {
+					existing.content = file.firstOldText;
+					existing.isNew = false;
+					existing.fromDiff = true;
+				}
 				continue;
 			}
 
 			if (typeof file.firstOldText === "string") {
+				let content = file.firstOldText;
+
+				if (file.allDiffPairs.length > 0) {
+					const diskContent = await this.tryReadFile(
+						{ readFile } as FileIo,
+						file.vaultPath,
+					);
+					if (
+						diskContent != null &&
+						diskContent.length > file.firstOldText.length * 1.5
+					) {
+						const reconstructed = reverseApplyDiffs(
+							diskContent,
+							file.allDiffPairs,
+						);
+						if (reconstructed != null) {
+							content = reconstructed;
+						}
+					}
+				}
+
 				this.originals.set(file.vaultPath, {
-					content: file.firstOldText,
+					content,
 					isNew: false,
 					wasDeletedByAgent: file.wasDeleted,
 					rawPath: file.rawPath,
 					fromDiff: true,
+					baselineAdvanced: false,
 				});
 				continue;
 			}
@@ -101,6 +132,7 @@ export class SnapshotManager {
 					wasDeletedByAgent: file.wasDeleted,
 					rawPath: file.rawPath,
 					fromDiff: true,
+					baselineAdvanced: false,
 				});
 				continue;
 			}
@@ -115,6 +147,7 @@ export class SnapshotManager {
 				wasDeletedByAgent: file.wasDeleted,
 				rawPath: file.rawPath,
 				fromDiff: false,
+				baselineAdvanced: false,
 			});
 		}
 	}
@@ -130,13 +163,14 @@ export class SnapshotManager {
 		readFile: (path: string) => Promise<string>,
 	): Promise<SessionChangeSet | null> {
 		let result: SessionChangeSet | null = null;
-		await (this.computeLock = this.computeLock.then(async () => {
+		this.computeLock = this.computeLock.then(async () => {
 			result = await this.computeChangesInner(
 				messages,
 				vaultBasePath,
 				readFile,
 			);
-		}));
+		});
+		await this.computeLock;
 		return result;
 	}
 
@@ -276,8 +310,8 @@ export class SnapshotManager {
 			wasDeletedByAgent:
 				change.isDeleted || existing?.wasDeletedByAgent === true,
 			rawPath: existing?.rawPath ?? change.path,
-			// Treat accepted state as authoritative baseline for future comparisons.
 			fromDiff: true,
+			baselineAdvanced: true,
 		});
 	}
 
@@ -303,4 +337,66 @@ export class SnapshotManager {
 
 function trimEnd(s: string): string {
 	return s.replace(/\s+$/, "");
+}
+
+/**
+ * Reverse-apply line-level diffs on the current disk content to reconstruct
+ * the original file before any edits. Processes diffs in reverse order so
+ * each newText is found in the progressively un-edited content.
+ *
+ * Returns the reconstructed content, or null if no diffs could be reversed.
+ */
+function reverseApplyDiffs(
+	diskContent: string,
+	diffs: ReadonlyArray<{ oldText: string; newText: string }>,
+): string | null {
+	let content = diskContent;
+	for (let i = diffs.length - 1; i >= 0; i--) {
+		const { oldText, newText } = diffs[i];
+		if (!newText) continue;
+		const idx = content.indexOf(newText);
+		if (idx === -1) continue;
+		content =
+			content.slice(0, idx) + oldText + content.slice(idx + newText.length);
+	}
+	return content !== diskContent ? content : null;
+}
+
+function shouldPromoteDiffBaseline(
+	existingContent: string | null,
+	firstOldText: string,
+	latestNewText: string | undefined,
+): boolean {
+	if (firstOldText === "") {
+		return existingContent == null;
+	}
+
+	if (existingContent == null) {
+		return true;
+	}
+
+	const normalizedExisting = trimEnd(existingContent);
+	const normalizedOld = trimEnd(firstOldText);
+	if (normalizedExisting === normalizedOld) {
+		return true;
+	}
+
+	// Many agents emit line-level replace snippets rather than whole-file diffs.
+	// If the captured full-file snapshot already contains either side of the
+	// replacement as a substring, keep the full snapshot instead of degrading the
+	// baseline to a single edited line.
+	if (normalizedOld && normalizedExisting.includes(normalizedOld)) {
+		return false;
+	}
+
+	const normalizedNew = latestNewText ? trimEnd(latestNewText) : "";
+	if (
+		normalizedNew &&
+		normalizedExisting !== normalizedNew &&
+		normalizedExisting.includes(normalizedNew)
+	) {
+		return false;
+	}
+
+	return true;
 }
