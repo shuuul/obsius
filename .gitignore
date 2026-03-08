@@ -47,3 +47,7 @@ docs/.vitepress/cache/
 
 # Personal developer logs
 dev/
+
+# skills
+*/skills/
+skills-lock.json
