@@ -208,6 +208,10 @@ git push && git push --tags
 npm run dev              # Vite watch build
 npm run typecheck        # TypeScript typecheck only
 npm run build            # typecheck + Vite production build
+npm run deploy:base      # Copy main.js, manifest.json, styles.css to the .env vault plugin folder
+npm run reload:base      # Reload Obsidian via Obsidian CLI
+npm run verify:base      # List registered Obsius commands via Obsidian CLI
+npm run install:base     # build + deploy:base + reload:base + verify:base
 npm run lint             # Biome + ESLint + architecture guardrails
 npm run lint:fix         # ESLint auto-fix
 npm run test             # Vitest
@@ -221,6 +225,33 @@ npm run docs:dev         # VitePress dev server
 grep -rn 'from.*adapters/' src/components/ src/hooks/ src/application/ 2>/dev/null | grep -v AGENTS.md
 npm run docs:build       # VitePress build
 ```
+
+## Local Obsidian CLI Development
+
+Local deployment to an Obsidian vault is configured through `.env`. Keep `.env` local and untracked; use `.env.example` as the template.
+
+Required local setup:
+```bash
+cp .env.example .env
+```
+
+Then set:
+```bash
+OBSIDIAN_VAULT_PATH="/absolute/path/to/your/vault"
+OBSIDIAN_CLI_VAULT=""
+OBSIDIAN_PLUGIN_ID="obsius"
+OBSIDIAN_RELOAD_WAIT_MS="2000"
+```
+
+Development loop:
+```bash
+npm run build
+npm run deploy:base
+npm run reload:base
+npm run verify:base
+```
+
+Use `npm run install:base` when you want the full loop in one command. `deploy:base` copies only `main.js`, `manifest.json`, and `styles.css` into `${OBSIDIAN_VAULT_PATH}/.obsidian/plugins/${OBSIDIAN_PLUGIN_ID}` and ensures the plugin id is present in `.obsidian/community-plugins.json` (a one-time backup is written before changing that file). `reload:base` and `verify:base` require the `obsidian` CLI and an open Obsidian app.
 
 ## Notes
 - **Tests exist**: Vitest with coverage gates (test/ directory, 19 test files + setup + mocks/)
